@@ -24,13 +24,11 @@
     <string name="phase_6">Bloqueio de sites adultos</string>
     <string name="phase_7">Perfil, conta e backup</string>
 
-    <string name="train_soon">Treine enquanto a câmera conta suas repetições.</string>
     <string name="progress_soon">Sequência de dias, níveis, conquistas e gráficos.</string>
     <string name="profile_soon">Seu perfil, conta e backup na nuvem.</string>
 
     <string name="balance_free_today">Grátis hoje: %1$s</string>
     <string name="balance_earned">Ganho: %1$s</string>
-    <string name="today_reps">Flexões hoje: %1$d</string>
     <string name="train_title">Flexões</string>
     <string name="train_how_title">Como funciona</string>
     <string name="train_step_1">Coloque o celular no chão, com a tela para cima, bem embaixo do seu rosto.</string>
@@ -120,4 +118,45 @@
     <string name="reminder_channel">Lembretes de treino</string>
     <string name="reminder_title">Hora de treinar!</string>
     <string name="reminder_body">Cada flexão vale 1 minuto de tela.</string>
+
+    <!-- Bloqueio de apps -->
+    <string name="tab_block">Bloqueio</string>
+    <string name="block_title">Bloqueio de apps</string>
+    <string name="block_intro">Escolha os apps que roubam seu tempo. Eles só abrem enquanto você tiver saldo.</string>
+    <string name="perm_section">Permissões</string>
+    <string name="perm_usage_title">Acesso aos dados de uso</string>
+    <string name="perm_usage_body">Para saber qual app está aberto. Encontre o PushLife na lista e ative.</string>
+    <string name="perm_overlay_title">Sobrepor a outros apps</string>
+    <string name="perm_overlay_body">Para mostrar a tela de bloqueio por cima de um app bloqueado.</string>
+    <string name="perm_notif_title">Notificações</string>
+    <string name="perm_notif_body">O Android exige uma notificação enquanto a proteção está ligada.</string>
+    <string name="perm_battery_title">Bateria sem restrição (recomendado)</string>
+    <string name="perm_battery_body">A Samsung e outras marcas fecham apps em segundo plano. Abra Bateria e escolha Sem restrições.</string>
+    <string name="perm_allow">Permitir</string>
+    <string name="perm_open">Abrir</string>
+    <string name="perm_ok">Pronto</string>
+    <string name="protection_title">Proteção</string>
+    <string name="protection_on">Ligada: os apps bloqueados gastam seu saldo.</string>
+    <string name="protection_off">Desligada: nada é bloqueado.</string>
+    <string name="protection_needs">Libere as permissões abaixo e escolha pelo menos 1 app para ligar.</string>
+    <string name="disable_title">Desligar a proteção?</string>
+    <string name="disable_body">Respira. Se ainda quiser, espere %1$d s para confirmar.</string>
+    <string name="disable_confirm">Desligar</string>
+    <string name="disable_cancel">Manter ligada</string>
+    <string name="apps_section">Apps para bloquear</string>
+    <string name="apps_count">%1$d selecionados</string>
+    <string name="app_average">Média diária: %1$s</string>
+    <string name="app_little_use">Pouco usado</string>
+    <string name="apps_loading">Carregando apps…</string>
+    <string name="emergencies_left">Emergências hoje: restam %1$d de %2$d</string>
+    <string name="debt_label">Você deve %1$d flexões. As próximas flexões pagam a dívida primeiro.</string>
+    <string name="blocked_title">Tempo esgotado</string>
+    <string name="blocked_body">Seu saldo acabou para usar o %1$s. Faça flexões para liberar.</string>
+    <string name="blocked_train">Fazer flexões</string>
+    <string name="blocked_emergency">Emergência: 5 min (você fica devendo 10 flexões)</string>
+    <string name="blocked_no_emergency">Acabaram as emergências de hoje.</string>
+    <string name="blocked_exit">Sair</string>
+    <string name="entered_toast">PushLife: usando seu saldo (restam %1$s)</string>
+    <string name="service_channel">Proteção de apps</string>
+    <string name="service_text">Protegendo seu foco. Os apps bloqueados gastam seu saldo.</string>
 </resources>

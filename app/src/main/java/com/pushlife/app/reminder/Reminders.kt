@@ -16,6 +16,7 @@ import androidx.core.content.ContextCompat
 import com.pushlife.app.AppGraph
 import com.pushlife.app.MainActivity
 import com.pushlife.app.R
+import com.pushlife.app.blocking.BlockerService
 import java.time.LocalTime
 import java.time.ZonedDateTime
 
@@ -83,10 +84,11 @@ class ReminderReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) = Reminders.show(context)
 }
 
-/** O Android apaga os alarmes ao reiniciar; reagenda o lembrete. */
+/** Ao reiniciar o celular: reagenda o lembrete (o Android apaga os alarmes) e religa o bloqueio. */
 class BootReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action != Intent.ACTION_BOOT_COMPLETED) return
         AppGraph.profile.state.value.reminder?.let { Reminders.schedule(context, it) }
+        BlockerService.syncWithSettings(context)
     }
 }

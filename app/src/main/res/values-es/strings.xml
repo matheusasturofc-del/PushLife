@@ -24,13 +24,11 @@
     <string name="phase_6">Bloqueo de sitios para adultos</string>
     <string name="phase_7">Perfil, cuenta y copia de seguridad</string>
 
-    <string name="train_soon">Entrena mientras la cámara cuenta tus repeticiones.</string>
     <string name="progress_soon">Rachas de días, niveles, logros y gráficos.</string>
     <string name="profile_soon">Tu perfil, cuenta y copia de seguridad en la nube.</string>
 
     <string name="balance_free_today">Gratis hoy: %1$s</string>
     <string name="balance_earned">Ganado: %1$s</string>
-    <string name="today_reps">Flexiones hoy: %1$d</string>
     <string name="train_title">Flexiones</string>
     <string name="train_how_title">Cómo funciona</string>
     <string name="train_step_1">Pon el teléfono en el suelo, con la pantalla hacia arriba, justo debajo de tu cara.</string>
@@ -120,4 +118,45 @@
     <string name="reminder_channel">Recordatorios de entrenamiento</string>
     <string name="reminder_title">¡Hora de entrenar!</string>
     <string name="reminder_body">Cada flexión vale 1 minuto de pantalla.</string>
+
+    <!-- Bloqueio de apps -->
+    <string name="tab_block">Bloqueo</string>
+    <string name="block_title">Bloqueo de apps</string>
+    <string name="block_intro">Elige las apps que te roban tiempo. Solo se abren mientras tengas saldo.</string>
+    <string name="perm_section">Permisos</string>
+    <string name="perm_usage_title">Acceso a datos de uso</string>
+    <string name="perm_usage_body">Para saber qué app está abierta. Busca PushLife en la lista y actívala.</string>
+    <string name="perm_overlay_title">Mostrar sobre otras apps</string>
+    <string name="perm_overlay_body">Para mostrar la pantalla de bloqueo encima de una app bloqueada.</string>
+    <string name="perm_notif_title">Notificaciones</string>
+    <string name="perm_notif_body">Android exige una notificación mientras la protección está activa.</string>
+    <string name="perm_battery_title">Batería sin restricciones (recomendado)</string>
+    <string name="perm_battery_body">Samsung y otras marcas cierran apps en segundo plano. Abre Batería y elige Sin restricciones.</string>
+    <string name="perm_allow">Permitir</string>
+    <string name="perm_open">Abrir</string>
+    <string name="perm_ok">Listo</string>
+    <string name="protection_title">Protección</string>
+    <string name="protection_on">Activada: las apps bloqueadas gastan tu saldo.</string>
+    <string name="protection_off">Desactivada: no se bloquea nada.</string>
+    <string name="protection_needs">Concede los permisos de abajo y elige al menos 1 app para activarla.</string>
+    <string name="disable_title">¿Desactivar la protección?</string>
+    <string name="disable_body">Respira. Si aún quieres, espera %1$d s para confirmar.</string>
+    <string name="disable_confirm">Desactivar</string>
+    <string name="disable_cancel">Mantener activada</string>
+    <string name="apps_section">Apps para bloquear</string>
+    <string name="apps_count">%1$d seleccionadas</string>
+    <string name="app_average">Promedio diario: %1$s</string>
+    <string name="app_little_use">Poco uso</string>
+    <string name="apps_loading">Cargando apps…</string>
+    <string name="emergencies_left">Emergencias hoy: quedan %1$d de %2$d</string>
+    <string name="debt_label">Debes %1$d flexiones. Las próximas flexiones pagan la deuda primero.</string>
+    <string name="blocked_title">Se acabó el tiempo</string>
+    <string name="blocked_body">Se acabó tu saldo para usar %1$s. Haz flexiones para desbloquearla.</string>
+    <string name="blocked_train">Hacer flexiones</string>
+    <string name="blocked_emergency">Emergencia: 5 min (deberás 10 flexiones)</string>
+    <string name="blocked_no_emergency">No quedan emergencias hoy.</string>
+    <string name="blocked_exit">Salir</string>
+    <string name="entered_toast">PushLife: usando tu saldo (quedan %1$s)</string>
+    <string name="service_channel">Protección de apps</string>
+    <string name="service_text">Protegiendo tu concentración. Las apps bloqueadas gastan tu saldo.</string>
 </resources>

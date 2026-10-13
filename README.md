@@ -15,16 +15,20 @@ Instagram, TikTok e outros apps bloqueados. Inspirado no PushScroll, gratuito e 
 |---|---|---|
 | 1 | Base do app: projeto, tema, 3 idiomas, APK automático | pronto |
 | 2 | Contagem de flexões pela câmera (celular no chão) e saldo de tempo | pronto |
-| 3 | Bloqueio de apps, emergência com dívida de flexões | próxima |
-| 4 | Mais exercícios, instruções e aviso de postura | |
+| 3 | Bloqueio de apps, emergência com dívida de flexões | pronto |
+| 4 | Mais exercícios, instruções e aviso de postura | próxima |
 | 5 | Sequência, metas, níveis, conquistas, gráficos, notificações | |
 | 6 | Bloqueio de sites adultos | |
 | 7 | Perfil, conta e backup na nuvem; preparação para a Play Store | |
+
+Extra: boas-vindas na primeira abertura (nome, objetivos, uso do celular, meta diária, lembrete).
 
 ## Tecnologia
 
 - Kotlin + Jetpack Compose (Material 3), Android 8.0 ou mais novo
 - IA da câmera: ML Kit (roda no aparelho; nenhuma imagem sai do celular)
+- Bloqueio: permissão "Acesso aos dados de uso" para saber o app aberto, um serviço em primeiro plano que
+  desconta o saldo a cada segundo e "Sobrepor a outros apps" para mostrar a tela de bloqueio
 - O GitHub Actions compila, testa e publica o APK a cada mudança (`.github/workflows/android.yml`)
 
 ## Abrir no Android Studio (opcional)

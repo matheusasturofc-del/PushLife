@@ -25,13 +25,11 @@
     <string name="phase_6">Adult site blocking</string>
     <string name="phase_7">Profile, account and backup</string>
 
-    <string name="train_soon">Work out while the camera counts your reps.</string>
     <string name="progress_soon">Day streaks, levels, achievements and charts.</string>
     <string name="profile_soon">Your profile, account and cloud backup.</string>
 
     <string name="balance_free_today">Free today: %1$s</string>
     <string name="balance_earned">Earned: %1$s</string>
-    <string name="today_reps">Push-ups today: %1$d</string>
     <string name="train_title">Push-ups</string>
     <string name="train_how_title">How it works</string>
     <string name="train_step_1">Put the phone on the floor, screen up, right under your face.</string>
@@ -127,4 +125,45 @@
     <string name="reminder_title">Time to train!</string>
     <string name="reminder_body">Every push-up is worth 1 minute of screen time.</string>
     <string name="hours_value" translatable="false">%1$s h</string>
+
+    <!-- Bloqueio de apps -->
+    <string name="tab_block">Block</string>
+    <string name="block_title">App blocking</string>
+    <string name="block_intro">Pick the apps that steal your time. They only open while you have screen time.</string>
+    <string name="perm_section">Permissions</string>
+    <string name="perm_usage_title">Usage access</string>
+    <string name="perm_usage_body">To know which app is open. Find PushLife in the list and turn it on.</string>
+    <string name="perm_overlay_title">Display over other apps</string>
+    <string name="perm_overlay_body">To show the block screen on top of a blocked app.</string>
+    <string name="perm_notif_title">Notifications</string>
+    <string name="perm_notif_body">Android requires a notification while protection is on.</string>
+    <string name="perm_battery_title">No battery restriction (recommended)</string>
+    <string name="perm_battery_body">Samsung and other brands close apps in the background. Open Battery and choose Unrestricted.</string>
+    <string name="perm_allow">Allow</string>
+    <string name="perm_open">Open</string>
+    <string name="perm_ok">Done</string>
+    <string name="protection_title">Protection</string>
+    <string name="protection_on">On: blocked apps use your balance.</string>
+    <string name="protection_off">Off: nothing is blocked.</string>
+    <string name="protection_needs">Allow the permissions below and pick at least 1 app to turn it on.</string>
+    <string name="disable_title">Turn off protection?</string>
+    <string name="disable_body">Take a breath. If you still want to, wait %1$d s to confirm.</string>
+    <string name="disable_confirm">Turn off</string>
+    <string name="disable_cancel">Keep on</string>
+    <string name="apps_section">Apps to block</string>
+    <string name="apps_count">%1$d selected</string>
+    <string name="app_average">Daily average: %1$s</string>
+    <string name="app_little_use">Little use</string>
+    <string name="apps_loading">Loading apps…</string>
+    <string name="emergencies_left">Emergencies left today: %1$d of %2$d</string>
+    <string name="debt_label">You owe %1$d push-ups. Your next push-ups pay them off first.</string>
+    <string name="blocked_title">Time\'s up</string>
+    <string name="blocked_body">You\'re out of screen time for %1$s. Do push-ups to unlock it.</string>
+    <string name="blocked_train">Do push-ups</string>
+    <string name="blocked_emergency">Emergency: 5 min (you\'ll owe 10 push-ups)</string>
+    <string name="blocked_no_emergency">No emergencies left today.</string>
+    <string name="blocked_exit">Leave</string>
+    <string name="entered_toast">PushLife: using your balance (%1$s left)</string>
+    <string name="service_channel">App protection</string>
+    <string name="service_text">Protecting your focus. Blocked apps use your balance.</string>
 </resources>
