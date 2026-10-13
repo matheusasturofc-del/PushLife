@@ -23,6 +23,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import com.pushlife.app.R
+import com.pushlife.app.core.Exercise
 
 private enum class Tab(@StringRes val label: Int, val icon: ImageVector) {
     Home(R.string.tab_home, Icons.Rounded.Home),
@@ -33,7 +34,7 @@ private enum class Tab(@StringRes val label: Int, val icon: ImageVector) {
 }
 
 @Composable
-fun PushLifeApp(trainRequests: Int = 0) {
+fun PushLifeApp(trainRequests: Int = 0, pendingExercise: Exercise? = null, onExerciseOpened: () -> Unit = {}) {
     var selected by rememberSaveable { mutableIntStateOf(Tab.Home.ordinal) }
     LaunchedEffect(trainRequests) {
         if (trainRequests > 0) selected = Tab.Train.ordinal
@@ -57,7 +58,12 @@ fun PushLifeApp(trainRequests: Int = 0) {
         val modifier = Modifier.padding(padding)
         when (tab) {
             Tab.Home -> HomeScreen(onStartTraining = { selected = Tab.Train.ordinal }, modifier = modifier)
-            Tab.Train -> TrainScreen(onBackHome = { selected = Tab.Home.ordinal }, modifier = modifier)
+            Tab.Train -> TrainScreen(
+                onBackHome = { selected = Tab.Home.ordinal },
+                pendingExercise = pendingExercise,
+                onExerciseOpened = onExerciseOpened,
+                modifier = modifier,
+            )
             Tab.Block -> BlockScreen(modifier)
             Tab.Progress -> ProgressScreen(modifier)
             Tab.Profile -> ProfileScreen(modifier)

@@ -2,9 +2,12 @@ package com.pushlife.app.data
 
 import android.content.Context
 import androidx.core.content.edit
+import com.pushlife.app.core.DistractionApp
 import com.pushlife.app.core.ExerciseFrequency
 import com.pushlife.app.core.Goal
 import com.pushlife.app.core.Profile
+import com.pushlife.app.core.QuitReason
+import com.pushlife.app.core.TriedMethod
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -31,6 +34,9 @@ class ProfileRepository(context: Context) {
             putBoolean(KEY_NOTIFY_STREAK, profile.notifyStreak)
             putBoolean(KEY_NOTIFY_WEEKLY, profile.notifyWeekly)
             putBoolean(KEY_NOTIFY_LOW, profile.notifyLowTime)
+            putStringSet(KEY_DISTRACTIONS, profile.distractions.map { it.name }.toSet())
+            putStringSet(KEY_REASONS, profile.quitReasons.map { it.name }.toSet())
+            putStringSet(KEY_TRIED, profile.triedMethods.map { it.name }.toSet())
         }
         _state.value = profile
     }
@@ -52,8 +58,16 @@ class ProfileRepository(context: Context) {
             notifyStreak = prefs.getBoolean(KEY_NOTIFY_STREAK, true),
             notifyWeekly = prefs.getBoolean(KEY_NOTIFY_WEEKLY, true),
             notifyLowTime = prefs.getBoolean(KEY_NOTIFY_LOW, true),
+            distractions = enums(KEY_DISTRACTIONS, DistractionApp.entries),
+            quitReasons = enums(KEY_REASONS, QuitReason.entries),
+            triedMethods = enums(KEY_TRIED, TriedMethod.entries),
         )
     }
+
+    private fun <E : Enum<E>> enums(key: String, all: List<E>): Set<E> =
+        prefs.getStringSet(key, emptySet()).orEmpty().mapNotNull { name -> all.firstOrNull { it.name == name } }.toSet()
+
+
 
     private companion object {
         const val KEY_DONE = "onboarding_done"
@@ -68,5 +82,8 @@ class ProfileRepository(context: Context) {
         const val KEY_NOTIFY_STREAK = "notify_streak"
         const val KEY_NOTIFY_WEEKLY = "notify_weekly"
         const val KEY_NOTIFY_LOW = "notify_low_time"
+        const val KEY_DISTRACTIONS = "distractions"
+        const val KEY_REASONS = "quit_reasons"
+        const val KEY_TRIED = "tried_methods"
     }
 }

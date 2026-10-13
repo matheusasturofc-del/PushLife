@@ -92,10 +92,24 @@ private enum class Stage { Pick, Intro, Active, Summary }
 private data class SessionResult(val exercise: Exercise, val amount: Int, val earnedSeconds: Long, val hitCap: Boolean)
 
 @Composable
-fun TrainScreen(onBackHome: () -> Unit, modifier: Modifier = Modifier) {
+fun TrainScreen(
+    onBackHome: () -> Unit,
+    modifier: Modifier = Modifier,
+    pendingExercise: Exercise? = null,
+    onExerciseOpened: () -> Unit = {},
+) {
     var stage by rememberSaveable { mutableStateOf(Stage.Pick) }
     var exercise by rememberSaveable { mutableStateOf(Exercise.PUSHUP) }
     var result by remember { mutableStateOf(SessionResult(Exercise.PUSHUP, 0, 0, false)) }
+
+    // Pedido para abrir um exercício direto (ex.: "testar agora" nas boas-vindas).
+    LaunchedEffect(pendingExercise) {
+        pendingExercise?.let {
+            exercise = it
+            stage = Stage.Intro
+            onExerciseOpened()
+        }
+    }
 
     BackHandler(enabled = stage == Stage.Intro) { stage = Stage.Pick }
 

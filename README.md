@@ -21,7 +21,8 @@ Instagram, TikTok e outros apps bloqueados. Inspirado no PushScroll, gratuito e 
 | 6 | Bloqueio de sites adultos | pronto |
 | 7 | Perfil, backup em arquivo (Google Drive) e preparação para a Play Store | pronto (login com e-mail depende do Firebase) |
 
-Extra: boas-vindas na primeira abertura (nome, objetivos, uso do celular, meta diária, lembrete).
+Extra: boas-vindas completas na primeira abertura (23 telas: perguntas, resultado, projeção, como funciona,
+permissões, escolha dos apps, plano pronto e primeiro treino).
 
 ## Tecnologia
 

@@ -7,9 +7,11 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.pushlife.app.blocking.BlockerService
+import com.pushlife.app.core.Exercise
 import com.pushlife.app.data.ProgressCenter
 import com.pushlife.app.filter.DnsFilterService
 import com.pushlife.app.reminder.DailyCheck
@@ -21,6 +23,9 @@ class MainActivity : ComponentActivity() {
     /** Cada pedido para abrir a aba de treino (fim das boas-vindas ou tela de bloqueio) soma 1. */
     private var trainRequests by mutableIntStateOf(0)
 
+    /** Exercício para abrir direto (fim das boas-vindas); null depois de usado. */
+    private var pendingExercise by mutableStateOf<Exercise?>(null)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
@@ -30,9 +35,20 @@ class MainActivity : ComponentActivity() {
             PushLifeTheme {
                 val profile by AppGraph.profile.state.collectAsStateWithLifecycle()
                 if (profile.onboardingDone) {
-                    PushLifeApp(trainRequests = trainRequests)
+                    PushLifeApp(
+                        trainRequests = trainRequests,
+                        pendingExercise = pendingExercise,
+                        onExerciseOpened = { pendingExercise = null },
+                    )
                 } else {
-                    OnboardingScreen(onFinished = { startWorkout -> if (startWorkout) trainRequests++ })
+                    OnboardingScreen(
+                        onFinished = { exercise ->
+                            if (exercise != null) {
+                                pendingExercise = exercise
+                                trainRequests++
+                            }
+                        },
+                    )
                 }
             }
         }

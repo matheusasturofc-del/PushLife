@@ -1,6 +1,8 @@
 package com.pushlife.app.ui.onboarding
 
 import android.Manifest
+import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.text.format.DateFormat
@@ -9,9 +11,12 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.StringRes
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -28,6 +33,7 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -36,42 +42,89 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.automirrored.rounded.ArrowForward
+import androidx.compose.material.icons.automirrored.rounded.Chat
 import androidx.compose.material.icons.automirrored.rounded.DirectionsRun
 import androidx.compose.material.icons.automirrored.rounded.DirectionsWalk
+import androidx.compose.material.icons.rounded.AccessibilityNew
+import androidx.compose.material.icons.rounded.Apps
+import androidx.compose.material.icons.rounded.Autorenew
 import androidx.compose.material.icons.rounded.Bedtime
+import androidx.compose.material.icons.rounded.Block
 import androidx.compose.material.icons.rounded.Bolt
 import androidx.compose.material.icons.rounded.Check
+import androidx.compose.material.icons.rounded.Contrast
+import androidx.compose.material.icons.rounded.DeleteForever
 import androidx.compose.material.icons.rounded.FitnessCenter
+import androidx.compose.material.icons.rounded.Forum
+import androidx.compose.material.icons.rounded.Groups
+import androidx.compose.material.icons.rounded.Headset
 import androidx.compose.material.icons.rounded.HourglassBottom
+import androidx.compose.material.icons.rounded.HourglassEmpty
+import androidx.compose.material.icons.rounded.Language
+import androidx.compose.material.icons.rounded.Layers
+import androidx.compose.material.icons.rounded.LiveTv
 import androidx.compose.material.icons.rounded.LocalFireDepartment
 import androidx.compose.material.icons.rounded.LockClock
+import androidx.compose.material.icons.rounded.Movie
+import androidx.compose.material.icons.rounded.MusicNote
+import androidx.compose.material.icons.rounded.Nfc
+import androidx.compose.material.icons.rounded.NotificationsActive
+import androidx.compose.material.icons.rounded.PanTool
+import androidx.compose.material.icons.rounded.PhoneAndroid
+import androidx.compose.material.icons.rounded.PhotoCamera
+import androidx.compose.material.icons.rounded.Psychology
+import androidx.compose.material.icons.rounded.QueryStats
+import androidx.compose.material.icons.rounded.Schedule
 import androidx.compose.material.icons.rounded.School
+import androidx.compose.material.icons.rounded.Science
+import androidx.compose.material.icons.rounded.SentimentDissatisfied
+import androidx.compose.material.icons.rounded.SentimentSatisfied
+import androidx.compose.material.icons.rounded.SentimentVeryDissatisfied
+import androidx.compose.material.icons.rounded.SelfImprovement
+import androidx.compose.material.icons.rounded.ShoppingBag
+import androidx.compose.material.icons.rounded.SmartDisplay
 import androidx.compose.material.icons.rounded.Smartphone
+import androidx.compose.material.icons.rounded.Spa
+import androidx.compose.material.icons.rounded.SportsEsports
+import androidx.compose.material.icons.rounded.SwapHoriz
+import androidx.compose.material.icons.rounded.Tag
+import androidx.compose.material.icons.rounded.Timer
+import androidx.compose.material.icons.rounded.TouchApp
+import androidx.compose.material.icons.rounded.VideoLibrary
+import androidx.compose.material.icons.rounded.WbTwilight
 import androidx.compose.material.icons.rounded.Weekend
 import androidx.compose.material.icons.rounded.Work
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Slider
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TimePicker
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -83,60 +136,131 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.compose.LifecycleResumeEffect
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.pushlife.app.AppGraph
 import com.pushlife.app.R
+import com.pushlife.app.blocking.AppEntry
+import com.pushlife.app.blocking.BlockerService
+import com.pushlife.app.blocking.InstalledApps
+import com.pushlife.app.blocking.Permissions
+import com.pushlife.app.core.DistractionApp
+import com.pushlife.app.core.Exercise
 import com.pushlife.app.core.ExerciseFrequency
 import com.pushlife.app.core.Goal
 import com.pushlife.app.core.Profile
 import com.pushlife.app.core.Projection
+import com.pushlife.app.core.Quiz
+import com.pushlife.app.core.QuitReason
+import com.pushlife.app.core.TriedMethod
 import com.pushlife.app.reminder.Reminders
+import com.pushlife.app.ui.formatDuration
 import com.pushlife.app.ui.theme.Ink
 import com.pushlife.app.ui.theme.Orange
 import com.pushlife.app.ui.theme.Yellow
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.text.NumberFormat
 import java.time.LocalTime
+import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
 
-private enum class Step { WELCOME, NAME, GOALS, USAGE, TARGET, REALITY, HOW, FREQUENCY, REMINDER, FIRST }
+/** As telas das boas-vindas, na ordem em que aparecem. */
+private enum class Step {
+    WELCOME, NAME, GOALS, USAGE, TARGET, APPS, REASONS, STATE, RESULT, PROJECTION, GOOD_NEWS, TRIED,
+    REPLACE, HOW_PUSH, HOW_SCROLL, REMINDER, FREQUENCY, SETUP, USAGE_ACCESS, OVERLAY, SELECT_APPS, PLAN, FIRST_WORKOUT,
+}
 
-private const val MAX_GOALS = 3
+private const val MAX_PICKS = 3
+
+/** Uma opção de resposta: o valor, o texto e o ícone. */
+private data class Choice<T>(val value: T, @StringRes val label: Int, val icon: ImageVector)
 
 private val GOAL_OPTIONS = listOf(
-    Triple(Goal.LESS_PHONE, R.string.goal_less_phone, Icons.Rounded.Smartphone),
-    Triple(Goal.NIGHT_SCROLL, R.string.goal_night, Icons.Rounded.Bedtime),
-    Triple(Goal.DISCIPLINE, R.string.goal_discipline, Icons.Rounded.LocalFireDepartment),
-    Triple(Goal.STUDY, R.string.goal_study, Icons.Rounded.School),
-    Triple(Goal.WORK, R.string.goal_work, Icons.Rounded.Work),
-    Triple(Goal.FITNESS, R.string.goal_fit, Icons.AutoMirrored.Rounded.DirectionsRun),
+    Choice(Goal.LESS_PHONE, R.string.goal_less_phone, Icons.Rounded.Smartphone),
+    Choice(Goal.NIGHT_SCROLL, R.string.goal_night, Icons.Rounded.Bedtime),
+    Choice(Goal.DISCIPLINE, R.string.goal_discipline, Icons.Rounded.LocalFireDepartment),
+    Choice(Goal.STUDY, R.string.goal_study, Icons.Rounded.School),
+    Choice(Goal.WORK, R.string.goal_work, Icons.Rounded.Work),
+    Choice(Goal.FITNESS, R.string.goal_fit, Icons.AutoMirrored.Rounded.DirectionsRun),
+)
+
+private val APP_OPTIONS = listOf(
+    Choice(DistractionApp.TIKTOK, R.string.app_tiktok, Icons.Rounded.MusicNote),
+    Choice(DistractionApp.YOUTUBE, R.string.app_youtube, Icons.Rounded.SmartDisplay),
+    Choice(DistractionApp.INSTAGRAM, R.string.app_instagram, Icons.Rounded.PhotoCamera),
+    Choice(DistractionApp.GAMES, R.string.app_games, Icons.Rounded.SportsEsports),
+    Choice(DistractionApp.X, R.string.app_x, Icons.Rounded.Tag),
+    Choice(DistractionApp.REDDIT, R.string.app_reddit, Icons.Rounded.Forum),
+    Choice(DistractionApp.DISCORD, R.string.app_discord, Icons.Rounded.Headset),
+    Choice(DistractionApp.SHOPPING, R.string.app_shopping, Icons.Rounded.ShoppingBag),
+    Choice(DistractionApp.TWITCH, R.string.app_twitch, Icons.Rounded.LiveTv),
+    Choice(DistractionApp.STREAMING, R.string.app_streaming, Icons.Rounded.Movie),
+    Choice(DistractionApp.SNAPCHAT, R.string.app_snapchat, Icons.AutoMirrored.Rounded.Chat),
+    Choice(DistractionApp.KWAI, R.string.app_kwai, Icons.Rounded.VideoLibrary),
+)
+
+private val REASON_OPTIONS = listOf(
+    Choice(QuitReason.FOMO, R.string.reason_fomo, Icons.Rounded.NotificationsActive),
+    Choice(QuitReason.ADDICTIVE_DESIGN, R.string.reason_design, Icons.Rounded.PhoneAndroid),
+    Choice(QuitReason.AUTOMATIC, R.string.reason_automatic, Icons.Rounded.Autorenew),
+    Choice(QuitReason.BOREDOM, R.string.reason_boredom, Icons.Rounded.HourglassEmpty),
+    Choice(QuitReason.PROCRASTINATION, R.string.reason_procrastination, Icons.Rounded.Schedule),
+    Choice(QuitReason.STRESS, R.string.reason_stress, Icons.Rounded.SentimentVeryDissatisfied),
+    Choice(QuitReason.COMMUNITY, R.string.reason_community, Icons.Rounded.Groups),
+    Choice(QuitReason.COMPARISON, R.string.reason_comparison, Icons.Rounded.SwapHoriz),
+    Choice(QuitReason.WORK, R.string.reason_work, Icons.Rounded.Work),
+    Choice(QuitReason.TOO_EASY, R.string.reason_too_easy, Icons.Rounded.TouchApp),
+)
+
+private val TRIED_OPTIONS = listOf(
+    Choice(TriedMethod.NOTHING, R.string.tried_nothing, Icons.Rounded.Block),
+    Choice(TriedMethod.LIMITERS, R.string.tried_limiters, Icons.Rounded.Timer),
+    Choice(TriedMethod.UNINSTALL, R.string.tried_uninstall, Icons.Rounded.DeleteForever),
+    Choice(TriedMethod.BROWSER_ONLY, R.string.tried_browser, Icons.Rounded.Language),
+    Choice(TriedMethod.DETOX, R.string.tried_detox, Icons.Rounded.Spa),
+    Choice(TriedMethod.GRAYSCALE, R.string.tried_grayscale, Icons.Rounded.Contrast),
+    Choice(TriedMethod.MINDSET, R.string.tried_mindset, Icons.Rounded.Psychology),
+    Choice(TriedMethod.OUT_OF_REACH, R.string.tried_out_of_reach, Icons.Rounded.PanTool),
+    Choice(TriedMethod.DUMB_PHONE, R.string.tried_dumb_phone, Icons.Rounded.PhoneAndroid),
+    Choice(TriedMethod.ROUTINE, R.string.tried_routine, Icons.Rounded.WbTwilight),
+    Choice(TriedMethod.NFC_TAG, R.string.tried_nfc, Icons.Rounded.Nfc),
+    Choice(TriedMethod.MINIMAL_LAUNCHER, R.string.tried_launcher, Icons.Rounded.Apps),
 )
 
 private val FREQUENCY_OPTIONS = listOf(
-    Triple(ExerciseFrequency.NEVER, R.string.freq_never, Icons.Rounded.Weekend),
-    Triple(ExerciseFrequency.ONE_TO_THREE, R.string.freq_1_3, Icons.AutoMirrored.Rounded.DirectionsWalk),
-    Triple(ExerciseFrequency.THREE_TO_FIVE, R.string.freq_3_5, Icons.AutoMirrored.Rounded.DirectionsRun),
-    Triple(ExerciseFrequency.DAILY, R.string.freq_daily, Icons.Rounded.Bolt),
+    Choice(ExerciseFrequency.NEVER, R.string.freq_never, Icons.Rounded.Weekend),
+    Choice(ExerciseFrequency.ONE_TO_THREE, R.string.freq_1_3, Icons.AutoMirrored.Rounded.DirectionsWalk),
+    Choice(ExerciseFrequency.THREE_TO_FIVE, R.string.freq_3_5, Icons.AutoMirrored.Rounded.DirectionsRun),
+    Choice(ExerciseFrequency.DAILY, R.string.freq_daily, Icons.Rounded.Bolt),
 )
 
 /**
- * Boas-vindas da primeira abertura. Ao terminar, salva o perfil e chama [onFinished]
- * com true se a pessoa quer ir direto para o primeiro treino.
+ * Boas-vindas da primeira abertura. Ao terminar, salva o perfil, liga o bloqueio (se a pessoa
+ * escolheu) e chama [onFinished] com o exercício para testar agora, ou null.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun OnboardingScreen(onFinished: (startWorkout: Boolean) -> Unit) {
+fun OnboardingScreen(onFinished: (startExercise: Exercise?) -> Unit) {
     val context = LocalContext.current
     var step by rememberSaveable { mutableStateOf(Step.WELCOME) }
     var name by rememberSaveable { mutableStateOf("") }
     var goals by rememberSaveable { mutableStateOf(emptyList<Goal>()) }
     var phoneHours by rememberSaveable { mutableFloatStateOf(5f) }
     var targetHours by rememberSaveable { mutableFloatStateOf(Projection.suggestedTarget(5f)) }
+    var apps by rememberSaveable { mutableStateOf(emptyList<DistractionApp>()) }
+    var reasons by rememberSaveable { mutableStateOf(emptyList<QuitReason>()) }
+    var tried by rememberSaveable { mutableStateOf(emptyList<TriedMethod>()) }
     var frequency by rememberSaveable { mutableStateOf<ExerciseFrequency?>(null) }
     var reminderHour by rememberSaveable { mutableIntStateOf(18) }
     var reminderMinute by rememberSaveable { mutableIntStateOf(0) }
     var reminderOn by rememberSaveable { mutableStateOf(false) }
+    var protectNow by rememberSaveable { mutableStateOf(true) }
 
     fun go(next: Step) { step = next }
+    fun next() { step = Step.entries[(step.ordinal + 1).coerceAtMost(Step.entries.lastIndex)] }
     fun back() { if (step.ordinal > 0) step = Step.entries[step.ordinal - 1] }
-    fun finish(startWorkout: Boolean) {
+    fun finish(startExercise: Exercise?) {
         val reminder = if (reminderOn) LocalTime.of(reminderHour, reminderMinute) else null
         if (reminder != null) Reminders.schedule(context, reminder) else Reminders.cancel(context)
         AppGraph.profile.save(
@@ -149,9 +273,16 @@ fun OnboardingScreen(onFinished: (startWorkout: Boolean) -> Unit) {
                 exerciseFrequency = frequency,
                 dailyGoal = (frequency ?: ExerciseFrequency.ONE_TO_THREE).dailyGoal,
                 reminder = reminder,
+                distractions = apps.toSet(),
+                quitReasons = reasons.toSet(),
+                triedMethods = tried.toSet(),
             ),
         )
-        onFinished(startWorkout)
+        if (protectNow && canProtect(context)) {
+            AppGraph.blocking.setEnabled(true)
+            BlockerService.syncWithSettings(context)
+        }
+        onFinished(startExercise)
     }
 
     BackHandler(enabled = step != Step.WELCOME) { back() }
@@ -163,20 +294,15 @@ fun OnboardingScreen(onFinished: (startWorkout: Boolean) -> Unit) {
             .background(MaterialTheme.colorScheme.background)
             .background(Brush.verticalGradient(0f to Orange.copy(alpha = 0.28f), 0.45f to Color.Transparent)),
     ) {
-        AnimatedContent(
-            targetState = step,
-            transitionSpec = { fadeIn() togetherWith fadeOut() },
-            label = "onboarding",
-        ) { current ->
+        AnimatedContent(targetState = step, transitionSpec = { fadeIn() togetherWith fadeOut() }, label = "onboarding") { current ->
             when (current) {
-                Step.WELCOME -> WelcomeStep(onStart = { go(Step.NAME) })
+                Step.WELCOME -> WelcomeStep(onStart = ::next)
 
                 Step.NAME -> StepLayout(
-                    step = current, onBack = ::back,
+                    current, ::back, ::next,
                     kicker = stringResource(R.string.ob_name_kicker),
                     title = stringResource(R.string.ob_name_title),
                     buttonEnabled = displayName.isNotEmpty(),
-                    onContinue = { go(Step.GOALS) },
                 ) {
                     Spacer(Modifier.height(24.dp))
                     OutlinedTextField(
@@ -186,39 +312,27 @@ fun OnboardingScreen(onFinished: (startWorkout: Boolean) -> Unit) {
                         singleLine = true,
                         shape = RoundedCornerShape(50),
                         keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words, imeAction = ImeAction.Next),
-                        keyboardActions = KeyboardActions(onNext = { if (displayName.isNotEmpty()) go(Step.GOALS) }),
+                        keyboardActions = KeyboardActions(onNext = { if (displayName.isNotEmpty()) next() }),
                         modifier = Modifier.fillMaxWidth(),
                     )
                 }
 
                 Step.GOALS -> StepLayout(
-                    step = current, onBack = ::back,
+                    current, ::back, ::next,
                     kicker = stringResource(R.string.ob_goals_kicker, displayName),
                     title = stringResource(R.string.ob_goals_title),
                     hint = stringResource(R.string.ob_choose_up_to_3),
                     buttonEnabled = goals.isNotEmpty(),
-                    onContinue = { go(Step.USAGE) },
-                ) {
-                    GOAL_OPTIONS.forEach { (goal, label, icon) ->
-                        val selected = goal in goals
-                        OptionCard(icon, stringResource(label), selected) {
-                            goals = when {
-                                selected -> goals - goal
-                                goals.size < MAX_GOALS -> goals + goal
-                                else -> goals
-                            }
-                        }
-                    }
-                }
+                ) { MultiChoice(GOAL_OPTIONS, goals, MAX_PICKS) { goals = it } }
 
                 Step.USAGE -> StepLayout(
-                    step = current, onBack = ::back,
-                    kicker = stringResource(R.string.ob_usage_kicker),
-                    title = stringResource(R.string.ob_usage_title),
+                    current, ::back,
                     onContinue = {
                         if (targetHours >= phoneHours) targetHours = Projection.suggestedTarget(phoneHours)
-                        go(Step.TARGET)
+                        next()
                     },
+                    kicker = stringResource(R.string.ob_usage_kicker),
+                    title = stringResource(R.string.ob_usage_title),
                 ) {
                     HoursSlider(phoneHours, 0.5f..12f, Orange) { phoneHours = it }
                     Text(
@@ -231,37 +345,100 @@ fun OnboardingScreen(onFinished: (startWorkout: Boolean) -> Unit) {
                 }
 
                 Step.TARGET -> StepLayout(
-                    step = current, onBack = ::back,
+                    current, ::back, ::next,
                     kicker = stringResource(R.string.ob_target_kicker, displayName),
                     title = stringResource(R.string.ob_target_title),
-                    onContinue = { go(Step.REALITY) },
-                ) {
-                    HoursSlider(targetHours, 0.5f..phoneHours.coerceAtLeast(1f), Yellow) { targetHours = it }
+                ) { HoursSlider(targetHours, 0.5f..phoneHours.coerceAtLeast(1f), Yellow) { targetHours = it } }
+
+                Step.APPS -> StepLayout(
+                    current, ::back, ::next,
+                    kicker = stringResource(R.string.ob_apps_kicker),
+                    title = stringResource(R.string.ob_apps_title),
+                    hint = stringResource(R.string.ob_choose_up_to_3),
+                    buttonEnabled = apps.isNotEmpty(),
+                ) { MultiChoice(APP_OPTIONS, apps, MAX_PICKS) { apps = it } }
+
+                Step.REASONS -> StepLayout(
+                    current, ::back, ::next,
+                    kicker = stringResource(R.string.ob_reasons_kicker),
+                    title = stringResource(R.string.ob_reasons_title),
+                    hint = stringResource(R.string.ob_choose_up_to_3),
+                    buttonEnabled = reasons.isNotEmpty(),
+                ) { MultiChoice(REASON_OPTIONS, reasons, MAX_PICKS) { reasons = it } }
+
+                Step.STATE -> StepLayout(current, ::back, ::next) { StateStep(apps) }
+
+                Step.RESULT -> StepLayout(current, ::back, ::next) {
+                    ResultStep(
+                        yours = Quiz.dependenceScore(phoneHours, apps.size, reasons.size),
+                        goal = Quiz.goalScore(targetHours),
+                    )
                 }
 
-                Step.REALITY -> StepLayout(step = current, onBack = ::back, onContinue = { go(Step.HOW) }) {
-                    RealityStep(phoneHours, targetHours)
+                Step.PROJECTION -> StepLayout(current, ::back, ::next) { ProjectionStep(phoneHours) }
+
+                Step.GOOD_NEWS -> StepLayout(current, ::back, ::next) { GoodNewsStep(phoneHours, targetHours) }
+
+                Step.TRIED -> StepLayout(
+                    current, ::back, ::next,
+                    kicker = stringResource(R.string.ob_tried_kicker),
+                    title = stringResource(R.string.ob_tried_title),
+                    buttonEnabled = tried.isNotEmpty(),
+                ) {
+                    MultiChoice(TRIED_OPTIONS, tried, limit = TRIED_OPTIONS.size) { picked ->
+                        // "Nada ainda" não combina com as outras opções.
+                        val newest = picked - tried.toSet()
+                        tried = when {
+                            TriedMethod.NOTHING in newest -> listOf(TriedMethod.NOTHING)
+                            newest.isNotEmpty() -> picked - TriedMethod.NOTHING
+                            else -> picked
+                        }
+                    }
                 }
 
-                Step.HOW -> StepLayout(
-                    step = current, onBack = ::back,
-                    title = stringResource(R.string.ob_how_title),
-                    onContinue = { go(Step.FREQUENCY) },
-                ) {
-                    HowCard(Icons.Rounded.FitnessCenter, Orange, R.string.ob_how_push_title, R.string.ob_how_push_body, "+1 min")
-                    HowCard(Icons.Rounded.HourglassBottom, Yellow, R.string.ob_how_scroll_title, R.string.ob_how_scroll_body, "−1 min")
-                    HowCard(Icons.Rounded.LockClock, MaterialTheme.colorScheme.primary, R.string.ob_how_free_title, R.string.ob_how_free_body, null)
+                Step.REPLACE -> StepLayout(current, ::back, ::next) { ReplaceStep() }
+
+                Step.HOW_PUSH -> StepLayout(current, ::back, ::next) {
+                    HowStep(Icons.Rounded.FitnessCenter, Orange, "+1 min", R.string.ob_how_push_title, R.string.ob_how_push_body)
+                }
+
+                Step.HOW_SCROLL -> StepLayout(current, ::back, ::next) {
+                    HowStep(Icons.Rounded.Smartphone, Yellow, "−1 min", R.string.ob_how_scroll_title, R.string.ob_how_scroll_body)
+                    HowCard(Icons.Rounded.LockClock, R.string.ob_how_free_title, R.string.ob_how_free_body)
+                }
+
+                Step.REMINDER -> {
+                    val pickerState = rememberTimePickerState(reminderHour, reminderMinute, DateFormat.is24HourFormat(context))
+                    val askNotifications = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { next() }
+                    StepLayout(
+                        current, ::back,
+                        onContinue = {
+                            reminderHour = pickerState.hour
+                            reminderMinute = pickerState.minute
+                            reminderOn = true
+                            val needsPermission = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+                                ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+                            if (needsPermission) askNotifications.launch(Manifest.permission.POST_NOTIFICATIONS) else next()
+                        },
+                        kicker = stringResource(R.string.ob_reminder_kicker),
+                        title = stringResource(R.string.ob_reminder_title),
+                        buttonText = stringResource(R.string.ob_reminder_set),
+                        secondaryText = stringResource(R.string.ob_skip),
+                        onSecondary = {
+                            reminderOn = false
+                            next()
+                        },
+                    ) { Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) { TimePicker(state = pickerState) } }
                 }
 
                 Step.FREQUENCY -> StepLayout(
-                    step = current, onBack = ::back,
+                    current, ::back, ::next,
                     kicker = stringResource(R.string.ob_freq_kicker),
                     title = stringResource(R.string.ob_freq_title),
                     buttonEnabled = frequency != null,
-                    onContinue = { go(Step.REMINDER) },
                 ) {
-                    FREQUENCY_OPTIONS.forEach { (option, label, icon) ->
-                        OptionCard(icon, stringResource(label), frequency == option) { frequency = option }
+                    FREQUENCY_OPTIONS.forEach { option ->
+                        OptionCard(option.icon, stringResource(option.label), frequency == option.value) { frequency = option.value }
                     }
                     frequency?.let {
                         Text(
@@ -273,79 +450,83 @@ fun OnboardingScreen(onFinished: (startWorkout: Boolean) -> Unit) {
                     }
                 }
 
-                Step.REMINDER -> {
-                    val pickerState = rememberTimePickerState(reminderHour, reminderMinute, DateFormat.is24HourFormat(context))
-                    val askNotifications = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {
-                        go(Step.FIRST)
-                    }
-                    StepLayout(
-                        step = current, onBack = ::back,
-                        kicker = stringResource(R.string.ob_reminder_kicker),
-                        title = stringResource(R.string.ob_reminder_title),
-                        buttonText = stringResource(R.string.ob_reminder_set),
-                        onContinue = {
-                            reminderHour = pickerState.hour
-                            reminderMinute = pickerState.minute
-                            reminderOn = true
-                            val needsPermission = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
-                                ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
-                            if (needsPermission) askNotifications.launch(Manifest.permission.POST_NOTIFICATIONS) else go(Step.FIRST)
-                        },
-                        secondaryText = stringResource(R.string.ob_skip),
-                        onSecondary = {
-                            reminderOn = false
-                            go(Step.FIRST)
-                        },
-                    ) {
-                        Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) { TimePicker(state = pickerState) }
-                    }
+                Step.SETUP -> StepLayout(current, ::back, ::next, buttonText = stringResource(R.string.ob_setup_button)) {
+                    Spacer(Modifier.height(80.dp))
+                    Text(
+                        stringResource(R.string.ob_setup_title, displayName),
+                        style = MaterialTheme.typography.headlineLarge,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
                 }
 
-                Step.FIRST -> StepLayout(
-                    step = current, onBack = ::back,
+                Step.USAGE_ACCESS -> PermissionStep(
+                    current, ::back, ::next,
+                    title = R.string.ob_usage_access_title,
+                    body = R.string.ob_usage_access_body,
+                    isGranted = { Permissions.hasUsageAccess(it) },
+                    openSettings = { it.startSafely(Permissions.usageAccessIntent()) },
+                )
+
+                Step.OVERLAY -> PermissionStep(
+                    current, ::back, ::next,
+                    title = R.string.ob_overlay_title,
+                    body = R.string.ob_overlay_body,
+                    isGranted = { Permissions.canDrawOverlays(it) },
+                    openSettings = { it.startSafely(Permissions.overlayIntent(it)) },
+                )
+
+                Step.SELECT_APPS -> SelectAppsStep(current, ::back, ::next)
+
+                Step.PLAN -> StepLayout(
+                    current, ::back, ::next,
+                    kicker = stringResource(R.string.ob_plan_kicker),
+                    title = stringResource(R.string.ob_plan_title, displayName),
+                ) {
+                    PlanStep(
+                        dailyGoal = (frequency ?: ExerciseFrequency.ONE_TO_THREE).dailyGoal,
+                        targetHours = targetHours,
+                        reminder = if (reminderOn) LocalTime.of(reminderHour, reminderMinute) else null,
+                        protectNow = protectNow,
+                        onProtectNow = { protectNow = it },
+                    )
+                }
+
+                Step.FIRST_WORKOUT -> StepLayout(
+                    current, ::back,
+                    onContinue = { finish(startExercise = null) },
                     title = stringResource(R.string.ob_first_title, displayName),
-                    kicker = null,
                     hint = stringResource(R.string.ob_first_body),
-                    buttonText = stringResource(R.string.tab_train),
-                    onContinue = { finish(startWorkout = true) },
-                    secondaryText = stringResource(R.string.ob_first_later),
-                    onSecondary = { finish(startWorkout = false) },
+                    buttonText = stringResource(R.string.ob_first_later),
+                    primaryIsOutlined = true,
                 ) {
                     Spacer(Modifier.height(16.dp))
-                    OptionCard(Icons.Rounded.FitnessCenter, stringResource(R.string.train_title), selected = true) { finish(startWorkout = true) }
-                    Text(
-                        stringResource(R.string.ob_first_more),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    Text(
-                        stringResource(R.string.train_privacy),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
+                    ExerciseCard(Icons.Rounded.FitnessCenter, R.string.ex_pushup) { finish(Exercise.PUSHUP) }
+                    ExerciseCard(Icons.Rounded.AccessibilityNew, R.string.ex_squat) { finish(Exercise.SQUAT) }
+                    Text(stringResource(R.string.ob_first_more), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(stringResource(R.string.train_privacy), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
         }
     }
 }
 
+/** O bloqueio só pode ser ligado com as permissões e pelo menos um app escolhido. */
+private fun canProtect(context: Context) =
+    Permissions.allRequired(context) && AppGraph.blocking.state.value.blockedPackages.isNotEmpty()
+
+private fun Context.startSafely(intent: Intent) {
+    runCatching { startActivity(intent) }
+}
+
+// ---------- Telas ----------
+
 @Composable
 private fun WelcomeStep(onStart: () -> Unit) {
-    Column(
-        Modifier.fillMaxSize().systemBarsPadding().padding(24.dp),
-        verticalArrangement = Arrangement.spacedBy(20.dp),
-    ) {
+    Column(Modifier.fillMaxSize().systemBarsPadding().padding(24.dp), verticalArrangement = Arrangement.spacedBy(20.dp)) {
         Spacer(Modifier.weight(1f))
-        Box(
-            Modifier.size(88.dp).background(Brush.linearGradient(listOf(Orange, Yellow)), RoundedCornerShape(24.dp)),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(Icons.Rounded.FitnessCenter, contentDescription = null, tint = Ink, modifier = Modifier.size(48.dp))
-        }
-        Text(
-            stringResource(R.string.ob_welcome_title).uppercase(),
-            style = MaterialTheme.typography.displayMedium.copy(fontSize = 44.sp, lineHeight = 46.sp),
-        )
+        GradientIcon(Icons.Rounded.FitnessCenter, 88.dp)
+        Text(stringResource(R.string.ob_welcome_title).uppercase(), style = MaterialTheme.typography.displayMedium.copy(fontSize = 44.sp, lineHeight = 46.sp))
         Text(
             stringResource(R.string.ob_welcome_body),
             style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Normal),
@@ -357,6 +538,337 @@ private fun WelcomeStep(onStart: () -> Unit) {
         }
     }
 }
+
+/** "Como você está" × "Com o PushLife", com a pesquisa que associa uso intenso de redes a irritabilidade. */
+@Composable
+private fun StateStep(apps: List<DistractionApp>) {
+    Column(Modifier.fillMaxWidth().padding(top = 16.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(14.dp)) {
+        Text(stringResource(R.string.ob_state_now), style = MaterialTheme.typography.headlineLarge, color = Orange)
+        Row(horizontalArrangement = Arrangement.spacedBy(20.dp)) {
+            apps.ifEmpty { listOf(DistractionApp.TIKTOK, DistractionApp.YOUTUBE, DistractionApp.INSTAGRAM) }.take(3).forEach { app ->
+                Icon(APP_OPTIONS.first { it.value == app }.icon, contentDescription = null, tint = Orange, modifier = Modifier.size(44.dp))
+            }
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            MoodChip(Icons.Rounded.SentimentDissatisfied, R.string.ob_state_irritable, Orange)
+            MoodChip(Icons.Rounded.QueryStats, R.string.ob_state_unfocused, Orange)
+        }
+        Box(Modifier.fillMaxWidth().height(1.dp).background(MaterialTheme.colorScheme.outline.copy(alpha = 0.4f)))
+        Text(stringResource(R.string.ob_state_with), style = MaterialTheme.typography.headlineLarge, color = Yellow)
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            MoodChip(Icons.Rounded.SentimentSatisfied, R.string.ob_state_calm, Yellow)
+            MoodChip(Icons.Rounded.SelfImprovement, R.string.ob_state_present, Yellow)
+        }
+        Column(
+            Modifier
+                .fillMaxWidth()
+                .padding(top = 16.dp)
+                .background(MaterialTheme.colorScheme.surfaceContainer, RoundedCornerShape(20.dp))
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Icon(Icons.Rounded.Science, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                Text(stringResource(R.string.ob_research_title), style = MaterialTheme.typography.titleMedium)
+            }
+            Text(stringResource(R.string.ob_research_body), style = MaterialTheme.typography.bodyMedium)
+        }
+    }
+}
+
+@Composable
+private fun MoodChip(icon: ImageVector, @StringRes label: Int, color: Color) {
+    Row(
+        Modifier.border(2.dp, color, RoundedCornerShape(50)).background(color.copy(alpha = 0.12f), RoundedCornerShape(50)).padding(horizontal = 14.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        Icon(icon, contentDescription = null, tint = color, modifier = Modifier.size(20.dp))
+        Text(stringResource(label), style = MaterialTheme.typography.titleMedium)
+    }
+}
+
+/** Resultado com barras que crescem: seu índice × o índice da sua meta. */
+@Composable
+private fun ResultStep(yours: Int, goal: Int) {
+    val yourBar = remember { Animatable(0f) }
+    val goalBar = remember { Animatable(0f) }
+    var showNumbers by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        yourBar.animateTo(yours / 100f, tween(900))
+        goalBar.animateTo(goal / 100f, tween(600))
+        showNumbers = true
+    }
+    Column(Modifier.fillMaxWidth().padding(top = 8.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(14.dp)) {
+        Text(stringResource(R.string.ob_result_title), style = MaterialTheme.typography.headlineLarge, textAlign = TextAlign.Center)
+        Text(stringResource(R.string.ob_result_body), style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.Center)
+        Row(Modifier.height(260.dp).padding(top = 12.dp), horizontalArrangement = Arrangement.spacedBy(40.dp), verticalAlignment = Alignment.Bottom) {
+            Bar(yourBar.value, if (showNumbers) "$yours%" else "", Brush.verticalGradient(listOf(Orange, Yellow.copy(alpha = 0.6f))), R.string.ob_result_yours)
+            Bar(goalBar.value, if (showNumbers) "$goal%" else "", Brush.verticalGradient(listOf(Yellow, Yellow.copy(alpha = 0.5f))), R.string.ob_result_goal)
+        }
+        if (showNumbers) {
+            Text(
+                stringResource(R.string.ob_result_diff, (yours - goal).coerceAtLeast(0)),
+                style = MaterialTheme.typography.titleLarge,
+                color = Orange,
+                textAlign = TextAlign.Center,
+            )
+        }
+        Text(stringResource(R.string.ob_result_note), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
+    }
+}
+
+@Composable
+private fun Bar(fraction: Float, label: String, brush: Brush, @StringRes caption: Int) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Box(
+            Modifier
+                .width(84.dp)
+                .height((200 * fraction.coerceIn(0.04f, 1f)).dp)
+                .background(brush, RoundedCornerShape(14.dp)),
+            contentAlignment = Alignment.TopCenter,
+        ) {
+            Text(label, style = MaterialTheme.typography.titleLarge, color = Ink, modifier = Modifier.padding(top = 8.dp))
+        }
+        Text(stringResource(caption), style = MaterialTheme.typography.titleMedium)
+    }
+}
+
+@Composable
+private fun ProjectionStep(phoneHours: Float) {
+    CenterColumn {
+        Text(stringResource(R.string.ob_reality_title), style = MaterialTheme.typography.titleLarge, textAlign = TextAlign.Center)
+        BigNumber(stringResource(R.string.ob_days, Projection.daysPerYear(phoneHours)), Orange)
+        Text(stringResource(R.string.ob_projection_year), style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.Center)
+        Spacer(Modifier.height(16.dp))
+        Text(stringResource(R.string.ob_projection_life_intro), style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.Center)
+        BigNumber(stringResource(R.string.ob_years, Quiz.lifeYears(phoneHours)), Orange, size = 72)
+        Text(stringResource(R.string.ob_projection_life), style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
+        Spacer(Modifier.height(16.dp))
+        Text(stringResource(R.string.ob_projection_note), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
+    }
+}
+
+@Composable
+private fun GoodNewsStep(phoneHours: Float, targetHours: Float) {
+    CenterColumn {
+        Text(stringResource(R.string.ob_good_news), style = MaterialTheme.typography.titleLarge, textAlign = TextAlign.Center)
+        BigNumber(stringResource(R.string.ob_years_plus, Quiz.yearsRecovered(phoneHours, targetHours)), Yellow, size = 72)
+        Text(stringResource(R.string.ob_good_news_body), style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
+        Spacer(Modifier.height(16.dp))
+        Text(stringResource(R.string.ob_good_news_note, formatHours(targetHours)), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
+    }
+}
+
+@Composable
+private fun ReplaceStep() {
+    CenterColumn {
+        GradientIcon(Icons.Rounded.Layers, 72.dp)
+        Text(stringResource(R.string.ob_replace_1), style = MaterialTheme.typography.headlineSmall, textAlign = TextAlign.Center)
+        Text(stringResource(R.string.ob_replace_1b), style = MaterialTheme.typography.headlineLarge, color = Orange, textAlign = TextAlign.Center)
+        Spacer(Modifier.height(16.dp))
+        Text(stringResource(R.string.ob_replace_2), style = MaterialTheme.typography.headlineSmall, textAlign = TextAlign.Center)
+        Text(stringResource(R.string.ob_replace_2b), style = MaterialTheme.typography.headlineLarge, color = Yellow, textAlign = TextAlign.Center)
+        Spacer(Modifier.height(16.dp))
+        Text(stringResource(R.string.ob_replace_note), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
+    }
+}
+
+@Composable
+private fun HowStep(icon: ImageVector, color: Color, badge: String, @StringRes title: Int, @StringRes body: Int) {
+    CenterColumn {
+        Box(
+            Modifier.size(180.dp).border(4.dp, color, CircleShape).background(color.copy(alpha = 0.12f), CircleShape),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(icon, contentDescription = null, tint = color, modifier = Modifier.size(96.dp))
+        }
+        Text(badge, style = MaterialTheme.typography.headlineSmall, color = color)
+        Text(stringResource(title).uppercase(), style = MaterialTheme.typography.displayMedium, color = color)
+        Text(stringResource(body), style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.Center)
+    }
+}
+
+@Composable
+private fun HowCard(icon: ImageVector, @StringRes title: Int, @StringRes body: Int) {
+    Row(
+        Modifier.fillMaxWidth().padding(top = 16.dp).background(MaterialTheme.colorScheme.surfaceContainer, RoundedCornerShape(20.dp)).padding(16.dp),
+        horizontalArrangement = Arrangement.spacedBy(14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        GradientIcon(icon, 44.dp)
+        Column(Modifier.weight(1f)) {
+            Text(stringResource(title), style = MaterialTheme.typography.titleMedium)
+            Text(stringResource(body), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+    }
+}
+
+/** Explica uma permissão especial, abre a tela do Android e confere ao voltar. */
+@Composable
+private fun PermissionStep(
+    step: Step,
+    onBack: () -> Unit,
+    onNext: () -> Unit,
+    @StringRes title: Int,
+    @StringRes body: Int,
+    isGranted: (Context) -> Boolean,
+    openSettings: (Context) -> Unit,
+) {
+    val context = LocalContext.current
+    var granted by remember { mutableStateOf(isGranted(context)) }
+    LifecycleResumeEffect(Unit) {
+        granted = isGranted(context)
+        onPauseOrDispose { }
+    }
+    StepLayout(
+        step, onBack,
+        onContinue = { if (granted) onNext() else openSettings(context) },
+        title = stringResource(title),
+        hint = stringResource(body),
+        buttonText = stringResource(if (granted) R.string.ob_continue else R.string.ob_grant),
+        secondaryText = if (granted) null else stringResource(R.string.ob_skip),
+        onSecondary = onNext,
+    ) {
+        Spacer(Modifier.height(40.dp))
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .border(2.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f), RoundedCornerShape(24.dp))
+                .background(MaterialTheme.colorScheme.surfaceContainer, RoundedCornerShape(24.dp))
+                .padding(20.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(14.dp),
+        ) {
+            GradientIcon(Icons.Rounded.FitnessCenter, 48.dp)
+            Column(Modifier.weight(1f)) {
+                Text(stringResource(R.string.app_name), style = MaterialTheme.typography.titleMedium)
+                Text(stringResource(R.string.ob_allow), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            Switch(checked = granted, onCheckedChange = { if (!granted) openSettings(context) })
+        }
+        if (granted) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Icon(Icons.Rounded.Check, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                Text(stringResource(R.string.ob_granted), color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.titleMedium)
+            }
+        }
+    }
+}
+
+/** Escolha dos apps que distraem, com a média de uso de cada um (vira a lista do bloqueio). */
+@Composable
+private fun SelectAppsStep(step: Step, onBack: () -> Unit, onNext: () -> Unit) {
+    val context = LocalContext.current
+    val settings by AppGraph.blocking.state.collectAsStateWithLifecycle()
+    var apps by remember { mutableStateOf<List<AppEntry>?>(null) }
+    var showAll by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) { apps = withContext(Dispatchers.IO) { InstalledApps.load(context) } }
+    val count = settings.blockedPackages.size
+
+    StepLayout(
+        step, onBack, onNext,
+        kicker = stringResource(R.string.ob_select_kicker),
+        title = stringResource(R.string.ob_select_title),
+        hint = stringResource(R.string.ob_select_hint),
+        buttonText = stringResource(R.string.ob_select_button, count),
+        buttonEnabled = count > 0,
+        secondaryText = if (count == 0) stringResource(R.string.ob_skip) else null,
+        onSecondary = onNext,
+    ) {
+        val list = apps
+        if (list == null) {
+            Row(Modifier.fillMaxWidth().padding(24.dp), horizontalArrangement = Arrangement.Center) { CircularProgressIndicator() }
+        } else {
+            (if (showAll) list else list.take(8)).forEach { app ->
+                val blocked = app.packageName in settings.blockedPackages
+                Row(
+                    Modifier
+                        .fillMaxWidth()
+                        .background(MaterialTheme.colorScheme.surfaceContainer, RoundedCornerShape(16.dp))
+                        .clickable { AppGraph.blocking.toggle(app.packageName) }
+                        .padding(12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    app.icon?.let { Image(it.asImageBitmap(), contentDescription = null, modifier = Modifier.size(40.dp)) }
+                        ?: Box(Modifier.size(40.dp).background(MaterialTheme.colorScheme.surfaceVariant, CircleShape))
+                    Column(Modifier.weight(1f)) {
+                        Text(app.label, style = MaterialTheme.typography.titleMedium)
+                        Text(
+                            if (app.dailyAverageMs >= 60_000) stringResource(R.string.app_average, formatDuration(app.dailyAverageMs / 1000)) else stringResource(R.string.app_little_use),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    Switch(checked = blocked, onCheckedChange = { AppGraph.blocking.toggle(app.packageName) })
+                }
+            }
+            if (!showAll && list.size > 8) {
+                OutlinedButton(onClick = { showAll = true }, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.ob_select_all)) }
+            }
+        }
+    }
+}
+
+/** Resumo do plano antes de terminar (no lugar da tela de criar conta). */
+@Composable
+private fun PlanStep(dailyGoal: Int, targetHours: Float, reminder: LocalTime?, protectNow: Boolean, onProtectNow: (Boolean) -> Unit) {
+    val context = LocalContext.current
+    val settings by AppGraph.blocking.state.collectAsStateWithLifecycle()
+    val canProtect = remember(settings) { canProtect(context) }
+    PlanRow(Icons.Rounded.FitnessCenter, stringResource(R.string.ob_plan_goal, dailyGoal))
+    PlanRow(Icons.Rounded.HourglassBottom, stringResource(R.string.ob_plan_target, formatHours(targetHours)))
+    PlanRow(Icons.Rounded.LockClock, stringResource(R.string.ob_plan_apps, settings.blockedPackages.size))
+    PlanRow(
+        Icons.Rounded.NotificationsActive,
+        reminder?.let { stringResource(R.string.ob_plan_reminder, it.format(DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT))) }
+            ?: stringResource(R.string.ob_plan_no_reminder),
+    )
+    PlanRow(Icons.Rounded.Timer, stringResource(R.string.ob_plan_free))
+    Row(
+        Modifier.fillMaxWidth().padding(top = 8.dp).background(MaterialTheme.colorScheme.primaryContainer, RoundedCornerShape(20.dp)).padding(16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Column(Modifier.weight(1f)) {
+            Text(stringResource(R.string.ob_plan_protect), style = MaterialTheme.typography.titleMedium)
+            Text(
+                stringResource(if (canProtect) R.string.ob_plan_protect_hint else R.string.ob_plan_protect_later),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        Switch(checked = protectNow && canProtect, onCheckedChange = onProtectNow, enabled = canProtect)
+    }
+}
+
+@Composable
+private fun PlanRow(icon: ImageVector, text: String) {
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+        GradientIcon(icon, 40.dp)
+        Text(text, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
+    }
+}
+
+@Composable
+private fun ExerciseCard(icon: ImageVector, @StringRes name: Int, onClick: () -> Unit) {
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .background(MaterialTheme.colorScheme.surfaceContainer, RoundedCornerShape(24.dp))
+            .clickable(onClick = onClick)
+            .padding(20.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+        GradientIcon(icon, 52.dp)
+        Text(stringResource(name), style = MaterialTheme.typography.headlineSmall, modifier = Modifier.weight(1f))
+        Icon(Icons.AutoMirrored.Rounded.ArrowForward, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+    }
+}
+
+// ---------- Peças comuns ----------
 
 /** Moldura comum: voltar + barra de progresso, títulos, conteúdo rolável e botões no rodapé. */
 @Composable
@@ -371,6 +883,7 @@ private fun StepLayout(
     buttonText: String = stringResource(R.string.ob_continue),
     secondaryText: String? = null,
     onSecondary: () -> Unit = {},
+    primaryIsOutlined: Boolean = false,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     Column(Modifier.fillMaxSize().systemBarsPadding().imePadding().padding(horizontal = 20.dp)) {
@@ -381,7 +894,7 @@ private fun StepLayout(
             LinearProgressIndicator(
                 progress = { step.ordinal.toFloat() / (Step.entries.size - 1) },
                 modifier = Modifier.weight(1f).height(10.dp).padding(end = 8.dp),
-                strokeCap = androidx.compose.ui.graphics.StrokeCap.Round,
+                strokeCap = StrokeCap.Round,
             )
         }
         Column(
@@ -394,12 +907,31 @@ private fun StepLayout(
             content()
         }
         Column(Modifier.padding(bottom = 16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Button(onClick = onContinue, enabled = buttonEnabled, modifier = Modifier.fillMaxWidth().height(60.dp)) {
-                Text(buttonText, style = MaterialTheme.typography.titleLarge)
+            if (primaryIsOutlined) {
+                OutlinedButton(onClick = onContinue, enabled = buttonEnabled, modifier = Modifier.fillMaxWidth().height(56.dp)) { Text(buttonText) }
+            } else {
+                Button(onClick = onContinue, enabled = buttonEnabled, modifier = Modifier.fillMaxWidth().height(60.dp)) {
+                    Text(buttonText, style = MaterialTheme.typography.titleLarge)
+                }
             }
-            secondaryText?.let {
-                TextButton(onClick = onSecondary, modifier = Modifier.fillMaxWidth()) { Text(it) }
-            }
+            secondaryText?.let { TextButton(onClick = onSecondary, modifier = Modifier.fillMaxWidth()) { Text(it) } }
+        }
+    }
+}
+
+/** Lista de opções em que se pode marcar até [limit]. */
+@Composable
+private fun <T> MultiChoice(options: List<Choice<T>>, selected: List<T>, limit: Int, onChange: (List<T>) -> Unit) {
+    options.forEach { option ->
+        val isSelected = option.value in selected
+        OptionCard(option.icon, stringResource(option.label), isSelected) {
+            onChange(
+                when {
+                    isSelected -> selected - option.value
+                    selected.size < limit -> selected + option.value
+                    else -> selected
+                },
+            )
         }
     }
 }
@@ -417,15 +949,27 @@ private fun OptionCard(icon: ImageVector, text: String, selected: Boolean, onCli
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(14.dp),
     ) {
-        Box(
-            Modifier.size(40.dp).background(Brush.linearGradient(listOf(Orange, Yellow)), CircleShape),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(icon, contentDescription = null, tint = Ink, modifier = Modifier.size(22.dp))
-        }
+        GradientIcon(icon, 40.dp)
         Text(text, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
         if (selected) Icon(Icons.Rounded.Check, contentDescription = null, tint = colors.primary)
     }
+}
+
+@Composable
+private fun GradientIcon(icon: ImageVector, size: androidx.compose.ui.unit.Dp) {
+    Box(Modifier.size(size).background(Brush.linearGradient(listOf(Orange, Yellow)), CircleShape), contentAlignment = Alignment.Center) {
+        Icon(icon, contentDescription = null, tint = Ink, modifier = Modifier.size(size * 0.55f))
+    }
+}
+
+@Composable
+private fun CenterColumn(content: @Composable ColumnScope.() -> Unit) {
+    Column(
+        Modifier.fillMaxWidth().padding(top = 24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+        content = content,
+    )
 }
 
 @Composable
@@ -449,66 +993,9 @@ private fun HoursSlider(value: Float, range: ClosedFloatingPointRange<Float>, co
     }
 }
 
-private fun formatHours(hours: Float): String =
-    NumberFormat.getInstance().apply { maximumFractionDigits = 1 }.format(hours)
+private fun formatHours(hours: Float): String = NumberFormat.getInstance().apply { maximumFractionDigits = 1 }.format(hours)
 
 @Composable
-private fun RealityStep(phoneHours: Float, targetHours: Float) {
-    Column(
-        Modifier.fillMaxWidth().padding(top = 24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        Text(stringResource(R.string.ob_reality_title), style = MaterialTheme.typography.titleLarge, textAlign = TextAlign.Center)
-        BigNumber(stringResource(R.string.ob_days, Projection.daysPerYear(phoneHours)), Orange)
-        Text(
-            stringResource(R.string.ob_reality_body),
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center,
-        )
-        Spacer(Modifier.height(32.dp))
-        Text(stringResource(R.string.ob_recover_title), style = MaterialTheme.typography.titleLarge, textAlign = TextAlign.Center)
-        BigNumber(stringResource(R.string.ob_days, Projection.daysRecovered(phoneHours, targetHours)), Yellow)
-        Text(
-            stringResource(R.string.ob_recover_body),
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center,
-        )
-        Spacer(Modifier.height(24.dp))
-        Text(
-            stringResource(R.string.ob_reality_note),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-    }
-}
-
-@Composable
-private fun BigNumber(text: String, color: Color) {
-    Text(text, fontSize = 64.sp, fontWeight = FontWeight.Black, fontStyle = FontStyle.Italic, color = color, textAlign = TextAlign.Center)
-}
-
-@Composable
-private fun HowCard(icon: ImageVector, color: Color, @StringRes title: Int, @StringRes body: Int, badge: String?) {
-    Row(
-        Modifier
-            .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.surfaceContainer, RoundedCornerShape(20.dp))
-            .padding(16.dp),
-        horizontalArrangement = Arrangement.spacedBy(14.dp),
-        verticalAlignment = Alignment.Top,
-    ) {
-        Box(Modifier.size(48.dp).background(color, CircleShape), contentAlignment = Alignment.Center) {
-            Icon(icon, contentDescription = null, tint = Ink)
-        }
-        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(stringResource(title).uppercase(), style = MaterialTheme.typography.headlineSmall)
-                badge?.let { Text(it, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary) }
-            }
-            Text(stringResource(body), style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        }
-    }
+private fun BigNumber(text: String, color: Color, size: Int = 64) {
+    Text(text, fontSize = size.sp, fontWeight = FontWeight.Black, fontStyle = FontStyle.Italic, color = color, textAlign = TextAlign.Center)
 }

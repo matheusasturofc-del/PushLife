@@ -28,6 +28,10 @@ data class Profile(
     val notifyStreak: Boolean = true,
     val notifyWeekly: Boolean = true,
     val notifyLowTime: Boolean = true,
+    // Respostas das boas-vindas (para personalizar o app no futuro).
+    val distractions: Set<DistractionApp> = emptySet(),
+    val quitReasons: Set<QuitReason> = emptySet(),
+    val triedMethods: Set<TriedMethod> = emptySet(),
 )
 
 /** A conta mostrada nas boas-vindas: horas por dia × 365 ÷ 24 = dias inteiros por ano. */
