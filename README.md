@@ -17,8 +17,8 @@ Instagram, TikTok e outros apps bloqueados. Inspirado no PushScroll, gratuito e 
 | 2 | Contagem de flexões pela câmera (celular no chão) e saldo de tempo | pronto |
 | 3 | Bloqueio de apps, emergência com dívida de flexões | pronto |
 | 4 | Mais exercícios, instruções e aviso de postura | pronto |
-| 5 | Sequência, metas, níveis, conquistas, gráficos, notificações | próxima |
-| 6 | Bloqueio de sites adultos | |
+| 5 | Sequência, metas, níveis, conquistas, gráficos, notificações | pronto |
+| 6 | Bloqueio de sites adultos | próxima |
 | 7 | Perfil, conta e backup na nuvem; preparação para a Play Store | |
 
 Extra: boas-vindas na primeira abertura (nome, objetivos, uso do celular, meta diária, lembrete).

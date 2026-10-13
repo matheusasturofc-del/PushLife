@@ -47,6 +47,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
@@ -81,6 +82,9 @@ import com.pushlife.app.core.FacePushupCounter
 import com.pushlife.app.core.Tracking
 import com.pushlife.app.core.pose.Cue
 import com.pushlife.app.core.pose.PoseTracker
+import com.pushlife.app.core.progress.Achievement
+import com.pushlife.app.core.progress.Levels
+import com.pushlife.app.data.ProgressCenter
 import java.time.LocalDate
 
 private enum class Stage { Pick, Intro, Active, Summary }
@@ -276,6 +280,7 @@ private class Session(val exercise: Exercise) {
         val credit = AppGraph.bank.addExercise(exercise, units, LocalDate.now())
         earned += credit.creditedSeconds
         hitCap = hitCap || credit.hitCap
+        ProgressCenter.afterExercise()
     }
 }
 
@@ -417,6 +422,16 @@ private fun SummaryStage(
     modifier: Modifier = Modifier,
 ) {
     val bank by AppGraph.bank.state.collectAsStateWithLifecycle()
+    // Conquistas e nível novos desde a última vez que a pessoa viu; depois de mostrar, marca como vistos.
+    val (newAchievements, newLevel) = remember {
+        val seen = AppGraph.progress.state.value
+        val stats = ProgressCenter.stats()
+        (Achievement.unlocked(stats) - seen.seenAchievements) to stats.level.takeIf { it > seen.seenLevel }
+    }
+    LaunchedEffect(Unit) {
+        val stats = ProgressCenter.stats()
+        AppGraph.progress.markSeen(Achievement.unlocked(stats), stats.level)
+    }
     Column(
         modifier = modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(24.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterVertically),
@@ -444,6 +459,18 @@ private fun SummaryStage(
         )
         if (bank.debtSeconds > 0) {
             Text(stringResource(R.string.debt_label, bank.debtPushups), color = MaterialTheme.colorScheme.primary, textAlign = TextAlign.Center)
+        }
+        newLevel?.let {
+            Text(
+                stringResource(R.string.summary_level_up, it, stringResource(Levels.rank(it).title)),
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.secondary,
+                textAlign = TextAlign.Center,
+            )
+        }
+        if (newAchievements.isNotEmpty()) {
+            Text(stringResource(R.string.summary_new_achievements), style = MaterialTheme.typography.titleMedium)
+            newAchievements.forEach { AchievementCard(it, unlocked = true, modifier = Modifier.fillMaxWidth()) }
         }
         if (result.hitCap) {
             Text(

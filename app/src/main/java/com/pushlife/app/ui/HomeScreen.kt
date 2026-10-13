@@ -37,6 +37,11 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import com.pushlife.app.AppGraph
+import com.pushlife.app.core.progress.Levels
+import com.pushlife.app.data.ProgressCenter
+import androidx.compose.material.icons.rounded.EmojiEvents
+import androidx.compose.material.icons.rounded.LocalFireDepartment
+import androidx.compose.runtime.remember
 import com.pushlife.app.R
 import com.pushlife.app.core.BankState
 import java.time.LocalDate
@@ -47,7 +52,7 @@ import com.pushlife.app.ui.theme.Orange
 import com.pushlife.app.ui.theme.Yellow
 
 // Fases do plano; CURRENT_PHASE é a última concluída.
-private const val CURRENT_PHASE = 4
+private const val CURRENT_PHASE = 5
 private val PHASES = listOf(
     R.string.phase_1, R.string.phase_2, R.string.phase_3, R.string.phase_4,
     R.string.phase_5, R.string.phase_6, R.string.phase_7,
@@ -57,7 +62,9 @@ private val PHASES = listOf(
 fun HomeScreen(onStartTraining: () -> Unit, modifier: Modifier = Modifier) {
     val bank by AppGraph.bank.state.collectAsStateWithLifecycle()
     val profile by AppGraph.profile.state.collectAsStateWithLifecycle()
+    val progress by AppGraph.progress.state.collectAsStateWithLifecycle()
     val today = LocalDate.now()
+    val stats = remember(bank, progress) { ProgressCenter.stats(today) }
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -71,6 +78,10 @@ fun HomeScreen(onStartTraining: () -> Unit, modifier: Modifier = Modifier) {
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Chip(Icons.Rounded.LocalFireDepartment, stringResource(R.string.progress_days, stats.currentStreak))
+            Chip(Icons.Rounded.EmojiEvents, stringResource(R.string.progress_level, stats.level) + " · " + stringResource(Levels.rank(stats.level).title))
+        }
         BalanceCard(bank, today, profile.dailyGoal)
         Button(onClick = onStartTraining, modifier = Modifier.fillMaxWidth().height(64.dp)) {
             Icon(Icons.Rounded.FitnessCenter, contentDescription = null)
@@ -78,6 +89,20 @@ fun HomeScreen(onStartTraining: () -> Unit, modifier: Modifier = Modifier) {
             Text(stringResource(R.string.start_training), style = MaterialTheme.typography.titleLarge)
         }
         Roadmap()
+    }
+}
+
+@Composable
+private fun Chip(icon: androidx.compose.ui.graphics.vector.ImageVector, text: String) {
+    Row(
+        Modifier
+            .background(MaterialTheme.colorScheme.surfaceContainer, RoundedCornerShape(50))
+            .padding(horizontal = 12.dp, vertical = 6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp))
+        Text(text, style = MaterialTheme.typography.labelMedium)
     }
 }
 

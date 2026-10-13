@@ -10,6 +10,8 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.pushlife.app.blocking.BlockerService
+import com.pushlife.app.data.ProgressCenter
+import com.pushlife.app.reminder.DailyCheck
 import com.pushlife.app.ui.PushLifeApp
 import com.pushlife.app.ui.onboarding.OnboardingScreen
 import com.pushlife.app.ui.theme.PushLifeTheme
@@ -22,6 +24,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         if (savedInstanceState == null) handleIntent(intent)
+        DailyCheck.schedule(this)
         setContent {
             PushLifeTheme {
                 val profile by AppGraph.profile.state.collectAsStateWithLifecycle()
@@ -43,6 +46,7 @@ class MainActivity : ComponentActivity() {
         super.onResume()
         // Religa o bloqueio se o Android tiver fechado o serviço.
         BlockerService.syncWithSettings(this)
+        ProgressCenter.adjustGoalIfDue()
     }
 
     private fun handleIntent(intent: Intent?) {

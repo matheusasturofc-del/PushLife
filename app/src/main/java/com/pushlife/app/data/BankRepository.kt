@@ -25,6 +25,13 @@ class BankRepository(context: Context) {
     }
 
     @Synchronized
+    fun addBonus(seconds: Long): Credit {
+        val credit = TimeBank.addBonus(_state.value, seconds)
+        save(credit.state)
+        return credit
+    }
+
+    @Synchronized
     fun spend(seconds: Long, today: LocalDate = LocalDate.now()) {
         save(TimeBank.spend(_state.value, seconds, today))
     }

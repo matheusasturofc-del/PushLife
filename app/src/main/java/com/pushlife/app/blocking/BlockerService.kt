@@ -19,6 +19,7 @@ import com.pushlife.app.AppGraph
 import com.pushlife.app.MainActivity
 import com.pushlife.app.R
 import com.pushlife.app.core.BlockerEngine
+import com.pushlife.app.reminder.Notifier
 import com.pushlife.app.ui.formatDuration
 import java.time.LocalDate
 
@@ -30,6 +31,7 @@ class BlockerService : Service() {
     private val handler = Handler(Looper.getMainLooper())
     private val engine = BlockerEngine()
     private lateinit var detector: ForegroundAppDetector
+    private var warnedLow = false
 
     private val tick = object : Runnable {
         override fun run() {
@@ -62,8 +64,9 @@ class BlockerService : Service() {
             return
         }
         val bank = AppGraph.bank.state.value
+        val foreground = detector.current()
         val events = engine.tick(
-            foreground = detector.current(),
+            foreground = foreground,
             blocked = settings.blockedPackages,
             nowMs = System.currentTimeMillis(),
             availableSeconds = bank.available(LocalDate.now()),
@@ -84,6 +87,22 @@ class BlockerService : Service() {
             }
         }
         if (engine.pendingSeconds >= FLUSH_EVERY_SECONDS) flush()
+        warnIfLow(foreground != null && foreground in settings.blockedPackages, bank.available(LocalDate.now()) - engine.pendingSeconds)
+    }
+
+    /** Avisa uma vez quando o saldo fica abaixo de 5 min usando um app bloqueado. */
+    private fun warnIfLow(inBlockedApp: Boolean, remaining: Long) {
+        if (remaining > LOW_SECONDS) {
+            warnedLow = false
+            return
+        }
+        if (!inBlockedApp || warnedLow || remaining <= 0) return
+        warnedLow = true
+        Notifier.notify(
+            this, Notifier.CHANNEL_ALERTS, Notifier.ID_TIME_LOW,
+            getString(R.string.notif_low_title, this.formatDuration(remaining.coerceAtLeast(60))),
+            getString(R.string.notif_low_body),
+        )
     }
 
     private fun flush() {
@@ -110,6 +129,7 @@ class BlockerService : Service() {
         private const val NOTIFICATION_ID = 2
         private const val TICK_MS = 1_000L
         private const val FLUSH_EVERY_SECONDS = 15
+        private const val LOW_SECONDS = 5 * 60L
 
         /** Liga o serviço se a proteção estiver ativa e as permissões liberadas. */
         fun syncWithSettings(context: Context) {

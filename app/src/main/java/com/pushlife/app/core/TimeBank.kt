@@ -71,6 +71,13 @@ object TimeBank {
         return Credit(newState, credited, hitCap = credited < wanted, debtPaidSeconds = debtPaid)
     }
 
+    /** Prêmio (ex.: desafio semanal): entra no saldo respeitando o limite, sem contar como exercício. */
+    fun addBonus(state: BankState, seconds: Long): Credit {
+        val newEarned = (state.earnedSeconds + seconds).coerceAtMost(Rules.MAX_EARNED_SECONDS)
+        val credited = (newEarned - state.earnedSeconds).coerceAtLeast(0)
+        return Credit(state.copy(earnedSeconds = maxOf(newEarned, state.earnedSeconds)), credited, hitCap = credited < seconds)
+    }
+
     /** Gasta tempo de tela: primeiro o grátis do dia, depois o ganho. Não deixa ficar negativo. */
     fun spend(state: BankState, seconds: Long, today: LocalDate): BankState {
         require(seconds >= 0)
