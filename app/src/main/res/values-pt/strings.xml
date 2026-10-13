@@ -63,4 +63,61 @@
         <item>Cada flexão é um minuto!</item>
         <item>Modo monstro!</item>
     </string-array>
+
+    <!-- Boas-vindas -->
+    <string name="ob_continue">Continuar</string>
+    <string name="ob_back">Voltar</string>
+    <string name="ob_welcome_title">Troque a rolagem\npor flexões.</string>
+    <string name="ob_welcome_body">O PushLife bloqueia os apps que te distraem. Cada flexão vale 1 minuto para usar neles.</string>
+    <string name="ob_start">Bora começar</string>
+    <string name="ob_name_kicker">Primeiro de tudo,</string>
+    <string name="ob_name_title">Como você quer ser chamado?</string>
+    <string name="ob_name_hint">Seu nome</string>
+    <string name="ob_goals_kicker">Conta pra gente, %1$s,</string>
+    <string name="ob_goals_title">O que você quer conquistar?</string>
+    <string name="ob_choose_up_to_3">Escolha até 3</string>
+    <string name="goal_less_phone">Usar menos o celular</string>
+    <string name="goal_night">Parar de rolar à noite e de manhã</string>
+    <string name="goal_discipline">Ter mais disciplina</string>
+    <string name="goal_study">Focar nos estudos</string>
+    <string name="goal_work">Render mais no trabalho</string>
+    <string name="goal_fit">Me mexer mais e entrar em forma</string>
+    <string name="ob_usage_kicker">Agora, sobre o seu celular.</string>
+    <string name="ob_usage_title">Quantas horas por dia você passa nele?</string>
+    <string name="ob_usage_tip">Não sabe? Veja em Configurações > Bem-estar digital.</string>
+    <string name="ob_target_kicker">Sem julgamento, %1$s. Você está aqui para mudar isso.</string>
+    <string name="ob_target_title">Quantas horas você gostaria de passar?</string>
+    <string name="ob_reality_title">Nesse ritmo, são</string>
+    <string name="ob_days">%1$d dias</string>
+    <string name="ob_reality_body">por ano no celular. Dias inteiros, de 24 horas.</string>
+    <string name="ob_recover_title">Com a sua meta, você recupera</string>
+    <string name="ob_recover_body">por ano para treinar, estudar e viver.</string>
+    <string name="ob_reality_note">Cálculo: horas por dia × 365 ÷ 24.</string>
+    <string name="ob_how_title">Como o PushLife funciona</string>
+    <string name="ob_how_push_title">Treine</string>
+    <string name="ob_how_push_body">Cada flexão soma 1 minuto ao seu saldo. A câmera conta para você.</string>
+    <string name="ob_how_scroll_title">Use</string>
+    <string name="ob_how_scroll_body">Gaste seus minutos nos apps que você escolher bloquear. O saldo acumula até 2 h.</string>
+    <string name="ob_how_free_title">1 h grátis</string>
+    <string name="ob_how_free_body">Todo dia começa com 1 hora grátis, para você nunca ficar travado.</string>
+    <string name="ob_freq_kicker">Falando em exercício,</string>
+    <string name="ob_freq_title">Com que frequência você treina hoje?</string>
+    <string name="freq_never">Nunca</string>
+    <string name="freq_1_3">1 a 3 vezes por semana</string>
+    <string name="freq_3_5">3 a 5 vezes por semana</string>
+    <string name="freq_daily">Todo dia</string>
+    <string name="ob_freq_goal">Sua meta diária: %1$d flexões</string>
+    <string name="ob_reminder_kicker">Um lembrete diário ajuda a manter o hábito.</string>
+    <string name="ob_reminder_title">Qual o melhor horário para treinar?</string>
+    <string name="ob_reminder_set">Definir lembrete</string>
+    <string name="ob_skip">Pular</string>
+    <string name="ob_first_title">Tudo pronto, %1$s!</string>
+    <string name="ob_first_body">Ganhe seus primeiros minutos agora.</string>
+    <string name="ob_first_more">Mais exercícios chegam na fase 4.</string>
+    <string name="ob_first_later">Depois</string>
+    <string name="home_hello">Olá, %1$s</string>
+    <string name="home_daily_goal">Meta de hoje: %1$d/%2$d flexões</string>
+    <string name="reminder_channel">Lembretes de treino</string>
+    <string name="reminder_title">Hora de treinar!</string>
+    <string name="reminder_body">Cada flexão vale 1 minuto de tela.</string>
 </resources>

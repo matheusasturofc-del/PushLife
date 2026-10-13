@@ -30,8 +30,8 @@ private enum class Tab(@StringRes val label: Int, val icon: ImageVector) {
 }
 
 @Composable
-fun PushLifeApp() {
-    var selected by rememberSaveable { mutableIntStateOf(Tab.Home.ordinal) }
+fun PushLifeApp(startInTraining: Boolean = false) {
+    var selected by rememberSaveable { mutableIntStateOf(if (startInTraining) Tab.Train.ordinal else Tab.Home.ordinal) }
     val tab = Tab.entries[selected]
 
     Scaffold(

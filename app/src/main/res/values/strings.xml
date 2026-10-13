@@ -69,4 +69,62 @@
     <string name="duration_min" translatable="false">%1$d min</string>
     <string name="duration_h" translatable="false">%1$d h</string>
     <string name="duration_h_min" translatable="false">%1$d h %2$d min</string>
+
+    <!-- Boas-vindas -->
+    <string name="ob_continue">Continue</string>
+    <string name="ob_back">Back</string>
+    <string name="ob_welcome_title">Trade scrolling\nfor push-ups.</string>
+    <string name="ob_welcome_body">PushLife locks the apps that distract you. Every push-up earns 1 minute to use them.</string>
+    <string name="ob_start">Let\'s go</string>
+    <string name="ob_name_kicker">First things first,</string>
+    <string name="ob_name_title">What should we call you?</string>
+    <string name="ob_name_hint">Your name</string>
+    <string name="ob_goals_kicker">Tell us, %1$s,</string>
+    <string name="ob_goals_title">What do you want to achieve?</string>
+    <string name="ob_choose_up_to_3">Choose up to 3</string>
+    <string name="goal_less_phone">Use my phone less</string>
+    <string name="goal_night">Stop scrolling at night and in the morning</string>
+    <string name="goal_discipline">Build discipline</string>
+    <string name="goal_study">Focus on my studies</string>
+    <string name="goal_work">Get more done at work</string>
+    <string name="goal_fit">Move more and get in shape</string>
+    <string name="ob_usage_kicker">Now, about your phone.</string>
+    <string name="ob_usage_title">How many hours a day do you spend on it?</string>
+    <string name="ob_usage_tip">Not sure? Check Settings > Digital Wellbeing.</string>
+    <string name="ob_target_kicker">No judgment, %1$s. You\'re here to change it.</string>
+    <string name="ob_target_title">How many hours would you like instead?</string>
+    <string name="ob_reality_title">At this rate, that\'s</string>
+    <string name="ob_days">%1$d days</string>
+    <string name="ob_reality_body">a year on your phone. Full 24-hour days.</string>
+    <string name="ob_recover_title">With your goal, you get back</string>
+    <string name="ob_recover_body">a year to train, study and live.</string>
+    <string name="ob_reality_note">Calculation: hours per day × 365 ÷ 24.</string>
+    <string name="ob_how_title">How PushLife works</string>
+    <string name="ob_how_push_title">Train</string>
+    <string name="ob_how_push_body">Every push-up adds 1 minute to your balance. The camera counts for you.</string>
+    <string name="ob_how_scroll_title">Use</string>
+    <string name="ob_how_scroll_body">Spend your minutes on the apps you choose to lock. Your balance stacks up to 2 h.</string>
+    <string name="ob_how_free_title">1 h free</string>
+    <string name="ob_how_free_body">Every day starts with 1 free hour, so you\'re never stuck.</string>
+    <string name="ob_freq_kicker">Speaking of exercise,</string>
+    <string name="ob_freq_title">How often do you work out today?</string>
+    <string name="freq_never">Never</string>
+    <string name="freq_1_3">1 to 3 times a week</string>
+    <string name="freq_3_5">3 to 5 times a week</string>
+    <string name="freq_daily">Every day</string>
+    <string name="ob_freq_goal">Your daily goal: %1$d push-ups</string>
+    <string name="ob_reminder_kicker">A daily reminder helps you keep the habit.</string>
+    <string name="ob_reminder_title">What\'s the best time to work out?</string>
+    <string name="ob_reminder_set">Set reminder</string>
+    <string name="ob_skip">Skip</string>
+    <string name="ob_first_title">All set, %1$s!</string>
+    <string name="ob_first_body">Earn your first minutes now.</string>
+    <string name="ob_first_more">More exercises arrive in phase 4.</string>
+    <string name="ob_first_later">Later</string>
+    <string name="home_hello">Hi, %1$s</string>
+    <string name="home_daily_goal">Today\'s goal: %1$d/%2$d push-ups</string>
+    <string name="reminder_channel">Workout reminders</string>
+    <string name="reminder_title">Time to train!</string>
+    <string name="reminder_body">Every push-up is worth 1 minute of screen time.</string>
+    <string name="hours_value" translatable="false">%1$s h</string>
 </resources>

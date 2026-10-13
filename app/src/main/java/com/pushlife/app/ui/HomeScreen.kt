@@ -23,12 +23,14 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -54,6 +56,7 @@ private val PHASES = listOf(
 @Composable
 fun HomeScreen(onStartTraining: () -> Unit, modifier: Modifier = Modifier) {
     val bank by AppGraph.bank.state.collectAsStateWithLifecycle()
+    val profile by AppGraph.profile.state.collectAsStateWithLifecycle()
     val today = LocalDate.now()
     Column(
         modifier = modifier
@@ -64,11 +67,11 @@ fun HomeScreen(onStartTraining: () -> Unit, modifier: Modifier = Modifier) {
     ) {
         Logo()
         Text(
-            stringResource(R.string.tagline),
+            if (profile.name.isNotBlank()) stringResource(R.string.home_hello, profile.name) else stringResource(R.string.tagline),
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
-        BalanceCard(bank, today)
+        BalanceCard(bank, today, profile.dailyGoal)
         Button(onClick = onStartTraining, modifier = Modifier.fillMaxWidth().height(64.dp)) {
             Icon(Icons.Rounded.FitnessCenter, contentDescription = null)
             Spacer(Modifier.size(8.dp))
@@ -90,7 +93,7 @@ private fun Logo() {
 }
 
 @Composable
-private fun BalanceCard(bank: BankState, today: LocalDate) {
+private fun BalanceCard(bank: BankState, today: LocalDate, dailyGoal: Int) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -106,7 +109,14 @@ private fun BalanceCard(bank: BankState, today: LocalDate) {
                 style = MaterialTheme.typography.bodyMedium,
                 color = Ink,
             )
-            Text(stringResource(R.string.today_reps, bank.repsOn(today)), style = MaterialTheme.typography.titleMedium, color = Ink)
+            Text(stringResource(R.string.home_daily_goal, bank.repsOn(today), dailyGoal), style = MaterialTheme.typography.titleMedium, color = Ink)
+            LinearProgressIndicator(
+                progress = { (bank.repsOn(today).toFloat() / dailyGoal).coerceIn(0f, 1f) },
+                modifier = Modifier.fillMaxWidth().height(8.dp),
+                color = Ink,
+                trackColor = Ink.copy(alpha = 0.2f),
+                strokeCap = StrokeCap.Round,
+            )
             Text(stringResource(R.string.balance_rules), style = MaterialTheme.typography.bodySmall, color = Ink.copy(alpha = 0.7f))
         }
     }

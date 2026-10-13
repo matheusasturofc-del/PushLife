@@ -63,4 +63,61 @@
         <item>¡Cada flexión es un minuto!</item>
         <item>¡Modo bestia!</item>
     </string-array>
+
+    <!-- Boas-vindas -->
+    <string name="ob_continue">Continuar</string>
+    <string name="ob_back">Volver</string>
+    <string name="ob_welcome_title">Cambia el scroll\npor flexiones.</string>
+    <string name="ob_welcome_body">PushLife bloquea las apps que te distraen. Cada flexión vale 1 minuto para usarlas.</string>
+    <string name="ob_start">Vamos</string>
+    <string name="ob_name_kicker">Lo primero,</string>
+    <string name="ob_name_title">¿Cómo quieres que te llamemos?</string>
+    <string name="ob_name_hint">Tu nombre</string>
+    <string name="ob_goals_kicker">Cuéntanos, %1$s,</string>
+    <string name="ob_goals_title">¿Qué quieres lograr?</string>
+    <string name="ob_choose_up_to_3">Elige hasta 3</string>
+    <string name="goal_less_phone">Usar menos el teléfono</string>
+    <string name="goal_night">Dejar el scroll de noche y por la mañana</string>
+    <string name="goal_discipline">Tener más disciplina</string>
+    <string name="goal_study">Concentrarme en los estudios</string>
+    <string name="goal_work">Rendir más en el trabajo</string>
+    <string name="goal_fit">Moverme más y ponerme en forma</string>
+    <string name="ob_usage_kicker">Ahora, sobre tu teléfono.</string>
+    <string name="ob_usage_title">¿Cuántas horas al día pasas en él?</string>
+    <string name="ob_usage_tip">¿No lo sabes? Mira en Ajustes > Bienestar digital.</string>
+    <string name="ob_target_kicker">Sin juicios, %1$s. Estás aquí para cambiarlo.</string>
+    <string name="ob_target_title">¿Cuántas horas te gustaría pasar?</string>
+    <string name="ob_reality_title">A este ritmo, son</string>
+    <string name="ob_days">%1$d días</string>
+    <string name="ob_reality_body">al año en el teléfono. Días completos de 24 horas.</string>
+    <string name="ob_recover_title">Con tu meta, recuperas</string>
+    <string name="ob_recover_body">al año para entrenar, estudiar y vivir.</string>
+    <string name="ob_reality_note">Cálculo: horas al día × 365 ÷ 24.</string>
+    <string name="ob_how_title">Cómo funciona PushLife</string>
+    <string name="ob_how_push_title">Entrena</string>
+    <string name="ob_how_push_body">Cada flexión suma 1 minuto a tu saldo. La cámara cuenta por ti.</string>
+    <string name="ob_how_scroll_title">Usa</string>
+    <string name="ob_how_scroll_body">Gasta tus minutos en las apps que elijas bloquear. El saldo se acumula hasta 2 h.</string>
+    <string name="ob_how_free_title">1 h gratis</string>
+    <string name="ob_how_free_body">Cada día empieza con 1 hora gratis, para que nunca te quedes bloqueado.</string>
+    <string name="ob_freq_kicker">Hablando de ejercicio,</string>
+    <string name="ob_freq_title">¿Con qué frecuencia entrenas hoy?</string>
+    <string name="freq_never">Nunca</string>
+    <string name="freq_1_3">1 a 3 veces por semana</string>
+    <string name="freq_3_5">3 a 5 veces por semana</string>
+    <string name="freq_daily">Todos los días</string>
+    <string name="ob_freq_goal">Tu meta diaria: %1$d flexiones</string>
+    <string name="ob_reminder_kicker">Un recordatorio diario ayuda a mantener el hábito.</string>
+    <string name="ob_reminder_title">¿Cuál es la mejor hora para entrenar?</string>
+    <string name="ob_reminder_set">Fijar recordatorio</string>
+    <string name="ob_skip">Omitir</string>
+    <string name="ob_first_title">¡Todo listo, %1$s!</string>
+    <string name="ob_first_body">Gana tus primeros minutos ahora.</string>
+    <string name="ob_first_more">Más ejercicios llegan en la fase 4.</string>
+    <string name="ob_first_later">Después</string>
+    <string name="home_hello">Hola, %1$s</string>
+    <string name="home_daily_goal">Meta de hoy: %1$d/%2$d flexiones</string>
+    <string name="reminder_channel">Recordatorios de entrenamiento</string>
+    <string name="reminder_title">¡Hora de entrenar!</string>
+    <string name="reminder_body">Cada flexión vale 1 minuto de pantalla.</string>
 </resources>
