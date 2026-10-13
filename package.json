@@ -1,0 +1,11 @@
+{
+  "name": "pushtrainer",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Faça flexões para ganhar tempo de tela — PWA com contagem de repetições por IA.",
+  "type": "module",
+  "scripts": {
+    "start": "npx --yes http-server -c-1 -p 8080 .",
+    "test": "node --test tests/*.test.js"
+  }
+}

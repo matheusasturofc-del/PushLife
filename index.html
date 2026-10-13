@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>PushTrainer</title>
+  <meta name="description" content="Faça flexões para ganhar tempo de tela." />
+  <meta name="theme-color" content="#0f1115" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <span class="logo">Push<b>Trainer</b></span>
+    <span class="pill" id="streak-pill" title="Dias seguidos">🔥 <span id="streak">0</span></span>
+  </header>
+
+  <main>
+    <!-- INÍCIO -->
+    <section class="view" data-view="inicio">
+      <div class="card balance-card">
+        <p class="label">Seu saldo de tela</p>
+        <p class="balance"><span id="balance">0</span><small>min</small></p>
+        <p class="muted" id="rate-hint">1 flexão = 1 minuto</p>
+
+        <div id="session-box" class="session" hidden>
+          <p class="label">Tempo liberado acabando em</p>
+          <p class="clock" id="session-clock">00:00</p>
+          <button class="btn ghost" id="end-session">Encerrar e devolver o restante</button>
+        </div>
+
+        <div id="spend-box">
+          <p class="label">Liberar tempo de tela</p>
+          <div class="chips" id="spend-chips">
+            <button class="chip" data-minutes="5">5 min</button>
+            <button class="chip" data-minutes="10">10 min</button>
+            <button class="chip" data-minutes="15">15 min</button>
+            <button class="chip" data-minutes="all">Tudo</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="row">
+          <p class="label">Meta de hoje</p>
+          <p class="muted"><b id="today-reps">0</b> / <span id="today-goal">50</span> reps</p>
+        </div>
+        <div class="bar"><div class="bar-fill" id="today-bar"></div></div>
+      </div>
+
+      <a class="btn primary big" href="#treino">Começar treino 💪</a>
+    </section>
+
+    <!-- TREINO -->
+    <section class="view" data-view="treino" hidden>
+      <div class="segmented" id="exercise-picker">
+        <button data-exercise="pushup">💪 Flexão</button>
+        <button data-exercise="squat">🦵 Agachamento</button>
+      </div>
+      <div class="segmented small" id="mode-picker">
+        <button data-mode="camera">📷 Câmera (IA)</button>
+        <button data-mode="touch">👆 Modo toque</button>
+      </div>
+
+      <div class="stage" id="stage">
+        <div class="mirror" id="camera-layer">
+          <video id="video" playsinline muted></video>
+          <canvas id="overlay"></canvas>
+        </div>
+        <button class="touchpad" id="touchpad" hidden>
+          <span>Toque aqui com o nariz<br />no fundo de cada flexão</span>
+        </button>
+        <div class="hud">
+          <p class="reps" id="reps">0</p>
+          <p class="status" id="status">Pronto quando você estiver</p>
+        </div>
+        <div class="depth" id="depth" aria-hidden="true"><div id="depth-fill"></div></div>
+      </div>
+
+      <p class="tip" id="tip"></p>
+      <div class="row gap">
+        <button class="btn primary big" id="start-btn">Iniciar</button>
+        <button class="btn danger big" id="stop-btn" hidden>Finalizar</button>
+      </div>
+      <p class="muted center">Ganhando: <b id="earned-now">0</b> min neste treino</p>
+    </section>
+
+    <!-- HISTÓRICO -->
+    <section class="view" data-view="historico" hidden>
+      <div class="card">
+        <p class="label">Últimos 14 dias</p>
+        <div class="chart" id="chart"></div>
+      </div>
+      <div class="stats">
+        <div class="card stat"><p class="label">Total de reps</p><p class="num" id="total-reps">0</p></div>
+        <div class="card stat"><p class="label">Minutos ganhos</p><p class="num" id="total-earned">0</p></div>
+        <div class="card stat"><p class="label">Melhor dia</p><p class="num" id="best-day">0</p></div>
+        <div class="card stat"><p class="label">Sequência</p><p class="num" id="streak-big">0</p></div>
+      </div>
+    </section>
+
+    <!-- AJUSTES -->
+    <section class="view" data-view="ajustes" hidden>
+      <div class="card form">
+        <label>Minutos por flexão
+          <select id="set-rate">
+            <option value="0.5">0,5 min (difícil)</option>
+            <option value="1">1 min (normal)</option>
+            <option value="2">2 min (fácil)</option>
+          </select>
+        </label>
+        <p class="muted">Agachamentos valem metade do tempo de uma flexão.</p>
+        <label>Meta diária de repetições
+          <input id="set-goal" type="number" min="1" max="1000" inputmode="numeric" />
+        </label>
+        <label class="switch"><input type="checkbox" id="set-sound" /> Som a cada repetição</label>
+        <label class="switch"><input type="checkbox" id="set-voice" /> Contar em voz alta</label>
+      </div>
+      <div class="card">
+        <p class="label">Instalar no celular</p>
+        <p class="muted">No Android (Chrome): menu ⋮ → <b>Instalar app</b>. No iPhone (Safari): Compartilhar → <b>Adicionar à Tela de Início</b>.</p>
+        <button class="btn" id="install-btn" hidden>Instalar agora</button>
+      </div>
+      <button class="btn danger" id="reset-btn">Apagar todos os dados</button>
+    </section>
+  </main>
+
+  <nav class="tabbar">
+    <a href="#inicio" data-tab="inicio"><span>🏠</span>Início</a>
+    <a href="#treino" data-tab="treino"><span>🏋️</span>Treino</a>
+    <a href="#historico" data-tab="historico"><span>📊</span>Histórico</a>
+    <a href="#ajustes" data-tab="ajustes"><span>⚙️</span>Ajustes</a>
+  </nav>
+
+  <dialog id="summary">
+    <p class="summary-emoji">🎉</p>
+    <h2 id="summary-title">Mandou bem!</h2>
+    <p id="summary-text"></p>
+    <form method="dialog"><button class="btn primary">Fechar</button></form>
+  </dialog>
+
+  <div class="toast" id="toast" role="status" hidden></div>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
