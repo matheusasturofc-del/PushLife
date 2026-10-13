@@ -1,24 +1,36 @@
-# PushTrainer (rascunho)
+# PushLife
 
-Primeira versão de um app no estilo PushScroll: faça flexões/agachamentos para ganhar minutos de tela.
-Ainda **não está definido**: plataforma, funcionalidades e visual vão ser decididos antes de continuar.
+App Android que transforma exercício em tempo de tela: faça flexões (e outros exercícios) para liberar
+Instagram, TikTok e outros apps bloqueados. Inspirado no PushScroll, gratuito e em português, inglês e espanhol.
 
-O que existe hoje (PWA, roda no navegador do celular):
-- Contagem de repetições pela câmera com IA (MediaPipe Pose, roda no aparelho) ou pelo "modo toque" (encostar o nariz na tela)
-- Saldo de minutos de tela, liberar tempo com cronômetro, meta diária, sequência de dias, histórico
-- Funciona offline e pode ser instalado na tela inicial
+## Instalar no celular (versão de teste)
 
-Limitação: um app web **não consegue bloquear outros apps** (Instagram, TikTok...). Para isso é preciso um app nativo
-(iOS: API Screen Time/Family Controls; Android: Accessibility/UsageStats).
+1. No celular, abra: https://github.com/matheusasturofc-del/PushTrainer/releases/latest/download/PushLife.apk
+2. Permita instalar apps do navegador quando o Android pedir ("fontes desconhecidas").
+3. Cada versão nova instala por cima da anterior, sem apagar seus dados.
 
-## Abrir no celular
+## Plano
 
-Depois de ativar o GitHub Pages (Settings → Pages → Source: **GitHub Actions**), o app fica em
-https://matheusasturofc-del.github.io/PushTrainer/ e é atualizado a cada push.
-A câmera só funciona em HTTPS, por isso o Pages (ou `localhost`).
+| Fase | O que entra | Status |
+|---|---|---|
+| 1 | Base do app: projeto, tema, 3 idiomas, APK automático | pronto |
+| 2 | Contagem de flexões pela câmera (celular no chão) e saldo de tempo | próxima |
+| 3 | Bloqueio de apps, emergência com dívida de flexões | |
+| 4 | Mais exercícios, instruções e aviso de postura | |
+| 5 | Sequência, metas, níveis, conquistas, gráficos, notificações | |
+| 6 | Bloqueio de sites adultos | |
+| 7 | Perfil, conta e backup na nuvem; preparação para a Play Store | |
 
-## Rodar no computador
-```
-npm start   # abre em http://localhost:8080
-npm test    # testes da lógica de contagem e do saldo
-```
+## Tecnologia
+
+- Kotlin + Jetpack Compose (Material 3), Android 8.0 ou mais novo
+- IA da câmera: ML Kit (roda no aparelho; nenhuma imagem sai do celular)
+- O GitHub Actions compila, testa e publica o APK a cada mudança (`.github/workflows/android.yml`)
+
+## Abrir no Android Studio (opcional)
+
+`File > Open` e escolha a pasta do projeto. Para rodar no celular, ative a Depuração USB
+(Configurações > Sobre o telefone > toque 7 vezes em "Número da versão" > Opções do desenvolvedor).
+
+A pasta `keystore/` tem só a chave de **desenvolvimento** (senha pública `android`). A chave de publicação na
+Play Store vai ficar fora do repositório.

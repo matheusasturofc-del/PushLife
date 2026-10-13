@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Idiomas do app (no Android 13+ dá para escolher em Configurações > Apps > PushLife > Idioma). -->
+<locale-config xmlns:android="http://schemas.android.com/apk/res/android">
+    <locale android:name="pt" />
+    <locale android:name="en" />
+    <locale android:name="es" />
+</locale-config>

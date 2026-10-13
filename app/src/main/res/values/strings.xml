@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name" translatable="false">PushLife</string>
+    <string name="tagline">Train to earn your screen time.</string>
+
+    <string name="tab_home">Home</string>
+    <string name="tab_train">Train</string>
+    <string name="tab_progress">Progress</string>
+    <string name="tab_profile">Profile</string>
+
+    <string name="balance_label">Your screen time</string>
+    <string name="balance_rules">1 push-up = 1 minute · 1 h free per day</string>
+    <string name="balance_soon">Your balance starts counting in phase 2.</string>
+    <string name="start_training">Start workout</string>
+    <string name="available_in_phase">Coming in phase %1$d</string>
+
+    <string name="roadmap_title">Building PushLife</string>
+    <string name="phase_number">Phase %1$d</string>
+    <string name="phase_done">done</string>
+    <string name="phase_next">next</string>
+    <string name="phase_1">App foundation</string>
+    <string name="phase_2">Push-ups and time balance</string>
+    <string name="phase_3">App blocking</string>
+    <string name="phase_4">More exercises</string>
+    <string name="phase_5">Levels, achievements and goals</string>
+    <string name="phase_6">Adult site blocking</string>
+    <string name="phase_7">Profile, account and backup</string>
+
+    <string name="train_soon">Work out while the camera counts your reps.</string>
+    <string name="progress_soon">Day streaks, levels, achievements and charts.</string>
+    <string name="profile_soon">Your profile, account and cloud backup.</string>
+</resources>

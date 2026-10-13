@@ -1,0 +1,154 @@
+package com.pushlife.app.ui
+
+import androidx.annotation.StringRes
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Check
+import androidx.compose.material.icons.rounded.FitnessCenter
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.unit.dp
+import com.pushlife.app.R
+import com.pushlife.app.ui.theme.Ink
+import com.pushlife.app.ui.theme.Orange
+import com.pushlife.app.ui.theme.Yellow
+
+// Fases do plano; CURRENT_PHASE é a última concluída.
+private const val CURRENT_PHASE = 1
+private val PHASES = listOf(
+    R.string.phase_1, R.string.phase_2, R.string.phase_3, R.string.phase_4,
+    R.string.phase_5, R.string.phase_6, R.string.phase_7,
+)
+
+@Composable
+fun HomeScreen(modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = 20.dp, vertical = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+        Logo()
+        Text(
+            stringResource(R.string.tagline),
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        BalanceCard()
+        Button(onClick = {}, enabled = false, modifier = Modifier.fillMaxWidth().height(56.dp)) {
+            Icon(Icons.Rounded.FitnessCenter, contentDescription = null)
+            Spacer(Modifier.size(8.dp))
+            Text(stringResource(R.string.start_training) + " · " + stringResource(R.string.available_in_phase, 2))
+        }
+        Roadmap()
+    }
+}
+
+@Composable
+private fun Logo() {
+    Text(
+        buildAnnotatedString {
+            append("PUSH")
+            withStyle(SpanStyle(color = MaterialTheme.colorScheme.primary)) { append("LIFE") }
+        },
+        style = MaterialTheme.typography.displayMedium,
+    )
+}
+
+@Composable
+private fun BalanceCard() {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Brush.linearGradient(listOf(Orange, Yellow)), RoundedCornerShape(24.dp))
+            .padding(20.dp),
+    ) {
+        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text(stringResource(R.string.balance_label).uppercase(), style = MaterialTheme.typography.labelMedium, color = Ink)
+            Text("0 min", style = MaterialTheme.typography.displayMedium, color = Ink)
+            Text(stringResource(R.string.balance_rules), style = MaterialTheme.typography.bodyMedium, color = Ink)
+            Text(stringResource(R.string.balance_soon), style = MaterialTheme.typography.bodySmall, color = Ink.copy(alpha = 0.7f))
+        }
+    }
+}
+
+@Composable
+private fun Roadmap() {
+    Card(
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+        shape = RoundedCornerShape(20.dp),
+    ) {
+        Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Text(stringResource(R.string.roadmap_title), style = MaterialTheme.typography.headlineSmall)
+            PHASES.forEachIndexed { index, name -> PhaseRow(number = index + 1, name = name) }
+        }
+    }
+}
+
+@Composable
+private fun PhaseRow(number: Int, @StringRes name: Int) {
+    val done = number <= CURRENT_PHASE
+    val next = number == CURRENT_PHASE + 1
+    val colors = MaterialTheme.colorScheme
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        Box(
+            modifier = Modifier
+                .size(32.dp)
+                .background(if (done) colors.primary else colors.surfaceVariant, CircleShape),
+            contentAlignment = Alignment.Center,
+        ) {
+            if (done) {
+                Icon(Icons.Rounded.Check, contentDescription = stringResource(R.string.phase_done), tint = colors.onPrimary)
+            } else {
+                Text("$number", style = MaterialTheme.typography.titleMedium, color = colors.onSurfaceVariant)
+            }
+        }
+        Column(Modifier.weight(1f)) {
+            Text(stringResource(R.string.phase_number, number).uppercase(), style = MaterialTheme.typography.labelMedium, color = colors.onSurfaceVariant)
+            Text(stringResource(name), style = MaterialTheme.typography.titleMedium)
+        }
+        when {
+            done -> Tag(stringResource(R.string.phase_done))
+            next -> Tag(stringResource(R.string.phase_next))
+        }
+    }
+}
+
+@Composable
+private fun Tag(text: String) {
+    Text(
+        text.uppercase(),
+        style = MaterialTheme.typography.labelMedium,
+        color = MaterialTheme.colorScheme.onSecondaryContainer,
+        modifier = Modifier
+            .background(MaterialTheme.colorScheme.secondaryContainer, RoundedCornerShape(8.dp))
+            .padding(horizontal = 8.dp, vertical = 4.dp),
+    )
+}

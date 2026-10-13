@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="tagline">Entrena para ganar tu tiempo de pantalla.</string>
+
+    <string name="tab_home">Inicio</string>
+    <string name="tab_train">Entrenar</string>
+    <string name="tab_progress">Progreso</string>
+    <string name="tab_profile">Perfil</string>
+
+    <string name="balance_label">Tu tiempo de pantalla</string>
+    <string name="balance_rules">1 flexión = 1 minuto · 1 h gratis por día</string>
+    <string name="balance_soon">El saldo empieza a contar en la fase 2.</string>
+    <string name="start_training">Empezar entrenamiento</string>
+    <string name="available_in_phase">Llega en la fase %1$d</string>
+
+    <string name="roadmap_title">Construcción de PushLife</string>
+    <string name="phase_number">Fase %1$d</string>
+    <string name="phase_done">listo</string>
+    <string name="phase_next">siguiente</string>
+    <string name="phase_1">Base de la app</string>
+    <string name="phase_2">Flexiones y saldo de tiempo</string>
+    <string name="phase_3">Bloqueo de apps</string>
+    <string name="phase_4">Más ejercicios</string>
+    <string name="phase_5">Niveles, logros y metas</string>
+    <string name="phase_6">Bloqueo de sitios para adultos</string>
+    <string name="phase_7">Perfil, cuenta y copia de seguridad</string>
+
+    <string name="train_soon">Entrena mientras la cámara cuenta tus repeticiones.</string>
+    <string name="progress_soon">Rachas de días, niveles, logros y gráficos.</string>
+    <string name="profile_soon">Tu perfil, cuenta y copia de seguridad en la nube.</string>
+</resources>
