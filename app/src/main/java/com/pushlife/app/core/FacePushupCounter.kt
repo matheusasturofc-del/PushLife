@@ -17,6 +17,7 @@ class FacePushupCounter(
     private val lostWhileCloseRatio: Float = 1.25f,
     private val smoothing: Float = 0.5f,
     private val minRepMs: Long = 400,
+    private val partialRatio: Float = 1.2f,
 ) {
     enum class Phase { WAITING, UP, DOWN }
 
@@ -32,6 +33,11 @@ class FacePushupCounter(
     private var top = 0f
     private var size: Float? = null
     private var lastRepAt = Long.MIN_VALUE / 2
+    private var peak = 0f
+
+    /** Quando foi a última meia flexão (desceu um pouco e voltou), para o aviso "Desça mais!". */
+    var lastPartialMs = Long.MIN_VALUE / 2
+        private set
 
     /**
      * @param faceSize largura do rosto em relação à imagem (0..1), ou null se nenhum rosto foi visto.
@@ -58,10 +64,16 @@ class FacePushupCounter(
                 phase = Phase.UP
             }
             Phase.UP -> {
+                peak = maxOf(peak, s)
                 if (s >= top * downRatio) {
                     phase = Phase.DOWN
+                    peak = 0f
                 } else if (s < top) {
                     top = s // subiu mais do que antes: novo "lá em cima"
+                    peak = s
+                } else if (peak >= top * partialRatio && s <= top * upRatio) {
+                    lastPartialMs = timeMs // desceu só um pouco e voltou
+                    peak = 0f
                 } else {
                     top += 0.02f * (s - top) // acompanha devagar se a pessoa mudar de posição
                 }
@@ -89,5 +101,7 @@ class FacePushupCounter(
         top = 0f
         size = null
         lastRepAt = Long.MIN_VALUE / 2
+        peak = 0f
+        lastPartialMs = Long.MIN_VALUE / 2
     }
 }

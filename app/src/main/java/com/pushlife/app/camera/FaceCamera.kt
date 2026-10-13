@@ -20,20 +20,20 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.face.FaceDetection
-import com.google.mlkit.vision.face.FaceDetector
 import com.google.mlkit.vision.face.FaceDetectorOptions
 import java.util.concurrent.Executors
 
+/** Um analisador de quadros que também libera seus recursos (o detector do ML Kit). */
+interface FrameAnalyzer : ImageAnalysis.Analyzer, AutoCloseable
+
 /**
- * Câmera frontal com detecção de rosto. A cada quadro analisado chama [onFaceSize] com a
- * largura do maior rosto em relação à imagem (0..1), ou null se não houver rosto.
- * A imagem é processada só no aparelho e nunca é salva.
+ * Câmera frontal com pré-visualização e um analisador de quadros. A imagem é processada só no
+ * aparelho e nunca é salva.
  */
 @Composable
-fun FaceCamera(onFaceSize: (Float?) -> Unit, modifier: Modifier = Modifier) {
+fun FrontCamera(createAnalyzer: () -> FrameAnalyzer, modifier: Modifier = Modifier) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
-    val callback by rememberUpdatedState(onFaceSize)
     val previewView = remember {
         PreviewView(context).apply {
             scaleType = PreviewView.ScaleType.FILL_CENTER
@@ -43,12 +43,7 @@ fun FaceCamera(onFaceSize: (Float?) -> Unit, modifier: Modifier = Modifier) {
 
     DisposableEffect(lifecycleOwner) {
         val executor = Executors.newSingleThreadExecutor()
-        val detector = FaceDetection.getClient(
-            FaceDetectorOptions.Builder()
-                .setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_FAST)
-                .setMinFaceSize(0.1f)
-                .build(),
-        )
+        val analyzer = createAnalyzer()
         val providerFuture = ProcessCameraProvider.getInstance(context)
         var provider: ProcessCameraProvider? = null
         var disposed = false
@@ -60,7 +55,7 @@ fun FaceCamera(onFaceSize: (Float?) -> Unit, modifier: Modifier = Modifier) {
             val analysis = ImageAnalysis.Builder()
                 .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                 .build()
-                .also { it.setAnalyzer(executor, FaceSizeAnalyzer(detector) { size -> if (!disposed) callback(size) }) }
+                .also { it.setAnalyzer(executor, analyzer) }
             cameraProvider.unbindAll()
             cameraProvider.bindToLifecycle(lifecycleOwner, CameraSelector.DEFAULT_FRONT_CAMERA, preview, analysis)
         }, ContextCompat.getMainExecutor(context))
@@ -68,7 +63,7 @@ fun FaceCamera(onFaceSize: (Float?) -> Unit, modifier: Modifier = Modifier) {
         onDispose {
             disposed = true
             provider?.unbindAll()
-            detector.close()
+            analyzer.close()
             executor.shutdown()
         }
     }
@@ -76,15 +71,26 @@ fun FaceCamera(onFaceSize: (Float?) -> Unit, modifier: Modifier = Modifier) {
     AndroidView(factory = { previewView }, modifier = modifier)
 }
 
-private class FaceSizeAnalyzer(
-    private val detector: FaceDetector,
-    private val onResult: (Float?) -> Unit,
-) : ImageAnalysis.Analyzer {
+/** Câmera para a flexão: informa a largura do maior rosto em relação à imagem (0..1), ou null. */
+@Composable
+fun FaceCamera(onFaceSize: (Float?) -> Unit, modifier: Modifier = Modifier) {
+    val callback by rememberUpdatedState(onFaceSize)
+    FrontCamera(createAnalyzer = { FaceSizeAnalyzer { callback(it) } }, modifier = modifier)
+}
+
+private class FaceSizeAnalyzer(private val onResult: (Float?) -> Unit) : FrameAnalyzer {
+    private val detector = FaceDetection.getClient(
+        FaceDetectorOptions.Builder()
+            .setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_FAST)
+            .setMinFaceSize(0.1f)
+            .build(),
+    )
+    @Volatile private var closed = false
 
     @OptIn(ExperimentalGetImage::class)
     override fun analyze(image: ImageProxy) {
         val mediaImage = image.image
-        if (mediaImage == null) {
+        if (mediaImage == null || closed) {
             image.close()
             return
         }
@@ -93,9 +99,14 @@ private class FaceSizeAnalyzer(
         // Os listeners do ML Kit rodam na thread principal.
         detector.process(InputImage.fromMediaImage(mediaImage, rotation))
             .addOnSuccessListener { faces ->
-                onResult(faces.maxOfOrNull { it.boundingBox.width() }?.let { it.toFloat() / width })
+                if (!closed) onResult(faces.maxOfOrNull { it.boundingBox.width() }?.let { it.toFloat() / width })
             }
-            .addOnFailureListener { onResult(null) }
+            .addOnFailureListener { if (!closed) onResult(null) }
             .addOnCompleteListener { image.close() }
+    }
+
+    override fun close() {
+        closed = true
+        detector.close()
     }
 }

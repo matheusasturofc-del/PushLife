@@ -4,13 +4,13 @@ import java.time.LocalDate
 
 /** Regras do tempo de tela combinadas no questionário. */
 object Rules {
-    const val SECONDS_PER_PUSHUP = 60L
     const val FREE_SECONDS_PER_DAY = 60L * 60 // 1 h grátis por dia (não acumula)
     const val MAX_EARNED_SECONDS = 2L * 60 * 60 // o saldo ganho acumula até 2 h
 
-    // Emergência: libera os apps sem saldo, mas a pessoa fica devendo flexões.
+    // Emergência: libera os apps sem saldo, mas a pessoa fica devendo exercício.
     const val EMERGENCY_SECONDS = 5L * 60
-    const val EMERGENCY_DEBT_REPS = 10
+    const val EMERGENCY_DEBT_PUSHUPS = 10
+    const val EMERGENCY_DEBT_SECONDS = EMERGENCY_DEBT_PUSHUPS * 60L
     const val MAX_EMERGENCIES_PER_DAY = 3
 }
 
@@ -22,10 +22,12 @@ data class BankState(
     val earnedSeconds: Long = 0,
     val freeUsedSeconds: Long = 0,
     val freeDay: LocalDate? = null,
-    val repsByDay: Map<LocalDate, Int> = emptyMap(),
-    val totalReps: Int = 0,
-    /** Flexões devidas por emergências; são pagas antes de virar minutos. */
-    val debtReps: Int = 0,
+    /** Quanto de cada exercício foi feito por dia (repetições, segundos de prancha ou passos). */
+    val countsByDay: Map<LocalDate, Map<Exercise, Int>> = emptyMap(),
+    /** Tempo de tela que os exercícios de cada dia valeram, mesmo acima do limite guardado. */
+    val effortByDay: Map<LocalDate, Long> = emptyMap(),
+    /** Tempo devido por emergências; é pago antes de o exercício virar saldo. */
+    val debtSeconds: Long = 0,
     val emergencyDay: LocalDate? = null,
     val emergenciesUsed: Int = 0,
     /** Até quando (relógio do sistema, em ms) a emergência atual libera os apps. */
@@ -36,29 +38,37 @@ data class BankState(
 
     fun available(today: LocalDate): Long = freeRemaining(today) + earnedSeconds
 
-    fun repsOn(day: LocalDate): Int = repsByDay[day] ?: 0
+    fun countOn(day: LocalDate, exercise: Exercise): Int = countsByDay[day]?.get(exercise) ?: 0
+
+    /** Minutos ganhos com exercício no dia (1 flexão = 1 minuto): é a unidade da meta diária. */
+    fun effortMinutesOn(day: LocalDate): Int = ((effortByDay[day] ?: 0) / 60).toInt()
+
+    /** A dívida mostrada em flexões, arredondando para cima. */
+    val debtPushups: Int get() = ((debtSeconds + 59) / 60).toInt()
 
     fun emergenciesLeft(today: LocalDate): Int =
         Rules.MAX_EMERGENCIES_PER_DAY - if (emergencyDay == today) emergenciesUsed else 0
 }
 
-/** Resultado de registrar repetições: o novo estado, quanto tempo entrou e quanto da dívida foi paga. */
-data class Credit(val state: BankState, val creditedSeconds: Long, val hitCap: Boolean, val debtPaid: Int = 0)
+/** Resultado de registrar exercício: o novo estado, quanto entrou no saldo e quanto pagou da dívida. */
+data class Credit(val state: BankState, val creditedSeconds: Long, val hitCap: Boolean, val debtPaidSeconds: Long = 0)
 
 object TimeBank {
-    fun addReps(state: BankState, reps: Int, today: LocalDate, secondsPerRep: Long = Rules.SECONDS_PER_PUSHUP): Credit {
-        require(reps >= 0)
-        val debtPaid = minOf(reps, state.debtReps)
-        val wanted = (reps - debtPaid) * secondsPerRep
+    fun addExercise(state: BankState, exercise: Exercise, amount: Int, today: LocalDate): Credit {
+        require(amount >= 0)
+        val value = exercise.valueOf(amount)
+        val debtPaid = minOf(value, state.debtSeconds)
+        val wanted = value - debtPaid
         val newEarned = (state.earnedSeconds + wanted).coerceAtMost(Rules.MAX_EARNED_SECONDS)
         val credited = (newEarned - state.earnedSeconds).coerceAtLeast(0)
+        val dayCounts = state.countsByDay[today].orEmpty()
         val newState = state.copy(
             earnedSeconds = maxOf(newEarned, state.earnedSeconds),
-            repsByDay = state.repsByDay + (today to state.repsOn(today) + reps),
-            totalReps = state.totalReps + reps,
-            debtReps = state.debtReps - debtPaid,
+            countsByDay = state.countsByDay + (today to dayCounts + (exercise to (dayCounts[exercise] ?: 0) + amount)),
+            effortByDay = state.effortByDay + (today to (state.effortByDay[today] ?: 0) + value),
+            debtSeconds = state.debtSeconds - debtPaid,
         )
-        return Credit(newState, credited, hitCap = credited < wanted, debtPaid = debtPaid)
+        return Credit(newState, credited, hitCap = credited < wanted, debtPaidSeconds = debtPaid)
     }
 
     /** Gasta tempo de tela: primeiro o grátis do dia, depois o ganho. Não deixa ficar negativo. */
@@ -78,7 +88,7 @@ object TimeBank {
     fun emergency(state: BankState, today: LocalDate, nowMs: Long): BankState? {
         if (state.emergenciesLeft(today) <= 0) return null
         return state.copy(
-            debtReps = state.debtReps + Rules.EMERGENCY_DEBT_REPS,
+            debtSeconds = state.debtSeconds + Rules.EMERGENCY_DEBT_SECONDS,
             emergencyDay = today,
             emergenciesUsed = (if (state.emergencyDay == today) state.emergenciesUsed else 0) + 1,
             emergencyUntilMs = nowMs + Rules.EMERGENCY_SECONDS * 1000,

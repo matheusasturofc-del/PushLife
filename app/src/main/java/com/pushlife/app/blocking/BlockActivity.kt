@@ -124,9 +124,9 @@ private fun BlockContent(appLabel: String, onTrain: () -> Unit, onEmergency: () 
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
         )
-        if (bank.debtReps > 0) {
+        if (bank.debtSeconds > 0) {
             Text(
-                stringResource(R.string.debt_label, bank.debtReps),
+                stringResource(R.string.debt_label, bank.debtPushups),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.primary,
                 textAlign = TextAlign.Center,

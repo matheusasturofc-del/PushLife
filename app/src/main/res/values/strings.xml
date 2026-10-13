@@ -9,7 +9,7 @@
     <string name="tab_profile">Profile</string>
 
     <string name="balance_label">Your screen time</string>
-    <string name="balance_rules">1 push-up = 1 minute · 1 h free per day</string>
+    <string name="balance_rules">1 push-up = 1 minute · 1 h free per day · other exercises count too</string>
     <string name="start_training">Start workout</string>
     <string name="available_in_phase">Coming in phase %1$d</string>
 
@@ -37,18 +37,14 @@
     <string name="train_step_3">Go down until your face is close to the phone, then push back up. Each push-up is worth 1 minute.</string>
     <string name="train_privacy">The camera image never leaves your phone.</string>
     <string name="train_start">Start</string>
-    <string name="camera_permission_needed">PushLife needs the camera to count your push-ups.</string>
     <string name="camera_permission_button">Allow camera</string>
     <string name="camera_permission_denied">Camera access is blocked. Allow it in Settings > Apps > PushLife > Permissions.</string>
     <string name="open_settings">Open settings</string>
-    <string name="status_waiting">Hold your face over the phone</string>
-    <string name="status_no_face">I can\'t see your face</string>
     <string name="status_go_down">Go down!</string>
     <string name="status_go_up">Push up!</string>
     <string name="session_earned">+%1$s of screen time</string>
     <string name="finish">Finish</string>
     <string name="summary_title">Great workout!</string>
-    <string name="summary_reps">Push-ups: %1$d</string>
     <string name="summary_balance">Available now: %1$s</string>
     <string name="summary_cap">You reached the 2 h limit of saved time. Extra push-ups still count in your stats.</string>
     <string name="summary_zero">No push-ups were counted this time.</string>
@@ -110,17 +106,17 @@
     <string name="freq_1_3">1 to 3 times a week</string>
     <string name="freq_3_5">3 to 5 times a week</string>
     <string name="freq_daily">Every day</string>
-    <string name="ob_freq_goal">Your daily goal: %1$d push-ups</string>
+    <string name="ob_freq_goal">Your daily goal: %1$d min earned (= %1$d push-ups)</string>
     <string name="ob_reminder_kicker">A daily reminder helps you keep the habit.</string>
     <string name="ob_reminder_title">What\'s the best time to work out?</string>
     <string name="ob_reminder_set">Set reminder</string>
     <string name="ob_skip">Skip</string>
     <string name="ob_first_title">All set, %1$s!</string>
     <string name="ob_first_body">Earn your first minutes now.</string>
-    <string name="ob_first_more">More exercises arrive in phase 4.</string>
+    <string name="ob_first_more">Pick push-ups or any of the 8 exercises.</string>
     <string name="ob_first_later">Later</string>
     <string name="home_hello">Hi, %1$s</string>
-    <string name="home_daily_goal">Today\'s goal: %1$d/%2$d push-ups</string>
+    <string name="home_daily_goal">Today\'s goal: %1$d/%2$d min earned</string>
     <string name="reminder_channel">Workout reminders</string>
     <string name="reminder_title">Time to train!</string>
     <string name="reminder_body">Every push-up is worth 1 minute of screen time.</string>
@@ -156,14 +152,81 @@
     <string name="app_little_use">Little use</string>
     <string name="apps_loading">Loading apps…</string>
     <string name="emergencies_left">Emergencies left today: %1$d of %2$d</string>
-    <string name="debt_label">You owe %1$d push-ups. Your next push-ups pay them off first.</string>
+    <string name="debt_label">You owe %1$d push-ups (or other exercise). Your next workout pays them off first.</string>
     <string name="blocked_title">Time\'s up</string>
     <string name="blocked_body">You\'re out of screen time for %1$s. Do push-ups to unlock it.</string>
-    <string name="blocked_train">Do push-ups</string>
+    <string name="blocked_train">Work out</string>
     <string name="blocked_emergency">Emergency: 5 min (you\'ll owe 10 push-ups)</string>
     <string name="blocked_no_emergency">No emergencies left today.</string>
     <string name="blocked_exit">Leave</string>
     <string name="entered_toast">PushLife: using your balance (%1$s left)</string>
     <string name="service_channel">App protection</string>
     <string name="service_text">Protecting your focus. Blocked apps use your balance.</string>
+
+    <!-- Exercícios (fase 4) -->
+    <string name="ex_pushup">Push-ups</string>
+    <string name="ex_squat">Squats</string>
+    <string name="ex_situp">Sit-ups</string>
+    <string name="ex_jack">Jumping jacks</string>
+    <string name="ex_plank">Plank</string>
+    <string name="ex_pullup">Pull-ups</string>
+    <string name="ex_burpee">Burpees</string>
+    <string name="ex_walk">Walk</string>
+    <string name="value_pushup">1 push-up = 1 min</string>
+    <string name="value_squat">1 squat = 30 s</string>
+    <string name="value_situp">1 sit-up = 30 s</string>
+    <string name="value_jack">1 jumping jack = 15 s</string>
+    <string name="value_plank">1 s of plank = 3 s</string>
+    <string name="value_pullup">1 pull-up = 2 min</string>
+    <string name="value_burpee">1 burpee = 1 min 30 s</string>
+    <string name="value_walk">100 steps = 1 min</string>
+    <string name="setup_pushup">Phone on the floor, screen up, right under your face.</string>
+    <string name="setup_side">Stand the phone up about 2 m away, with your side facing it. Your whole body must be on screen.</string>
+    <string name="setup_side_floor">Prop the phone low (floor or chair) about 2 m away, with your side facing it. Your whole body must be on screen.</string>
+    <string name="setup_front">Stand the phone up 2 to 3 m away, facing you. Your whole body must be on screen.</string>
+    <string name="setup_pullup">Put the phone facing the bar, far enough to show you whole, straight arms included.</string>
+    <string name="setup_walk">Uses your phone\'s step sensor. You can keep it in your pocket.</string>
+    <string name="squat_1">Feet shoulder-width apart, toes slightly out.</string>
+    <string name="squat_2">Sit back as if onto a chair until your thighs are parallel to the floor, chest up.</string>
+    <string name="squat_3">Stand up pushing the floor through your heels.</string>
+    <string name="situp_1">Lie on your back with knees bent and feet on the floor.</string>
+    <string name="situp_2">Lift your torso until you are almost sitting, without pulling your neck.</string>
+    <string name="situp_3">Lower slowly until your back touches the floor.</string>
+    <string name="jack_1">Start standing, feet together and arms by your sides.</string>
+    <string name="jack_2">Jump your feet apart and bring your hands above your head.</string>
+    <string name="jack_3">Jump back to the start. That is 1 jumping jack.</string>
+    <string name="plank_1">Forearms on the floor, elbows under your shoulders.</string>
+    <string name="plank_2">Legs straight, body in a line from head to heels.</string>
+    <string name="plank_3">Brace your abs. Time only counts while your body is aligned.</string>
+    <string name="pullup_1">Grip the bar a little wider than your shoulders.</string>
+    <string name="pullup_2">Pull until your chin is over the bar.</string>
+    <string name="pullup_3">Lower until your arms are fully straight.</string>
+    <string name="burpee_1">From standing, squat and put your hands on the floor.</string>
+    <string name="burpee_2">Kick your legs back into a plank (add a push-up if you like).</string>
+    <string name="burpee_3">Bring your legs in, stand up and jump. That is 1 burpee.</string>
+    <string name="walk_1">Tap Start and put the phone away.</string>
+    <string name="walk_2">Walk or run as much as you want.</string>
+    <string name="walk_3">Come back and tap Finish to get your time.</string>
+    <string name="walk_status">Walking… steps are counted even with the screen off.</string>
+    <string name="walk_no_sensor">This phone doesn\'t have a step sensor.</string>
+    <string name="activity_permission_button">Allow step counting</string>
+    <string name="activity_permission_denied">Step counting is blocked. Allow \"Physical activity\" in Settings > Apps > PushLife > Permissions.</string>
+    <string name="unit_reps">reps</string>
+    <string name="unit_seconds">seconds</string>
+    <string name="unit_steps">steps</string>
+    <string name="cue_not_visible">Show your whole body to the camera</string>
+    <string name="cue_get_ready">Get into the starting position</string>
+    <string name="cue_go_lower">Go lower!</string>
+    <string name="cue_go_higher">Come up higher!</string>
+    <string name="cue_chest_up">Keep your chest up</string>
+    <string name="cue_hips_up">Raise your hips</string>
+    <string name="cue_hips_down">Lower your hips</string>
+    <string name="cue_hold">Hold it!</string>
+    <string name="cue_open">Open!</string>
+    <string name="cue_close">Close!</string>
+    <string name="cue_floor">Down to the floor!</string>
+    <string name="cue_stand">Stand up!</string>
+    <string name="cue_pull">Pull!</string>
+    <string name="cue_extend">Straighten your arms</string>
+    <string name="train_other">Other exercise</string>
 </resources>

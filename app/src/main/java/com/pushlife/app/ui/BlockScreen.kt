@@ -133,11 +133,11 @@ fun BlockScreen(modifier: Modifier = Modifier) {
             )
         }
 
-        if (bank.debtReps > 0 || bank.emergenciesLeft(LocalDate.now()) < Rules.MAX_EMERGENCIES_PER_DAY) {
+        if (bank.debtSeconds > 0 || bank.emergenciesLeft(LocalDate.now()) < Rules.MAX_EMERGENCIES_PER_DAY) {
             item {
                 Column(Modifier.padding(horizontal = 4.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    if (bank.debtReps > 0) {
-                        Text(stringResource(R.string.debt_label, bank.debtReps), color = MaterialTheme.colorScheme.primary)
+                    if (bank.debtSeconds > 0) {
+                        Text(stringResource(R.string.debt_label, bank.debtPushups), color = MaterialTheme.colorScheme.primary)
                     }
                     Text(
                         stringResource(R.string.emergencies_left, bank.emergenciesLeft(LocalDate.now()), Rules.MAX_EMERGENCIES_PER_DAY),

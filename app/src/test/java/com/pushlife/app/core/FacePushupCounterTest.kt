@@ -28,12 +28,13 @@ class FacePushupCounterTest {
     }
 
     @Test
-    fun naoContaMeiaFlexao() {
+    fun naoContaMeiaFlexaoEAvisa() {
         val c = FacePushupCounter()
         var t = c.sweep(0.30f, 0.30f, 0, steps = 5)
-        t = c.sweep(0.30f, 0.38f, t) // desceu pouco
-        c.sweep(0.38f, 0.30f, t)
+        t = c.sweep(0.30f, 0.39f, t) // desceu pouco
+        c.sweep(0.39f, 0.30f, t)
         assertEquals(0, c.count)
+        assertTrue(c.lastPartialMs > 0)
     }
 
     @Test
@@ -63,6 +64,7 @@ class FacePushupCounterTest {
         var t = c.sweep(0.60f, 0.60f, 0, steps = 5) // começou já embaixo
         t = c.sweep(0.60f, 0.30f, t) // sobe: não é repetição, só aprende o topo
         assertEquals(0, c.count)
+        assertTrue("subir do fundo não é meia flexão", c.lastPartialMs < 0)
         t = c.sweep(0.30f, 0.60f, t)
         c.sweep(0.60f, 0.30f, t)
         assertEquals(1, c.count)

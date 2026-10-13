@@ -8,7 +8,7 @@
     <string name="tab_profile">Perfil</string>
 
     <string name="balance_label">Seu tempo de tela</string>
-    <string name="balance_rules">1 flexão = 1 minuto · 1 h grátis por dia</string>
+    <string name="balance_rules">1 flexão = 1 minuto · 1 h grátis por dia · outros exercícios também contam</string>
     <string name="start_training">Começar treino</string>
     <string name="available_in_phase">Chega na fase %1$d</string>
 
@@ -36,18 +36,14 @@
     <string name="train_step_3">Desça até o rosto chegar perto do celular e suba. Cada flexão vale 1 minuto.</string>
     <string name="train_privacy">A imagem da câmera nunca sai do seu celular.</string>
     <string name="train_start">Começar</string>
-    <string name="camera_permission_needed">O PushLife precisa da câmera para contar suas flexões.</string>
     <string name="camera_permission_button">Permitir câmera</string>
     <string name="camera_permission_denied">O acesso à câmera está bloqueado. Libere em Configurações > Apps > PushLife > Permissões.</string>
     <string name="open_settings">Abrir configurações</string>
-    <string name="status_waiting">Posicione o rosto em cima do celular</string>
-    <string name="status_no_face">Não estou vendo seu rosto</string>
     <string name="status_go_down">Desça!</string>
     <string name="status_go_up">Suba!</string>
     <string name="session_earned">+%1$s de tela</string>
     <string name="finish">Finalizar</string>
     <string name="summary_title">Mandou bem!</string>
-    <string name="summary_reps">Flexões: %1$d</string>
     <string name="summary_balance">Disponível agora: %1$s</string>
     <string name="summary_cap">Você chegou ao limite de 2 h guardadas. As flexões extras ainda contam nas suas estatísticas.</string>
     <string name="summary_zero">Nenhuma flexão foi contada desta vez.</string>
@@ -104,17 +100,17 @@
     <string name="freq_1_3">1 a 3 vezes por semana</string>
     <string name="freq_3_5">3 a 5 vezes por semana</string>
     <string name="freq_daily">Todo dia</string>
-    <string name="ob_freq_goal">Sua meta diária: %1$d flexões</string>
+    <string name="ob_freq_goal">Sua meta diária: %1$d min ganhos (= %1$d flexões)</string>
     <string name="ob_reminder_kicker">Um lembrete diário ajuda a manter o hábito.</string>
     <string name="ob_reminder_title">Qual o melhor horário para treinar?</string>
     <string name="ob_reminder_set">Definir lembrete</string>
     <string name="ob_skip">Pular</string>
     <string name="ob_first_title">Tudo pronto, %1$s!</string>
     <string name="ob_first_body">Ganhe seus primeiros minutos agora.</string>
-    <string name="ob_first_more">Mais exercícios chegam na fase 4.</string>
+    <string name="ob_first_more">Escolha flexões ou qualquer um dos 8 exercícios.</string>
     <string name="ob_first_later">Depois</string>
     <string name="home_hello">Olá, %1$s</string>
-    <string name="home_daily_goal">Meta de hoje: %1$d/%2$d flexões</string>
+    <string name="home_daily_goal">Meta de hoje: %1$d/%2$d min ganhos</string>
     <string name="reminder_channel">Lembretes de treino</string>
     <string name="reminder_title">Hora de treinar!</string>
     <string name="reminder_body">Cada flexão vale 1 minuto de tela.</string>
@@ -149,14 +145,81 @@
     <string name="app_little_use">Pouco usado</string>
     <string name="apps_loading">Carregando apps…</string>
     <string name="emergencies_left">Emergências hoje: restam %1$d de %2$d</string>
-    <string name="debt_label">Você deve %1$d flexões. As próximas flexões pagam a dívida primeiro.</string>
+    <string name="debt_label">Você deve %1$d flexões (ou outro exercício). O próximo treino paga a dívida primeiro.</string>
     <string name="blocked_title">Tempo esgotado</string>
     <string name="blocked_body">Seu saldo acabou para usar o %1$s. Faça flexões para liberar.</string>
-    <string name="blocked_train">Fazer flexões</string>
+    <string name="blocked_train">Treinar</string>
     <string name="blocked_emergency">Emergência: 5 min (você fica devendo 10 flexões)</string>
     <string name="blocked_no_emergency">Acabaram as emergências de hoje.</string>
     <string name="blocked_exit">Sair</string>
     <string name="entered_toast">PushLife: usando seu saldo (restam %1$s)</string>
     <string name="service_channel">Proteção de apps</string>
     <string name="service_text">Protegendo seu foco. Os apps bloqueados gastam seu saldo.</string>
+
+    <!-- Exercícios (fase 4) -->
+    <string name="ex_pushup">Flexões</string>
+    <string name="ex_squat">Agachamentos</string>
+    <string name="ex_situp">Abdominais</string>
+    <string name="ex_jack">Polichinelos</string>
+    <string name="ex_plank">Prancha</string>
+    <string name="ex_pullup">Barra fixa</string>
+    <string name="ex_burpee">Burpees</string>
+    <string name="ex_walk">Caminhada</string>
+    <string name="value_pushup">1 flexão = 1 min</string>
+    <string name="value_squat">1 agachamento = 30 s</string>
+    <string name="value_situp">1 abdominal = 30 s</string>
+    <string name="value_jack">1 polichinelo = 15 s</string>
+    <string name="value_plank">1 s de prancha = 3 s</string>
+    <string name="value_pullup">1 barra = 2 min</string>
+    <string name="value_burpee">1 burpee = 1 min 30 s</string>
+    <string name="value_walk">100 passos = 1 min</string>
+    <string name="setup_pushup">Celular no chão, tela para cima, bem embaixo do rosto.</string>
+    <string name="setup_side">Apoie o celular em pé, a uns 2 metros, de lado para você. O corpo inteiro precisa aparecer.</string>
+    <string name="setup_side_floor">Apoie o celular baixo (no chão ou numa cadeira), a uns 2 metros, de lado para você. O corpo inteiro precisa aparecer.</string>
+    <string name="setup_front">Apoie o celular em pé, de frente para você, a uns 2 ou 3 metros. O corpo inteiro precisa aparecer.</string>
+    <string name="setup_pullup">Coloque o celular de frente para a barra, longe o bastante para mostrar você inteiro, com os braços esticados.</string>
+    <string name="setup_walk">Usa o sensor de passos do celular. Pode deixar no bolso.</string>
+    <string name="squat_1">Pés na largura dos ombros, pontas levemente para fora.</string>
+    <string name="squat_2">Desça como se fosse sentar numa cadeira, até a coxa ficar paralela ao chão, com o peito erguido.</string>
+    <string name="squat_3">Suba empurrando o chão com os calcanhares.</string>
+    <string name="situp_1">Deite de costas com os joelhos dobrados e os pés no chão.</string>
+    <string name="situp_2">Suba o tronco até ficar quase sentado, sem puxar o pescoço.</string>
+    <string name="situp_3">Desça devagar até as costas tocarem o chão.</string>
+    <string name="jack_1">Comece em pé, pés juntos e braços ao lado do corpo.</string>
+    <string name="jack_2">Salte abrindo as pernas e levando as mãos acima da cabeça.</string>
+    <string name="jack_3">Salte de volta à posição inicial. Isso é 1 polichinelo.</string>
+    <string name="plank_1">Antebraços no chão, cotovelos embaixo dos ombros.</string>
+    <string name="plank_2">Pernas esticadas e corpo reto, da cabeça aos calcanhares.</string>
+    <string name="plank_3">Contraia o abdômen. O tempo só conta com o corpo alinhado.</string>
+    <string name="pullup_1">Segure a barra com as mãos um pouco mais abertas que os ombros.</string>
+    <string name="pullup_2">Puxe até o queixo passar da barra.</string>
+    <string name="pullup_3">Desça até esticar os braços por completo.</string>
+    <string name="burpee_1">Em pé, agache e apoie as mãos no chão.</string>
+    <string name="burpee_2">Jogue as pernas para trás até a prancha (pode fazer uma flexão).</string>
+    <string name="burpee_3">Volte as pernas, levante e dê um pequeno salto. Isso é 1 burpee.</string>
+    <string name="walk_1">Toque em Começar e guarde o celular.</string>
+    <string name="walk_2">Caminhe ou corra o quanto quiser.</string>
+    <string name="walk_3">Volte ao app e toque em Finalizar para receber o tempo.</string>
+    <string name="walk_status">Caminhando… os passos contam mesmo com a tela desligada.</string>
+    <string name="walk_no_sensor">Este celular não tem sensor de passos.</string>
+    <string name="activity_permission_button">Permitir contar passos</string>
+    <string name="activity_permission_denied">A contagem de passos está bloqueada. Libere \"Atividade física\" em Configurações > Apps > PushLife > Permissões.</string>
+    <string name="unit_reps">repetições</string>
+    <string name="unit_seconds">segundos</string>
+    <string name="unit_steps">passos</string>
+    <string name="cue_not_visible">Mostre o corpo inteiro para a câmera</string>
+    <string name="cue_get_ready">Fique na posição inicial</string>
+    <string name="cue_go_lower">Desça mais!</string>
+    <string name="cue_go_higher">Suba mais!</string>
+    <string name="cue_chest_up">Mantenha o peito erguido</string>
+    <string name="cue_hips_up">Suba o quadril</string>
+    <string name="cue_hips_down">Abaixe o quadril</string>
+    <string name="cue_hold">Segura!</string>
+    <string name="cue_open">Abre!</string>
+    <string name="cue_close">Fecha!</string>
+    <string name="cue_floor">Ao chão!</string>
+    <string name="cue_stand">Levanta!</string>
+    <string name="cue_pull">Puxa!</string>
+    <string name="cue_extend">Estique os braços</string>
+    <string name="train_other">Outro exercício</string>
 </resources>

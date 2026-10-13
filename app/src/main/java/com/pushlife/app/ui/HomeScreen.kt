@@ -47,7 +47,7 @@ import com.pushlife.app.ui.theme.Orange
 import com.pushlife.app.ui.theme.Yellow
 
 // Fases do plano; CURRENT_PHASE é a última concluída.
-private const val CURRENT_PHASE = 3
+private const val CURRENT_PHASE = 4
 private val PHASES = listOf(
     R.string.phase_1, R.string.phase_2, R.string.phase_3, R.string.phase_4,
     R.string.phase_5, R.string.phase_6, R.string.phase_7,
@@ -109,16 +109,16 @@ private fun BalanceCard(bank: BankState, today: LocalDate, dailyGoal: Int) {
                 style = MaterialTheme.typography.bodyMedium,
                 color = Ink,
             )
-            Text(stringResource(R.string.home_daily_goal, bank.repsOn(today), dailyGoal), style = MaterialTheme.typography.titleMedium, color = Ink)
+            Text(stringResource(R.string.home_daily_goal, bank.effortMinutesOn(today), dailyGoal), style = MaterialTheme.typography.titleMedium, color = Ink)
             LinearProgressIndicator(
-                progress = { (bank.repsOn(today).toFloat() / dailyGoal).coerceIn(0f, 1f) },
+                progress = { (bank.effortMinutesOn(today).toFloat() / dailyGoal).coerceIn(0f, 1f) },
                 modifier = Modifier.fillMaxWidth().height(8.dp),
                 color = Ink,
                 trackColor = Ink.copy(alpha = 0.2f),
                 strokeCap = StrokeCap.Round,
             )
-            if (bank.debtReps > 0) {
-                Text(stringResource(R.string.debt_label, bank.debtReps), style = MaterialTheme.typography.bodyMedium, color = Ink)
+            if (bank.debtSeconds > 0) {
+                Text(stringResource(R.string.debt_label, bank.debtPushups), style = MaterialTheme.typography.bodyMedium, color = Ink)
             }
             Text(stringResource(R.string.balance_rules), style = MaterialTheme.typography.bodySmall, color = Ink.copy(alpha = 0.7f))
         }

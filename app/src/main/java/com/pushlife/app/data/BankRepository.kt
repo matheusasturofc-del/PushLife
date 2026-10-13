@@ -4,21 +4,22 @@ import android.content.Context
 import androidx.core.content.edit
 import com.pushlife.app.core.BankState
 import com.pushlife.app.core.Credit
+import com.pushlife.app.core.Exercise
 import com.pushlife.app.core.TimeBank
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import java.time.LocalDate
 
-/** Guarda o saldo de tempo e as repetições no próprio celular. */
+/** Guarda o saldo de tempo e o histórico de exercícios no próprio celular. */
 class BankRepository(context: Context) {
     private val prefs = context.getSharedPreferences("bank", Context.MODE_PRIVATE)
     private val _state = MutableStateFlow(load())
     val state: StateFlow<BankState> = _state.asStateFlow()
 
     @Synchronized
-    fun addReps(reps: Int, today: LocalDate = LocalDate.now()): Credit {
-        val credit = TimeBank.addReps(_state.value, reps, today)
+    fun addExercise(exercise: Exercise, amount: Int, today: LocalDate = LocalDate.now()): Credit {
+        val credit = TimeBank.addExercise(_state.value, exercise, amount, today)
         save(credit.state)
         return credit
     }
@@ -36,29 +37,39 @@ class BankRepository(context: Context) {
         return true
     }
 
-    private fun load() = BankState(
-        earnedSeconds = prefs.getLong(KEY_EARNED, 0),
-        freeUsedSeconds = prefs.getLong(KEY_FREE_USED, 0),
-        freeDay = prefs.getString(KEY_FREE_DAY, null)?.let(LocalDate::parse),
-        repsByDay = decodeReps(prefs.getString(KEY_REPS, "").orEmpty()),
-        totalReps = prefs.getInt(KEY_TOTAL, 0),
-        debtReps = prefs.getInt(KEY_DEBT, 0),
-        emergencyDay = prefs.getString(KEY_EMERGENCY_DAY, null)?.let(LocalDate::parse),
-        emergenciesUsed = prefs.getInt(KEY_EMERGENCIES_USED, 0),
-        emergencyUntilMs = prefs.getLong(KEY_EMERGENCY_UNTIL, 0),
-    )
+    private fun load(): BankState {
+        // Versões antigas guardavam só flexões ("reps_by_day") e a dívida em flexões ("debt_reps").
+        val legacyReps = decodeDayInts(prefs.getString(KEY_LEGACY_REPS, "").orEmpty())
+        val counts = prefs.getString(KEY_COUNTS, null)?.let(::decodeCounts)
+            ?: legacyReps.mapValues { mapOf(Exercise.PUSHUP to it.value) }
+        val effort = prefs.getString(KEY_EFFORT, null)?.let { decodeDayInts(it).mapValues { e -> e.value.toLong() } }
+            ?: legacyReps.mapValues { it.value * 60L }
+        return BankState(
+            earnedSeconds = prefs.getLong(KEY_EARNED, 0),
+            freeUsedSeconds = prefs.getLong(KEY_FREE_USED, 0),
+            freeDay = prefs.getString(KEY_FREE_DAY, null)?.let(LocalDate::parse),
+            countsByDay = counts,
+            effortByDay = effort,
+            debtSeconds = if (prefs.contains(KEY_DEBT_SECONDS)) prefs.getLong(KEY_DEBT_SECONDS, 0) else prefs.getInt(KEY_LEGACY_DEBT, 0) * 60L,
+            emergencyDay = prefs.getString(KEY_EMERGENCY_DAY, null)?.let(LocalDate::parse),
+            emergenciesUsed = prefs.getInt(KEY_EMERGENCIES_USED, 0),
+            emergencyUntilMs = prefs.getLong(KEY_EMERGENCY_UNTIL, 0),
+        )
+    }
 
     private fun save(state: BankState) {
         prefs.edit {
             putLong(KEY_EARNED, state.earnedSeconds)
             putLong(KEY_FREE_USED, state.freeUsedSeconds)
             putString(KEY_FREE_DAY, state.freeDay?.toString())
-            putString(KEY_REPS, encodeReps(state.repsByDay))
-            putInt(KEY_TOTAL, state.totalReps)
-            putInt(KEY_DEBT, state.debtReps)
+            putString(KEY_COUNTS, encodeCounts(state.countsByDay))
+            putString(KEY_EFFORT, state.effortByDay.entries.joinToString(";") { "${it.key}=${it.value}" })
+            putLong(KEY_DEBT_SECONDS, state.debtSeconds)
             putString(KEY_EMERGENCY_DAY, state.emergencyDay?.toString())
             putInt(KEY_EMERGENCIES_USED, state.emergenciesUsed)
             putLong(KEY_EMERGENCY_UNTIL, state.emergencyUntilMs)
+            remove(KEY_LEGACY_REPS)
+            remove(KEY_LEGACY_DEBT)
         }
         _state.value = state
     }
@@ -67,20 +78,37 @@ class BankRepository(context: Context) {
         const val KEY_EARNED = "earned_seconds"
         const val KEY_FREE_USED = "free_used_seconds"
         const val KEY_FREE_DAY = "free_day"
-        const val KEY_REPS = "reps_by_day"
-        const val KEY_TOTAL = "total_reps"
-        const val KEY_DEBT = "debt_reps"
+        const val KEY_COUNTS = "counts_by_day"
+        const val KEY_EFFORT = "effort_by_day"
+        const val KEY_DEBT_SECONDS = "debt_seconds"
         const val KEY_EMERGENCY_DAY = "emergency_day"
         const val KEY_EMERGENCIES_USED = "emergencies_used"
         const val KEY_EMERGENCY_UNTIL = "emergency_until_ms"
+        const val KEY_LEGACY_REPS = "reps_by_day"
+        const val KEY_LEGACY_DEBT = "debt_reps"
+
+        // Formato: "2026-10-13=PUSHUP:20,SQUAT:5;2026-10-12=PUSHUP:10"
+        fun encodeCounts(map: Map<LocalDate, Map<Exercise, Int>>) = map.entries.joinToString(";") { (day, counts) ->
+            "$day=" + counts.entries.joinToString(",") { "${it.key.name}:${it.value}" }
+        }
+
+        fun decodeCounts(text: String): Map<LocalDate, Map<Exercise, Int>> = text.split(';')
+            .mapNotNull { entry ->
+                val (day, list) = entry.split('=').takeIf { it.size == 2 } ?: return@mapNotNull null
+                val counts = list.split(',').mapNotNull { pair ->
+                    val (name, n) = pair.split(':').takeIf { it.size == 2 } ?: return@mapNotNull null
+                    val exercise = Exercise.entries.firstOrNull { it.name == name } ?: return@mapNotNull null
+                    n.toIntOrNull()?.let { exercise to it }
+                }.toMap()
+                runCatching { LocalDate.parse(day) to counts }.getOrNull()
+            }
+            .toMap()
 
         // Formato: "2026-10-13=25;2026-10-12=10"
-        fun encodeReps(map: Map<LocalDate, Int>) = map.entries.joinToString(";") { "${it.key}=${it.value}" }
-
-        fun decodeReps(text: String): Map<LocalDate, Int> = text.split(';')
+        fun decodeDayInts(text: String): Map<LocalDate, Int> = text.split(';')
             .mapNotNull { entry ->
-                val (day, reps) = entry.split('=').takeIf { it.size == 2 } ?: return@mapNotNull null
-                runCatching { LocalDate.parse(day) to reps.toInt() }.getOrNull()
+                val (day, value) = entry.split('=').takeIf { it.size == 2 } ?: return@mapNotNull null
+                runCatching { LocalDate.parse(day) to value.toInt() }.getOrNull()
             }
             .toMap()
     }

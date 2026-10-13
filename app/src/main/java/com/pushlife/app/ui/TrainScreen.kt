@@ -1,34 +1,46 @@
 package com.pushlife.app.ui
 
 import android.Manifest
-import androidx.annotation.StringRes
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.media.AudioManager
 import android.media.ToneGenerator
 import android.net.Uri
+import android.os.Build
 import android.os.SystemClock
 import android.provider.Settings
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.StringRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -60,21 +72,40 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.pushlife.app.AppGraph
 import com.pushlife.app.R
 import com.pushlife.app.camera.FaceCamera
+import com.pushlife.app.camera.PoseCamera
+import com.pushlife.app.camera.StepCounterEffect
+import com.pushlife.app.camera.StepSensor
+import com.pushlife.app.core.Exercise
+import com.pushlife.app.core.ExerciseUnit
 import com.pushlife.app.core.FacePushupCounter
+import com.pushlife.app.core.Tracking
+import com.pushlife.app.core.pose.Cue
+import com.pushlife.app.core.pose.PoseTracker
 import java.time.LocalDate
 
-private enum class Stage { Intro, Active, Summary }
+private enum class Stage { Pick, Intro, Active, Summary }
 
-private data class SessionResult(val reps: Int, val earnedSeconds: Long, val hitCap: Boolean)
+private data class SessionResult(val exercise: Exercise, val amount: Int, val earnedSeconds: Long, val hitCap: Boolean)
 
 @Composable
 fun TrainScreen(onBackHome: () -> Unit, modifier: Modifier = Modifier) {
-    var stage by rememberSaveable { mutableStateOf(Stage.Intro) }
-    var result by remember { mutableStateOf(SessionResult(0, 0, false)) }
+    var stage by rememberSaveable { mutableStateOf(Stage.Pick) }
+    var exercise by rememberSaveable { mutableStateOf(Exercise.PUSHUP) }
+    var result by remember { mutableStateOf(SessionResult(Exercise.PUSHUP, 0, 0, false)) }
+
+    BackHandler(enabled = stage == Stage.Intro) { stage = Stage.Pick }
 
     when (stage) {
-        Stage.Intro -> IntroStage(onStart = { stage = Stage.Active }, modifier = modifier)
+        Stage.Pick -> PickStage(
+            onPick = {
+                exercise = it
+                stage = Stage.Intro
+            },
+            modifier = modifier,
+        )
+        Stage.Intro -> IntroStage(exercise, onBack = { stage = Stage.Pick }, onStart = { stage = Stage.Active }, modifier = modifier)
         Stage.Active -> ActiveStage(
+            exercise,
             onFinish = {
                 result = it
                 stage = Stage.Summary
@@ -84,8 +115,9 @@ fun TrainScreen(onBackHome: () -> Unit, modifier: Modifier = Modifier) {
         Stage.Summary -> SummaryStage(
             result = result,
             onAgain = { stage = Stage.Active },
+            onOther = { stage = Stage.Pick },
             onBackHome = {
-                stage = Stage.Intro
+                stage = Stage.Pick
                 onBackHome()
             },
             modifier = modifier,
@@ -94,49 +126,96 @@ fun TrainScreen(onBackHome: () -> Unit, modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun IntroStage(onStart: () -> Unit, modifier: Modifier = Modifier) {
+private fun PickStage(onPick: (Exercise) -> Unit, modifier: Modifier = Modifier) {
+    LazyVerticalGrid(
+        columns = GridCells.Fixed(2),
+        modifier = modifier.fillMaxSize(),
+        contentPadding = PaddingValues(horizontal = 20.dp, vertical = 16.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        item(span = { GridItemSpan(2) }) {
+            Text(stringResource(R.string.tab_train), style = MaterialTheme.typography.displayMedium)
+        }
+        items(Exercise.entries) { ex ->
+            val ui = ex.ui
+            Column(
+                Modifier
+                    .clip(RoundedCornerShape(20.dp))
+                    .background(MaterialTheme.colorScheme.surfaceContainer)
+                    .clickable { onPick(ex) }
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                Box(
+                    Modifier.size(44.dp).background(MaterialTheme.colorScheme.primary, CircleShape),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(ui.icon, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimary)
+                }
+                Text(stringResource(ui.name), style = MaterialTheme.typography.titleMedium)
+                Text(stringResource(ui.value), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        }
+    }
+}
+
+@Composable
+private fun IntroStage(exercise: Exercise, onBack: () -> Unit, onStart: () -> Unit, modifier: Modifier = Modifier) {
     val context = LocalContext.current
-    var hasCamera by remember {
-        mutableStateOf(ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED)
+    val ui = exercise.ui
+    val permission = when {
+        exercise.tracking != Tracking.STEPS -> Manifest.permission.CAMERA
+        Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q -> Manifest.permission.ACTIVITY_RECOGNITION
+        else -> null
     }
+    fun granted() = permission == null ||
+        ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED
+    var hasPermission by remember(exercise) { mutableStateOf(granted()) }
     var denied by rememberSaveable { mutableStateOf(false) }
-    val askCamera = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-        hasCamera = granted
-        denied = !granted
-        if (granted) onStart()
+    val ask = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { ok ->
+        hasPermission = ok
+        denied = !ok
+        if (ok) onStart()
     }
+    val sensorMissing = exercise.tracking == Tracking.STEPS && !StepSensor.isAvailable(context)
 
     Column(
         modifier = modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(horizontal = 20.dp, vertical = 16.dp),
+            .padding(horizontal = 20.dp, vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        Text(stringResource(R.string.train_title), style = MaterialTheme.typography.displayMedium)
+        IconButton(onClick = onBack) {
+            Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = stringResource(R.string.ob_back))
+        }
+        Text(stringResource(ui.name), style = MaterialTheme.typography.displayMedium)
+        Text(stringResource(ui.value), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
         Card(
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
             shape = RoundedCornerShape(20.dp),
         ) {
             Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
                 Text(stringResource(R.string.train_how_title), style = MaterialTheme.typography.headlineSmall)
-                Step(1, R.string.train_step_1)
-                Step(2, R.string.train_step_2)
-                Step(3, R.string.train_step_3)
-                Text(
-                    stringResource(R.string.train_privacy),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+                Text(stringResource(ui.setup), style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold)
+                ui.steps.forEachIndexed { i, step -> Step(i + 1, step) }
+                if (exercise.tracking != Tracking.STEPS) {
+                    Text(
+                        stringResource(R.string.train_privacy),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
             }
         }
 
-        if (!hasCamera) {
-            Text(stringResource(R.string.camera_permission_needed), style = MaterialTheme.typography.bodyLarge)
+        if (sensorMissing) {
+            Text(stringResource(R.string.walk_no_sensor), color = MaterialTheme.colorScheme.error)
         }
         if (denied) {
             Text(
-                stringResource(R.string.camera_permission_denied),
+                stringResource(if (exercise.tracking == Tracking.STEPS) R.string.activity_permission_denied else R.string.camera_permission_denied),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.error,
             )
@@ -151,11 +230,18 @@ private fun IntroStage(onStart: () -> Unit, modifier: Modifier = Modifier) {
         }
 
         Button(
-            onClick = { if (hasCamera) onStart() else askCamera.launch(Manifest.permission.CAMERA) },
+            onClick = { if (hasPermission) onStart() else permission?.let { ask.launch(it) } },
+            enabled = !sensorMissing,
             modifier = Modifier.fillMaxWidth().height(64.dp),
         ) {
             Text(
-                stringResource(if (hasCamera) R.string.train_start else R.string.camera_permission_button),
+                stringResource(
+                    when {
+                        hasPermission -> R.string.train_start
+                        exercise.tracking == Tracking.STEPS -> R.string.activity_permission_button
+                        else -> R.string.camera_permission_button
+                    },
+                ),
                 style = MaterialTheme.typography.titleLarge,
             )
         }
@@ -175,15 +261,27 @@ private fun Step(number: Int, @StringRes text: Int) {
     }
 }
 
+/** Estado de uma sessão de treino, atualizado pela câmera ou pelo sensor de passos. */
+private class Session(val exercise: Exercise) {
+    var amount by mutableIntStateOf(0)
+    var progress by mutableFloatStateOf(0f)
+    var cue by mutableStateOf(Cue.GET_READY)
+    var tracking by mutableStateOf(false)
+    var earned by mutableLongStateOf(0L)
+    var hitCap by mutableStateOf(false)
+
+    /** Credita [units] unidades no saldo (a dívida de emergência é paga primeiro). */
+    fun credit(units: Int) {
+        if (units <= 0) return
+        val credit = AppGraph.bank.addExercise(exercise, units, LocalDate.now())
+        earned += credit.creditedSeconds
+        hitCap = hitCap || credit.hitCap
+    }
+}
+
 @Composable
-private fun ActiveStage(onFinish: (SessionResult) -> Unit, modifier: Modifier = Modifier) {
-    val counter = remember { FacePushupCounter() }
-    var reps by remember { mutableIntStateOf(0) }
-    var depth by remember { mutableFloatStateOf(0f) }
-    var phase by remember { mutableStateOf(FacePushupCounter.Phase.WAITING) }
-    var faceVisible by remember { mutableStateOf(false) }
-    var earned by remember { mutableLongStateOf(0L) }
-    var hitCap by remember { mutableStateOf(false) }
+private fun ActiveStage(exercise: Exercise, onFinish: (SessionResult) -> Unit, modifier: Modifier = Modifier) {
+    val session = remember(exercise) { Session(exercise) }
     val phrases = stringArrayResource(R.array.motivation)
     var phrase by remember { mutableStateOf("") }
 
@@ -191,10 +289,22 @@ private fun ActiveStage(onFinish: (SessionResult) -> Unit, modifier: Modifier = 
     val view = LocalView.current
     val tone = remember { runCatching { ToneGenerator(AudioManager.STREAM_MUSIC, 80) }.getOrNull() }
     DisposableEffect(Unit) {
-        view.keepScreenOn = true
+        view.keepScreenOn = exercise.tracking != Tracking.STEPS
         onDispose {
             view.keepScreenOn = false
             tone?.release()
+        }
+    }
+    // Uma frase de incentivo a cada 5 repetições (ou a cada 15 s de prancha).
+    val phraseEvery = if (exercise.unit == ExerciseUnit.SECONDS) 15 else 5
+    fun onCounted(units: Int) {
+        if (units <= 0) return
+        val before = session.amount
+        session.amount += units
+        session.credit(units)
+        if (exercise.unit == ExerciseUnit.REPS) tone?.startTone(ToneGenerator.TONE_PROP_BEEP, 120)
+        if (session.amount / phraseEvery > before / phraseEvery) {
+            phrase = phrases[(session.amount / phraseEvery - 1) % phrases.size]
         }
     }
 
@@ -203,73 +313,124 @@ private fun ActiveStage(onFinish: (SessionResult) -> Unit, modifier: Modifier = 
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        FaceCamera(
-            onFaceSize = { size ->
-                faceVisible = size != null
-                if (counter.update(size, SystemClock.elapsedRealtime())) {
-                    reps = counter.count
-                    val credit = AppGraph.bank.addReps(1, LocalDate.now())
-                    earned += credit.creditedSeconds
-                    hitCap = hitCap || credit.hitCap
-                    tone?.startTone(ToneGenerator.TONE_PROP_BEEP, 120)
-                    if (reps % 5 == 0) phrase = phrases[(reps / 5 - 1) % phrases.size]
+        val cameraModifier = Modifier
+            .size(120.dp)
+            .clip(CircleShape)
+            .border(3.dp, if (session.tracking) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline, CircleShape)
+        when (exercise.tracking) {
+            Tracking.FACE -> {
+                val counter = remember { FacePushupCounter() }
+                FaceCamera(
+                    onFaceSize = { size ->
+                        val now = SystemClock.elapsedRealtime()
+                        session.tracking = size != null
+                        if (counter.update(size, now)) onCounted(1)
+                        session.progress = counter.depth
+                        session.cue = when {
+                            now - counter.lastPartialMs < 1_500 -> Cue.GO_LOWER
+                            counter.phase == FacePushupCounter.Phase.WAITING -> Cue.GET_READY
+                            size == null && counter.phase != FacePushupCounter.Phase.DOWN -> Cue.NOT_VISIBLE
+                            counter.phase == FacePushupCounter.Phase.UP -> Cue.GO_DOWN
+                            else -> Cue.GO_UP
+                        }
+                    },
+                    modifier = cameraModifier,
+                )
+            }
+            Tracking.POSE -> {
+                val tracker = remember { PoseTracker.forExercise(exercise) }
+                PoseCamera(
+                    onPose = { frame ->
+                        val update = tracker.update(frame, SystemClock.elapsedRealtime())
+                        session.tracking = update.cue != Cue.NOT_VISIBLE
+                        onCounted(update.counted)
+                        session.progress = update.progress
+                        session.cue = update.cue
+                    },
+                    modifier = cameraModifier,
+                )
+            }
+            Tracking.STEPS -> {
+                StepCounterEffect { steps ->
+                    session.tracking = true
+                    session.amount = steps // passos são creditados de uma vez ao finalizar
                 }
-                depth = counter.depth
-                phase = counter.phase
-            },
-            modifier = Modifier
-                .size(120.dp)
-                .clip(CircleShape)
-                .border(3.dp, if (faceVisible) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline, CircleShape),
-        )
-
-        val status = when {
-            phase == FacePushupCounter.Phase.WAITING -> R.string.status_waiting
-            !faceVisible && phase != FacePushupCounter.Phase.DOWN -> R.string.status_no_face
-            phase == FacePushupCounter.Phase.UP -> R.string.status_go_down
-            else -> R.string.status_go_up
+            }
         }
-        Text(stringResource(status), style = MaterialTheme.typography.headlineSmall, textAlign = TextAlign.Center)
+
+        Text(
+            if (exercise.tracking == Tracking.STEPS) stringResource(R.string.walk_status) else stringResource(cueText(exercise, session.cue)),
+            style = MaterialTheme.typography.headlineSmall,
+            textAlign = TextAlign.Center,
+        )
 
         Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
-            Text(
-                "$reps",
-                fontSize = 160.sp,
-                fontWeight = FontWeight.Black,
-                fontStyle = FontStyle.Italic,
-                color = MaterialTheme.colorScheme.primary,
-            )
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(
+                    "${session.amount}",
+                    fontSize = 140.sp,
+                    fontWeight = FontWeight.Black,
+                    fontStyle = FontStyle.Italic,
+                    color = MaterialTheme.colorScheme.primary,
+                )
+                Text(stringResource(unitLabel(exercise)), style = MaterialTheme.typography.titleMedium)
+            }
         }
 
-        LinearProgressIndicator(
-            progress = { depth },
-            modifier = Modifier.fillMaxWidth().height(14.dp).clip(RoundedCornerShape(7.dp)),
-        )
+        if (exercise.tracking != Tracking.STEPS) {
+            LinearProgressIndicator(
+                progress = { session.progress },
+                modifier = Modifier.fillMaxWidth().height(14.dp).clip(RoundedCornerShape(7.dp)),
+            )
+        }
         Text(phrase, style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.secondary)
-        Text(
-            stringResource(R.string.session_earned, formatDuration(earned)),
-            style = MaterialTheme.typography.titleMedium,
-        )
+        val earnedNow = if (exercise.tracking == Tracking.STEPS) exercise.valueOf(session.amount) else session.earned
+        Text(stringResource(R.string.session_earned, formatDuration(earnedNow)), style = MaterialTheme.typography.titleMedium)
         Button(
-            onClick = { onFinish(SessionResult(reps, earned, hitCap)) },
+            onClick = {
+                if (exercise.tracking == Tracking.STEPS) session.credit(session.amount)
+                onFinish(SessionResult(exercise, session.amount, session.earned, session.hitCap))
+            },
             modifier = Modifier.fillMaxWidth().height(64.dp),
         ) { Text(stringResource(R.string.finish), style = MaterialTheme.typography.titleLarge) }
     }
 }
 
+/** No abdominal "Desça mais" vira "Suba mais": a mesma meia repetição, na direção certa. */
+@StringRes
+private fun cueText(exercise: Exercise, cue: Cue): Int =
+    if (exercise == Exercise.SITUP && cue == Cue.GO_LOWER) R.string.cue_go_higher else cue.text
+
+@StringRes
+private fun unitLabel(exercise: Exercise): Int = when (exercise.unit) {
+    ExerciseUnit.REPS -> R.string.unit_reps
+    ExerciseUnit.SECONDS -> R.string.unit_seconds
+    ExerciseUnit.STEPS -> R.string.unit_steps
+}
+
 @Composable
-private fun SummaryStage(result: SessionResult, onAgain: () -> Unit, onBackHome: () -> Unit, modifier: Modifier = Modifier) {
+private fun SummaryStage(
+    result: SessionResult,
+    onAgain: () -> Unit,
+    onOther: () -> Unit,
+    onBackHome: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     val bank by AppGraph.bank.state.collectAsStateWithLifecycle()
     Column(
         modifier = modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(24.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterVertically),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        if (result.reps == 0) {
+        if (result.amount == 0) {
             Text(stringResource(R.string.summary_zero), style = MaterialTheme.typography.headlineSmall, textAlign = TextAlign.Center)
         } else {
             Text(stringResource(R.string.summary_title), style = MaterialTheme.typography.headlineLarge, textAlign = TextAlign.Center)
-            Text(stringResource(R.string.summary_reps, result.reps), style = MaterialTheme.typography.titleLarge)
+            Text(
+                "${stringResource(result.exercise.ui.name)}: ${result.amount} ${stringResource(unitLabel(result.exercise))}",
+                style = MaterialTheme.typography.titleLarge,
+                textAlign = TextAlign.Center,
+            )
             Text(
                 stringResource(R.string.session_earned, formatDuration(result.earnedSeconds)),
                 style = MaterialTheme.typography.displayMedium.copy(fontSize = 40.sp),
@@ -281,6 +442,9 @@ private fun SummaryStage(result: SessionResult, onAgain: () -> Unit, onBackHome:
             stringResource(R.string.summary_balance, formatDuration(bank.available(LocalDate.now()))),
             style = MaterialTheme.typography.titleMedium,
         )
+        if (bank.debtSeconds > 0) {
+            Text(stringResource(R.string.debt_label, bank.debtPushups), color = MaterialTheme.colorScheme.primary, textAlign = TextAlign.Center)
+        }
         if (result.hitCap) {
             Text(
                 stringResource(R.string.summary_cap),
@@ -290,6 +454,7 @@ private fun SummaryStage(result: SessionResult, onAgain: () -> Unit, onBackHome:
             )
         }
         Button(onClick = onAgain, modifier = Modifier.fillMaxWidth().height(56.dp)) { Text(stringResource(R.string.train_again)) }
+        OutlinedButton(onClick = onOther, modifier = Modifier.fillMaxWidth().height(56.dp)) { Text(stringResource(R.string.train_other)) }
         OutlinedButton(onClick = onBackHome, modifier = Modifier.fillMaxWidth().height(56.dp)) { Text(stringResource(R.string.back_home)) }
     }
 }
