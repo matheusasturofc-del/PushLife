@@ -11,7 +11,13 @@ O que existe hoje (PWA, roda no navegador do celular):
 Limitação: um app web **não consegue bloquear outros apps** (Instagram, TikTok...). Para isso é preciso um app nativo
 (iOS: API Screen Time/Family Controls; Android: Accessibility/UsageStats).
 
-## Rodar
+## Abrir no celular
+
+Depois de ativar o GitHub Pages (Settings → Pages → Source: **GitHub Actions**), o app fica em
+https://matheusasturofc-del.github.io/PushTrainer/ e é atualizado a cada push.
+A câmera só funciona em HTTPS, por isso o Pages (ou `localhost`).
+
+## Rodar no computador
 ```
 npm start   # abre em http://localhost:8080
 npm test    # testes da lógica de contagem e do saldo
