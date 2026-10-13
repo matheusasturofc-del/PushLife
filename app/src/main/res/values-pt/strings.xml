@@ -9,7 +9,6 @@
 
     <string name="balance_label">Seu tempo de tela</string>
     <string name="balance_rules">1 flexão = 1 minuto · 1 h grátis por dia</string>
-    <string name="balance_soon">O saldo começa a contar na fase 2.</string>
     <string name="start_training">Começar treino</string>
     <string name="available_in_phase">Chega na fase %1$d</string>
 
@@ -28,4 +27,40 @@
     <string name="train_soon">Treine enquanto a câmera conta suas repetições.</string>
     <string name="progress_soon">Sequência de dias, níveis, conquistas e gráficos.</string>
     <string name="profile_soon">Seu perfil, conta e backup na nuvem.</string>
+
+    <string name="balance_free_today">Grátis hoje: %1$s</string>
+    <string name="balance_earned">Ganho: %1$s</string>
+    <string name="today_reps">Flexões hoje: %1$d</string>
+    <string name="train_title">Flexões</string>
+    <string name="train_how_title">Como funciona</string>
+    <string name="train_step_1">Coloque o celular no chão, com a tela para cima, bem embaixo do seu rosto.</string>
+    <string name="train_step_2">Fique em posição de flexão, com os braços esticados.</string>
+    <string name="train_step_3">Desça até o rosto chegar perto do celular e suba. Cada flexão vale 1 minuto.</string>
+    <string name="train_privacy">A imagem da câmera nunca sai do seu celular.</string>
+    <string name="train_start">Começar</string>
+    <string name="camera_permission_needed">O PushLife precisa da câmera para contar suas flexões.</string>
+    <string name="camera_permission_button">Permitir câmera</string>
+    <string name="camera_permission_denied">O acesso à câmera está bloqueado. Libere em Configurações > Apps > PushLife > Permissões.</string>
+    <string name="open_settings">Abrir configurações</string>
+    <string name="status_waiting">Posicione o rosto em cima do celular</string>
+    <string name="status_no_face">Não estou vendo seu rosto</string>
+    <string name="status_go_down">Desça!</string>
+    <string name="status_go_up">Suba!</string>
+    <string name="session_earned">+%1$s de tela</string>
+    <string name="finish">Finalizar</string>
+    <string name="summary_title">Mandou bem!</string>
+    <string name="summary_reps">Flexões: %1$d</string>
+    <string name="summary_balance">Disponível agora: %1$s</string>
+    <string name="summary_cap">Você chegou ao limite de 2 h guardadas. As flexões extras ainda contam nas suas estatísticas.</string>
+    <string name="summary_zero">Nenhuma flexão foi contada desta vez.</string>
+    <string name="back_home">Voltar ao início</string>
+    <string name="train_again">Treinar de novo</string>
+    <string-array name="motivation">
+        <item>Continua!</item>
+        <item>Mais uma!</item>
+        <item>Forte!</item>
+        <item>Não para agora!</item>
+        <item>Cada flexão é um minuto!</item>
+        <item>Modo monstro!</item>
+    </string-array>
 </resources>

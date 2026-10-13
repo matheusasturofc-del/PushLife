@@ -50,8 +50,8 @@ fun PushLifeApp() {
     ) { padding ->
         val modifier = Modifier.padding(padding)
         when (tab) {
-            Tab.Home -> HomeScreen(modifier)
-            Tab.Train -> ComingSoonScreen(Icons.Rounded.FitnessCenter, R.string.tab_train, R.string.train_soon, phase = 2, modifier)
+            Tab.Home -> HomeScreen(onStartTraining = { selected = Tab.Train.ordinal }, modifier = modifier)
+            Tab.Train -> TrainScreen(onBackHome = { selected = Tab.Home.ordinal }, modifier = modifier)
             Tab.Progress -> ComingSoonScreen(Icons.Rounded.Insights, R.string.tab_progress, R.string.progress_soon, phase = 5, modifier)
             Tab.Profile -> ComingSoonScreen(Icons.Rounded.Person, R.string.tab_profile, R.string.profile_soon, phase = 7, modifier)
         }

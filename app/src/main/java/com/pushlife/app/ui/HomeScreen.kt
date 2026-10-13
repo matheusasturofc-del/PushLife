@@ -34,20 +34,27 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
+import com.pushlife.app.AppGraph
 import com.pushlife.app.R
+import com.pushlife.app.core.BankState
+import java.time.LocalDate
+import androidx.compose.runtime.getValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.pushlife.app.ui.theme.Ink
 import com.pushlife.app.ui.theme.Orange
 import com.pushlife.app.ui.theme.Yellow
 
 // Fases do plano; CURRENT_PHASE é a última concluída.
-private const val CURRENT_PHASE = 1
+private const val CURRENT_PHASE = 2
 private val PHASES = listOf(
     R.string.phase_1, R.string.phase_2, R.string.phase_3, R.string.phase_4,
     R.string.phase_5, R.string.phase_6, R.string.phase_7,
 )
 
 @Composable
-fun HomeScreen(modifier: Modifier = Modifier) {
+fun HomeScreen(onStartTraining: () -> Unit, modifier: Modifier = Modifier) {
+    val bank by AppGraph.bank.state.collectAsStateWithLifecycle()
+    val today = LocalDate.now()
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -61,11 +68,11 @@ fun HomeScreen(modifier: Modifier = Modifier) {
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
-        BalanceCard()
-        Button(onClick = {}, enabled = false, modifier = Modifier.fillMaxWidth().height(56.dp)) {
+        BalanceCard(bank, today)
+        Button(onClick = onStartTraining, modifier = Modifier.fillMaxWidth().height(64.dp)) {
             Icon(Icons.Rounded.FitnessCenter, contentDescription = null)
             Spacer(Modifier.size(8.dp))
-            Text(stringResource(R.string.start_training) + " · " + stringResource(R.string.available_in_phase, 2))
+            Text(stringResource(R.string.start_training), style = MaterialTheme.typography.titleLarge)
         }
         Roadmap()
     }
@@ -83,7 +90,7 @@ private fun Logo() {
 }
 
 @Composable
-private fun BalanceCard() {
+private fun BalanceCard(bank: BankState, today: LocalDate) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -92,9 +99,15 @@ private fun BalanceCard() {
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(stringResource(R.string.balance_label).uppercase(), style = MaterialTheme.typography.labelMedium, color = Ink)
-            Text("0 min", style = MaterialTheme.typography.displayMedium, color = Ink)
-            Text(stringResource(R.string.balance_rules), style = MaterialTheme.typography.bodyMedium, color = Ink)
-            Text(stringResource(R.string.balance_soon), style = MaterialTheme.typography.bodySmall, color = Ink.copy(alpha = 0.7f))
+            Text(formatDuration(bank.available(today)), style = MaterialTheme.typography.displayMedium, color = Ink)
+            Text(
+                stringResource(R.string.balance_free_today, formatDuration(bank.freeRemaining(today))) + " · " +
+                    stringResource(R.string.balance_earned, formatDuration(bank.earnedSeconds)),
+                style = MaterialTheme.typography.bodyMedium,
+                color = Ink,
+            )
+            Text(stringResource(R.string.today_reps, bank.repsOn(today)), style = MaterialTheme.typography.titleMedium, color = Ink)
+            Text(stringResource(R.string.balance_rules), style = MaterialTheme.typography.bodySmall, color = Ink.copy(alpha = 0.7f))
         }
     }
 }

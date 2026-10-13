@@ -14,8 +14,8 @@ Instagram, TikTok e outros apps bloqueados. Inspirado no PushScroll, gratuito e 
 | Fase | O que entra | Status |
 |---|---|---|
 | 1 | Base do app: projeto, tema, 3 idiomas, APK automático | pronto |
-| 2 | Contagem de flexões pela câmera (celular no chão) e saldo de tempo | próxima |
-| 3 | Bloqueio de apps, emergência com dívida de flexões | |
+| 2 | Contagem de flexões pela câmera (celular no chão) e saldo de tempo | pronto |
+| 3 | Bloqueio de apps, emergência com dívida de flexões | próxima |
 | 4 | Mais exercícios, instruções e aviso de postura | |
 | 5 | Sequência, metas, níveis, conquistas, gráficos, notificações | |
 | 6 | Bloqueio de sites adultos | |
