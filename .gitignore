@@ -9,5 +9,3 @@ captures/
 .externalNativeBuild/
 .cxx/
 
-# Node (versão web antiga)
-node_modules/
