@@ -52,7 +52,7 @@ import com.pushlife.app.ui.theme.Orange
 import com.pushlife.app.ui.theme.Yellow
 
 // Fases do plano; CURRENT_PHASE é a última concluída.
-private const val CURRENT_PHASE = 5
+private const val CURRENT_PHASE = 7
 private val PHASES = listOf(
     R.string.phase_1, R.string.phase_2, R.string.phase_3, R.string.phase_4,
     R.string.phase_5, R.string.phase_6, R.string.phase_7,

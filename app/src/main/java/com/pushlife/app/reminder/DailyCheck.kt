@@ -40,14 +40,15 @@ object DailyCheck {
 
     fun run(context: Context, today: LocalDate = LocalDate.now()) {
         val stats = ProgressCenter.stats(today)
-        if (Streaks.atRisk(stats.activeDays, today)) {
+        val profile = AppGraph.profile.state.value
+        if (profile.notifyStreak && Streaks.atRisk(stats.activeDays, today)) {
             Notifier.notify(
                 context, Notifier.CHANNEL_ALERTS, Notifier.ID_STREAK,
                 context.getString(R.string.notif_streak_title, Streaks.current(stats.activeDays, today)),
                 context.getString(R.string.notif_streak_body),
             )
         }
-        if (today.dayOfWeek == DayOfWeek.SUNDAY) {
+        if (profile.notifyWeekly && today.dayOfWeek == DayOfWeek.SUNDAY) {
             val bank = AppGraph.bank.state.value
             val start = WeeklyChallenge.weekStart(today)
             val days = (0L..6L).map { start.plusDays(it) }

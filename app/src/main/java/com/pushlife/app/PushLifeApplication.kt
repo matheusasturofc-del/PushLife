@@ -1,6 +1,7 @@
 package com.pushlife.app
 
 import android.app.Application
+import android.content.Context
 import com.pushlife.app.data.BankRepository
 import com.pushlife.app.data.BlockSettingsRepository
 import com.pushlife.app.data.ProfileRepository
@@ -9,10 +10,7 @@ import com.pushlife.app.data.ProgressRepository
 class PushLifeApplication : Application() {
     override fun onCreate() {
         super.onCreate()
-        AppGraph.bank = BankRepository(this)
-        AppGraph.profile = ProfileRepository(this)
-        AppGraph.blocking = BlockSettingsRepository(this)
-        AppGraph.progress = ProgressRepository(this)
+        AppGraph.load(this)
     }
 }
 
@@ -22,4 +20,13 @@ object AppGraph {
     lateinit var profile: ProfileRepository
     lateinit var blocking: BlockSettingsRepository
     lateinit var progress: ProgressRepository
+
+    /** (Re)lê tudo do armazenamento; usado ao abrir o app e depois de restaurar um backup. */
+    fun load(context: Context) {
+        val app = context.applicationContext
+        bank = BankRepository(app)
+        profile = ProfileRepository(app)
+        blocking = BlockSettingsRepository(app)
+        progress = ProgressRepository(app)
+    }
 }

@@ -8,6 +8,7 @@ import android.content.Intent
 import com.pushlife.app.AppGraph
 import com.pushlife.app.R
 import com.pushlife.app.blocking.BlockerService
+import com.pushlife.app.filter.DnsFilterService
 import java.time.LocalTime
 import java.time.ZonedDateTime
 
@@ -57,5 +58,6 @@ class BootReceiver : BroadcastReceiver() {
         AppGraph.profile.state.value.reminder?.let { Reminders.schedule(context, it) }
         DailyCheck.schedule(context)
         BlockerService.syncWithSettings(context)
+        DnsFilterService.syncWithSettings(context)
     }
 }

@@ -14,8 +14,9 @@ android {
         applicationId = "com.pushlife.app"
         minSdk = 26
         targetSdk = 35
-        versionCode = 6
-        versionName = "0.6.0"
+        // No GitHub cada build ganha um número maior (a Play Store exige que ele sempre suba).
+        versionCode = System.getenv("GITHUB_RUN_NUMBER")?.toIntOrNull()?.plus(100) ?: 7
+        versionName = "0.7.0"
     }
 
     signingConfigs {
@@ -27,12 +28,25 @@ android {
             keyAlias = "androiddebugkey"
             keyPassword = "android"
         }
+        // Chave de publicação: só existe no GitHub (segredos), nunca no repositório.
+        // Veja play-store/README.md para criar a chave e cadastrar os segredos.
+        val releaseStore = System.getenv("PUSHLIFE_KEYSTORE_FILE")
+        if (releaseStore != null) {
+            create("release") {
+                storeFile = file(releaseStore)
+                storePassword = System.getenv("PUSHLIFE_KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("PUSHLIFE_KEY_ALIAS")
+                keyPassword = System.getenv("PUSHLIFE_KEY_PASSWORD")
+            }
+        }
     }
 
     buildTypes {
         release {
             isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            signingConfig = signingConfigs.findByName("release")
         }
     }
 

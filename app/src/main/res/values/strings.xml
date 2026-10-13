@@ -11,7 +11,6 @@
     <string name="balance_label">Your screen time</string>
     <string name="balance_rules">1 push-up = 1 minute · 1 h free per day · other exercises count too</string>
     <string name="start_training">Start workout</string>
-    <string name="available_in_phase">Coming in phase %1$d</string>
 
     <string name="roadmap_title">Building PushLife</string>
     <string name="phase_number">Phase %1$d</string>
@@ -25,7 +24,6 @@
     <string name="phase_6">Adult site blocking</string>
     <string name="phase_7">Profile, account and backup</string>
 
-    <string name="profile_soon">Your profile, account and cloud backup.</string>
 
     <string name="balance_free_today">Free today: %1$s</string>
     <string name="balance_earned">Earned: %1$s</string>
@@ -301,4 +299,45 @@
     <string name="notif_weekly_body">%1$d min earned, %2$d push-ups, %3$d active days. Keep it up!</string>
     <string name="notif_goal_title">Your daily goal changed</string>
     <string name="notif_goal_body">Based on last week, your new goal is %1$d min a day.</string>
+
+    <!-- Filtro de sites (fase 6) e perfil (fase 7) -->
+    <string name="filter_title">Adult sites</string>
+    <string name="filter_on">On: porn and hentai sites are blocked in every browser and app.</string>
+    <string name="filter_paused">Turning on… If it stays like this, open the app again.</string>
+    <string name="filter_off">Off. Uses a local VPN that only filters site addresses (DNS). The rest of your internet does not go through it.</string>
+    <string name="filter_tips">For extra protection: Settings > Connections > More connection settings > VPN > PushLife > Always-on VPN. If you use Private DNS, keep it on Automatic.</string>
+    <string name="filter_disable_title">Turn off the adult site filter?</string>
+    <string name="disable_cancel_generic">Cancel</string>
+    <string name="profile_edit_name">Edit name</string>
+    <string name="profile_avatar_hint">Tap the avatar to change its color.</string>
+    <string name="profile_goals">Goal and reminder</string>
+    <string name="profile_daily_goal">Daily goal</string>
+    <string name="profile_daily_goal_value">%1$d min earned a day (adjusts weekly)</string>
+    <string name="profile_reminder">Workout reminder</string>
+    <string name="profile_reminder_off">Off</string>
+    <string name="profile_change">Change</string>
+    <string name="profile_notifications">Notifications</string>
+    <string name="profile_notify_streak">Streak at risk (8 pm)</string>
+    <string name="profile_notify_weekly">Weekly summary (Sundays)</string>
+    <string name="profile_notify_low">Screen time running out</string>
+    <string name="profile_language">Language</string>
+    <string name="profile_language_hint">Portuguese, English or Spanish. Follows your phone unless you choose one.</string>
+    <string name="profile_backup">Backup</string>
+    <string name="backup_body">Save a file with your balance, history and settings. Choose Google Drive in the file picker to keep it in the cloud.</string>
+    <string name="backup_export">Save backup</string>
+    <string name="backup_import">Restore</string>
+    <string name="backup_saved">Backup saved</string>
+    <string name="backup_error">Couldn\'t save the backup. Try another folder.</string>
+    <string name="backup_restore_confirm">This replaces everything in the app with the backup data. Continue?</string>
+    <string name="backup_restore_yes">Restore</string>
+    <string name="backup_restored">Backup restored</string>
+    <string name="backup_invalid">This file isn\'t a PushLife backup.</string>
+    <string name="account_soon">Sign-in with email and automatic cloud backup are coming in a future version.</string>
+    <string name="profile_about">About</string>
+    <string name="profile_version">Version %1$s</string>
+    <string name="profile_privacy">Privacy</string>
+    <string name="profile_save">Save</string>
+    <string name="profile_wipe">Delete all data</string>
+    <string name="profile_wipe_confirm">Your balance, history, achievements and settings will be deleted and the app starts from scratch. This cannot be undone.</string>
+    <string name="profile_wipe_yes">Delete everything</string>
 </resources>

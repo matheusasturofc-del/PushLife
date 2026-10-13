@@ -23,6 +23,11 @@ data class Profile(
     val exerciseFrequency: ExerciseFrequency? = null,
     val dailyGoal: Int = ExerciseFrequency.ONE_TO_THREE.dailyGoal,
     val reminder: LocalTime? = null,
+    /** Índice da cor do avatar. */
+    val avatarColor: Int = 0,
+    val notifyStreak: Boolean = true,
+    val notifyWeekly: Boolean = true,
+    val notifyLowTime: Boolean = true,
 )
 
 /** A conta mostrada nas boas-vindas: horas por dia × 365 ÷ 24 = dias inteiros por ano. */

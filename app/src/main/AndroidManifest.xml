@@ -66,6 +66,15 @@
                 android:value="Checks which app is in the foreground to block the apps the user chose when their earned screen time runs out." />
         </service>
 
+        <service
+            android:name=".filter.DnsFilterService"
+            android:exported="false"
+            android:permission="android.permission.BIND_VPN_SERVICE">
+            <intent-filter>
+                <action android:name="android.net.VpnService" />
+            </intent-filter>
+        </service>
+
         <receiver
             android:name=".reminder.ReminderReceiver"
             android:exported="false" />

@@ -60,7 +60,7 @@ fun PushLifeApp(trainRequests: Int = 0) {
             Tab.Train -> TrainScreen(onBackHome = { selected = Tab.Home.ordinal }, modifier = modifier)
             Tab.Block -> BlockScreen(modifier)
             Tab.Progress -> ProgressScreen(modifier)
-            Tab.Profile -> ComingSoonScreen(Icons.Rounded.Person, R.string.tab_profile, R.string.profile_soon, phase = 7, modifier)
+            Tab.Profile -> ProfileScreen(modifier)
         }
     }
 }

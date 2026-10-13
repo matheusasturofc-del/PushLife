@@ -10,7 +10,6 @@
     <string name="balance_label">Seu tempo de tela</string>
     <string name="balance_rules">1 flexão = 1 minuto · 1 h grátis por dia · outros exercícios também contam</string>
     <string name="start_training">Começar treino</string>
-    <string name="available_in_phase">Chega na fase %1$d</string>
 
     <string name="roadmap_title">Construção do PushLife</string>
     <string name="phase_number">Fase %1$d</string>
@@ -24,7 +23,6 @@
     <string name="phase_6">Bloqueio de sites adultos</string>
     <string name="phase_7">Perfil, conta e backup</string>
 
-    <string name="profile_soon">Seu perfil, conta e backup na nuvem.</string>
 
     <string name="balance_free_today">Grátis hoje: %1$s</string>
     <string name="balance_earned">Ganho: %1$s</string>
@@ -294,4 +292,45 @@
     <string name="notif_weekly_body">%1$d min ganhos, %2$d flexões e %3$d dias de treino. Continue assim!</string>
     <string name="notif_goal_title">Sua meta diária mudou</string>
     <string name="notif_goal_body">Pela sua última semana, a nova meta é %1$d min por dia.</string>
+
+    <!-- Filtro de sites (fase 6) e perfil (fase 7) -->
+    <string name="filter_title">Sites adultos</string>
+    <string name="filter_on">Ligado: sites pornográficos e de hentai ficam bloqueados em qualquer navegador e app.</string>
+    <string name="filter_paused">Ligando… Se ficar assim, abra o app de novo.</string>
+    <string name="filter_off">Desligado. Usa uma VPN local que só filtra os endereços dos sites (DNS). O resto da sua internet não passa por ela.</string>
+    <string name="filter_tips">Para mais proteção: Configurações > Conexões > Mais configurações de conexão > VPN > PushLife > VPN sempre ativa. Se você usa DNS privado, deixe em Automático.</string>
+    <string name="filter_disable_title">Desligar o filtro de sites adultos?</string>
+    <string name="disable_cancel_generic">Cancelar</string>
+    <string name="profile_edit_name">Editar nome</string>
+    <string name="profile_avatar_hint">Toque no avatar para trocar a cor.</string>
+    <string name="profile_goals">Meta e lembrete</string>
+    <string name="profile_daily_goal">Meta diária</string>
+    <string name="profile_daily_goal_value">%1$d min ganhos por dia (ajusta toda semana)</string>
+    <string name="profile_reminder">Lembrete de treino</string>
+    <string name="profile_reminder_off">Desligado</string>
+    <string name="profile_change">Mudar</string>
+    <string name="profile_notifications">Notificações</string>
+    <string name="profile_notify_streak">Sequência em risco (20 h)</string>
+    <string name="profile_notify_weekly">Resumo da semana (domingo)</string>
+    <string name="profile_notify_low">Tempo de tela acabando</string>
+    <string name="profile_language">Idioma</string>
+    <string name="profile_language_hint">Português, inglês ou espanhol. Segue o celular, a não ser que você escolha outro.</string>
+    <string name="profile_backup">Backup</string>
+    <string name="backup_body">Salve um arquivo com seu saldo, histórico e ajustes. No seletor de arquivos, escolha o Google Drive para guardar na nuvem.</string>
+    <string name="backup_export">Salvar backup</string>
+    <string name="backup_import">Restaurar</string>
+    <string name="backup_saved">Backup salvo</string>
+    <string name="backup_error">Não consegui salvar o backup. Tente outra pasta.</string>
+    <string name="backup_restore_confirm">Isso troca tudo o que está no app pelos dados do backup. Continuar?</string>
+    <string name="backup_restore_yes">Restaurar</string>
+    <string name="backup_restored">Backup restaurado</string>
+    <string name="backup_invalid">Esse arquivo não é um backup do PushLife.</string>
+    <string name="account_soon">Login com e-mail e backup automático na nuvem chegam numa próxima versão.</string>
+    <string name="profile_about">Sobre</string>
+    <string name="profile_version">Versão %1$s</string>
+    <string name="profile_privacy">Privacidade</string>
+    <string name="profile_save">Salvar</string>
+    <string name="profile_wipe">Apagar todos os dados</string>
+    <string name="profile_wipe_confirm">Seu saldo, histórico, conquistas e ajustes serão apagados e o app começa do zero. Não dá para desfazer.</string>
+    <string name="profile_wipe_yes">Apagar tudo</string>
 </resources>

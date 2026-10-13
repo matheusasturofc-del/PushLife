@@ -1,6 +1,8 @@
 package com.pushlife.app.ui
 
 import android.Manifest
+import android.app.Activity
+import android.net.VpnService
 import android.content.Context
 import android.content.Intent
 import android.os.Build
@@ -25,6 +27,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.CheckCircle
+import androidx.compose.material.icons.rounded.Shield
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilledTonalButton
@@ -55,6 +58,7 @@ import com.pushlife.app.blocking.BlockerService
 import com.pushlife.app.blocking.InstalledApps
 import com.pushlife.app.blocking.Permissions
 import com.pushlife.app.core.Rules
+import com.pushlife.app.filter.DnsFilterService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
@@ -88,6 +92,15 @@ fun BlockScreen(modifier: Modifier = Modifier) {
     var permissions by remember { mutableStateOf(PermissionState.read(context)) }
     var apps by remember { mutableStateOf<List<AppEntry>?>(null) }
     var askDisable by remember { mutableStateOf(false) }
+    var askDisableFilter by remember { mutableStateOf(false) }
+    val filterRunning by DnsFilterService.running.collectAsStateWithLifecycle()
+    // O Android pede autorização uma única vez para o app criar a VPN local do filtro.
+    val vpnConsent = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            AppGraph.blocking.setAdultFilter(true)
+            DnsFilterService.syncWithSettings(context)
+        }
+    }
 
     // Ao voltar das configurações do Android, relê as permissões e recarrega as médias de uso.
     LifecycleResumeEffect(Unit) {
@@ -128,6 +141,26 @@ fun BlockScreen(modifier: Modifier = Modifier) {
                         BlockerService.syncWithSettings(context)
                     } else {
                         askDisable = true
+                    }
+                },
+            )
+        }
+
+        item {
+            AdultFilterCard(
+                enabled = settings.adultFilter,
+                running = filterRunning,
+                onToggle = { on ->
+                    if (on) {
+                        val consent = VpnService.prepare(context)
+                        if (consent == null) {
+                            AppGraph.blocking.setAdultFilter(true)
+                            DnsFilterService.syncWithSettings(context)
+                        } else {
+                            vpnConsent.launch(consent)
+                        }
+                    } else {
+                        askDisableFilter = true
                     }
                 },
             )
@@ -202,6 +235,7 @@ fun BlockScreen(modifier: Modifier = Modifier) {
 
     if (askDisable) {
         DisableDialog(
+            title = R.string.disable_title,
             onConfirm = {
                 askDisable = false
                 AppGraph.blocking.setEnabled(false)
@@ -209,6 +243,49 @@ fun BlockScreen(modifier: Modifier = Modifier) {
             },
             onDismiss = { askDisable = false },
         )
+    }
+    if (askDisableFilter) {
+        DisableDialog(
+            title = R.string.filter_disable_title,
+            onConfirm = {
+                askDisableFilter = false
+                AppGraph.blocking.setAdultFilter(false)
+                DnsFilterService.syncWithSettings(context)
+            },
+            onDismiss = { askDisableFilter = false },
+        )
+    }
+}
+
+@Composable
+private fun AdultFilterCard(enabled: Boolean, running: Boolean, onToggle: (Boolean) -> Unit) {
+    val colors = MaterialTheme.colorScheme
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .background(if (enabled) colors.primaryContainer else colors.surfaceContainer, RoundedCornerShape(20.dp))
+            .padding(20.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+            Icon(Icons.Rounded.Shield, contentDescription = null, tint = colors.primary)
+            Text(stringResource(R.string.filter_title), style = MaterialTheme.typography.headlineSmall, modifier = Modifier.weight(1f))
+            Switch(checked = enabled, onCheckedChange = onToggle)
+        }
+        Text(
+            stringResource(
+                when {
+                    enabled && running -> R.string.filter_on
+                    enabled -> R.string.filter_paused
+                    else -> R.string.filter_off
+                },
+            ),
+            style = MaterialTheme.typography.bodyMedium,
+            color = colors.onSurfaceVariant,
+        )
+        if (enabled) {
+            Text(stringResource(R.string.filter_tips), style = MaterialTheme.typography.bodySmall, color = colors.onSurfaceVariant)
+        }
     }
 }
 
@@ -311,7 +388,7 @@ private fun AppRow(app: AppEntry, blocked: Boolean, onToggle: () -> Unit) {
 
 /** Desligar a proteção exige esperar 30 s: um freio para o impulso de burlar. */
 @Composable
-private fun DisableDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
+private fun DisableDialog(@StringRes title: Int, onConfirm: () -> Unit, onDismiss: () -> Unit) {
     var secondsLeft by remember { mutableIntStateOf(DISABLE_WAIT_SECONDS) }
     LaunchedEffect(Unit) {
         while (secondsLeft > 0) {
@@ -321,7 +398,7 @@ private fun DisableDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
     }
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.disable_title)) },
+        title = { Text(stringResource(title)) },
         text = { Text(stringResource(R.string.disable_body, secondsLeft)) },
         confirmButton = {
             TextButton(onClick = onConfirm, enabled = secondsLeft == 0) {

@@ -96,7 +96,7 @@ class BlockerService : Service() {
             warnedLow = false
             return
         }
-        if (!inBlockedApp || warnedLow || remaining <= 0) return
+        if (!inBlockedApp || warnedLow || remaining <= 0 || !AppGraph.profile.state.value.notifyLowTime) return
         warnedLow = true
         Notifier.notify(
             this, Notifier.CHANNEL_ALERTS, Notifier.ID_TIME_LOW,

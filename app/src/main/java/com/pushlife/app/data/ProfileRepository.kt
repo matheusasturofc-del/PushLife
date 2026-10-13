@@ -27,6 +27,10 @@ class ProfileRepository(context: Context) {
             putString(KEY_FREQUENCY, profile.exerciseFrequency?.name)
             putInt(KEY_DAILY_GOAL, profile.dailyGoal)
             putString(KEY_REMINDER, profile.reminder?.toString())
+            putInt(KEY_AVATAR_COLOR, profile.avatarColor)
+            putBoolean(KEY_NOTIFY_STREAK, profile.notifyStreak)
+            putBoolean(KEY_NOTIFY_WEEKLY, profile.notifyWeekly)
+            putBoolean(KEY_NOTIFY_LOW, profile.notifyLowTime)
         }
         _state.value = profile
     }
@@ -44,6 +48,10 @@ class ProfileRepository(context: Context) {
                 ?.let { name -> ExerciseFrequency.entries.firstOrNull { it.name == name } },
             dailyGoal = prefs.getInt(KEY_DAILY_GOAL, defaults.dailyGoal),
             reminder = prefs.getString(KEY_REMINDER, null)?.let { runCatching { LocalTime.parse(it) }.getOrNull() },
+            avatarColor = prefs.getInt(KEY_AVATAR_COLOR, 0),
+            notifyStreak = prefs.getBoolean(KEY_NOTIFY_STREAK, true),
+            notifyWeekly = prefs.getBoolean(KEY_NOTIFY_WEEKLY, true),
+            notifyLowTime = prefs.getBoolean(KEY_NOTIFY_LOW, true),
         )
     }
 
@@ -56,5 +64,9 @@ class ProfileRepository(context: Context) {
         const val KEY_FREQUENCY = "exercise_frequency"
         const val KEY_DAILY_GOAL = "daily_goal"
         const val KEY_REMINDER = "reminder"
+        const val KEY_AVATAR_COLOR = "avatar_color"
+        const val KEY_NOTIFY_STREAK = "notify_streak"
+        const val KEY_NOTIFY_WEEKLY = "notify_weekly"
+        const val KEY_NOTIFY_LOW = "notify_low_time"
     }
 }

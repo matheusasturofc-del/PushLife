@@ -37,6 +37,29 @@ jobs:
           name: PushLife-apk
           path: PushLife.apk
 
+      # Versão para a Play Store (AAB), só quando os segredos da chave de publicação existem.
+      - name: Gerar pacote da Play Store
+        env:
+          KEYSTORE_BASE64: ${{ secrets.PUSHLIFE_KEYSTORE_BASE64 }}
+          PUSHLIFE_KEYSTORE_PASSWORD: ${{ secrets.PUSHLIFE_KEYSTORE_PASSWORD }}
+          PUSHLIFE_KEY_ALIAS: ${{ secrets.PUSHLIFE_KEY_ALIAS }}
+          PUSHLIFE_KEY_PASSWORD: ${{ secrets.PUSHLIFE_KEY_PASSWORD }}
+        run: |
+          if [ -z "$KEYSTORE_BASE64" ]; then
+            echo "Sem chave de publicação cadastrada: pulando o pacote da Play Store."
+            exit 0
+          fi
+          echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/upload.jks"
+          PUSHLIFE_KEYSTORE_FILE="$RUNNER_TEMP/upload.jks" ./gradlew --no-daemon bundleRelease
+          cp app/build/outputs/bundle/release/app-release.aab PushLife-playstore.aab
+
+      - name: Guardar pacote da Play Store
+        uses: actions/upload-artifact@v4
+        with:
+          name: PushLife-playstore
+          path: PushLife-playstore.aab
+          if-no-files-found: ignore
+
       # Cada build vira uma "release" no GitHub; o link .../releases/latest/download/PushLife.apk
       # sempre baixa a versão mais nova, direto pelo navegador do celular.
       - name: Publicar APK para baixar no celular

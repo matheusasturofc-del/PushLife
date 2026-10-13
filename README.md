@@ -18,8 +18,8 @@ Instagram, TikTok e outros apps bloqueados. Inspirado no PushScroll, gratuito e 
 | 3 | Bloqueio de apps, emergência com dívida de flexões | pronto |
 | 4 | Mais exercícios, instruções e aviso de postura | pronto |
 | 5 | Sequência, metas, níveis, conquistas, gráficos, notificações | pronto |
-| 6 | Bloqueio de sites adultos | próxima |
-| 7 | Perfil, conta e backup na nuvem; preparação para a Play Store | |
+| 6 | Bloqueio de sites adultos | pronto |
+| 7 | Perfil, backup em arquivo (Google Drive) e preparação para a Play Store | pronto (login com e-mail depende do Firebase) |
 
 Extra: boas-vindas na primeira abertura (nome, objetivos, uso do celular, meta diária, lembrete).
 
@@ -31,12 +31,15 @@ Extra: boas-vindas na primeira abertura (nome, objetivos, uso do celular, meta d
 - Caminhada: sensor de passos do celular
 - Bloqueio: permissão "Acesso aos dados de uso" para saber o app aberto, um serviço em primeiro plano que
   desconta o saldo a cada segundo e "Sobrepor a outros apps" para mostrar a tela de bloqueio
+- Filtro de sites adultos: VPN local que só recebe as consultas de DNS; lista própria + Cloudflare for Families
 - O GitHub Actions compila, testa e publica o APK a cada mudança (`.github/workflows/android.yml`)
 
 ## Abrir no Android Studio (opcional)
 
 `File > Open` e escolha a pasta do projeto. Para rodar no celular, ative a Depuração USB
 (Configurações > Sobre o telefone > toque 7 vezes em "Número da versão" > Opções do desenvolvedor).
+
+Publicação na Play Store: veja [`play-store/README.md`](play-store/README.md). Privacidade: [`PRIVACY.md`](PRIVACY.md).
 
 A pasta `keystore/` tem só a chave de **desenvolvimento** (senha pública `android`). A chave de publicação na
 Play Store vai ficar fora do repositório.

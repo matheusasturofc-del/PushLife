@@ -11,6 +11,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.pushlife.app.blocking.BlockerService
 import com.pushlife.app.data.ProgressCenter
+import com.pushlife.app.filter.DnsFilterService
 import com.pushlife.app.reminder.DailyCheck
 import com.pushlife.app.ui.PushLifeApp
 import com.pushlife.app.ui.onboarding.OnboardingScreen
@@ -46,6 +47,7 @@ class MainActivity : ComponentActivity() {
         super.onResume()
         // Religa o bloqueio se o Android tiver fechado o serviço.
         BlockerService.syncWithSettings(this)
+        DnsFilterService.syncWithSettings(this)
         ProgressCenter.adjustGoalIfDue()
     }
 
