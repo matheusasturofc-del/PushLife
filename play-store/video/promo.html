@@ -1,0 +1,366 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:1080px;height:1920px;overflow:hidden;background:#0b0b0e;font-family:'Inter Display','Inter',sans-serif;color:#fff}
+#stage{position:absolute;inset:0;overflow:hidden}
+.c{position:absolute;left:0;width:1080px;text-align:center}
+.mask{overflow:hidden;position:absolute;left:0;width:1080px;text-align:center}
+.mask>div{will-change:transform}
+.h{font-weight:900;letter-spacing:-3px;line-height:1.02}
+.grad{background:linear-gradient(90deg,#FFC300,#FF8A00 45%,#FF4E00);-webkit-background-clip:text;background-clip:text;color:transparent}
+.sub{font-weight:500;color:#b9b9c2;font-size:42px;letter-spacing:-.5px}
+.phone{position:absolute;width:600px;height:1220px;left:240px;top:540px;border-radius:84px;background:#050506;
+  box-shadow:0 0 0 3px #2b2b31,0 60px 140px rgba(0,0,0,.65),0 0 160px rgba(255,106,0,.18);padding:18px}
+.screen{position:relative;width:564px;height:1184px;border-radius:68px;overflow:hidden;background:#111114}
+.page{position:absolute;inset:0}
+.notch{position:absolute;top:22px;left:232px;width:100px;height:30px;border-radius:15px;background:#000;z-index:5}
+.lbl{position:absolute;font-weight:500;color:#9c9ca6}
+.tile{position:absolute;background:#1c1c21;border-radius:34px}
+.pill{position:absolute;border-radius:999px}
+</style></head>
+<body><div id="stage"></div>
+<script>
+const stage = document.getElementById('stage');
+function el(parent, css, html = '', cls = '') {
+  const e = document.createElement('div');
+  if (cls) e.className = cls;
+  e.style.position = 'absolute';
+  Object.assign(e.style, css);
+  e.innerHTML = html;
+  parent.appendChild(e);
+  return e;
+}
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const p = (t, a, b) => clamp((t - a) / (b - a));
+const eo = x => 1 - Math.pow(1 - clamp(x), 3);
+const eo5 = x => 1 - Math.pow(1 - clamp(x), 5);
+const eio = x => { x = clamp(x); return x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2; };
+const eback = x => { x = clamp(x); const c1 = 1.5, c3 = c1 + 1; return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2); };
+const lerp = (a, b, x) => a + (b - a) * x;
+const tf = (e, s) => { e.style.transform = s; };
+const op = (e, v) => { e.style.opacity = clamp(v); };
+// janela de visibilidade com entrada e saída suaves
+const win = (t, a, b, fi = .4, fo = .4) => Math.min(eo(p(t, a, a + fi)), 1 - eio(p(t, b - fo, b)));
+
+const LOGO = `<svg viewBox="0 0 108 108" width="100%" height="100%"><defs><linearGradient id="lg" x1="0" y1="0" x2="108" y2="108" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#FF9A1F"/><stop offset="1" stop-color="#FF4E00"/></linearGradient></defs><rect width="108" height="108" rx="26" fill="url(#lg)"/><path d="M42,76 L42,32 L56,32 A13,13 0 0 1 56,58 L42,58" fill="none" stroke="#fff" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/><circle cx="70" cy="76" r="7" fill="#FFC300"/></svg>`;
+const ICON = {
+  play: '<path d="M38 28 L76 50 L38 72 Z" fill="#fff"/>',
+  camera: '<rect x="24" y="30" width="52" height="40" rx="12" fill="none" stroke="#fff" stroke-width="7"/><circle cx="50" cy="50" r="10" fill="none" stroke="#fff" stroke-width="7"/><circle cx="66" cy="38" r="3.5" fill="#fff"/>',
+  chat: '<path d="M26 32 h48 a8 8 0 0 1 8 8 v22 a8 8 0 0 1 -8 8 h-26 l-14 11 v-11 h-8 a8 8 0 0 1 -8 -8 v-22 a8 8 0 0 1 8 -8z" fill="#fff"/>',
+  music: '<path d="M44 26 L74 20 V62" fill="none" stroke="#fff" stroke-width="7" stroke-linejoin="round"/><path d="M44 26 V68" stroke="#fff" stroke-width="7"/><circle cx="36" cy="70" r="10" fill="#fff"/><circle cx="66" cy="64" r="10" fill="#fff"/>',
+  game: '<rect x="20" y="34" width="60" height="34" rx="17" fill="#fff"/><path d="M36 44 v14 M29 51 h14" stroke="#111" stroke-width="5" stroke-linecap="round"/><circle cx="62" cy="47" r="4" fill="#111"/><circle cx="69" cy="55" r="4" fill="#111"/>',
+  heart: '<path d="M50 76 C20 56 22 30 38 28 C46 27 50 34 50 38 C50 34 54 27 62 28 C78 30 80 56 50 76Z" fill="#fff"/>',
+  lock: '<rect x="28" y="46" width="44" height="34" rx="9" fill="#fff"/><path d="M37 46 V36 a13 13 0 0 1 26 0 V46" fill="none" stroke="#fff" stroke-width="7"/>',
+  dumbbell: '<path d="M22 50 H78" stroke="#fff" stroke-width="7" stroke-linecap="round"/><rect x="24" y="34" width="12" height="32" rx="4" fill="#fff"/><rect x="64" y="34" width="12" height="32" rx="4" fill="#fff"/>',
+  eye: '<path d="M18 50 C32 28 68 28 82 50 C68 72 32 72 18 50Z" fill="none" stroke="#fff" stroke-width="7"/><circle cx="50" cy="50" r="9" fill="#fff"/>',
+  flame: '<path d="M50 18 C56 34 72 40 72 58 a22 22 0 0 1 -44 0 C28 46 38 40 40 30 C46 38 48 40 50 18Z" fill="#fff"/>',
+  target: '<circle cx="50" cy="50" r="28" fill="none" stroke="#fff" stroke-width="7"/><circle cx="50" cy="50" r="12" fill="#fff"/>',
+  shield: '<path d="M50 18 L76 28 V50 C76 66 64 76 50 82 C36 76 24 66 24 50 V28Z" fill="#fff"/>',
+  star: '<path d="M50 18 L59 40 L82 41 L64 56 L70 79 L50 66 L30 79 L36 56 L18 41 L41 40Z" fill="#fff"/>',
+};
+const svg = (k, size = 100) => `<svg viewBox="0 0 100 100" width="${size}" height="${size}">${ICON[k]}</svg>`;
+
+/* ---------- Fundo ---------- */
+const bg = el(stage, { inset: 0 });
+const blobs = [
+  el(bg, { width: '820px', height: '820px', borderRadius: '50%', background: '#FF5A00', filter: 'blur(160px)', opacity: .35 }),
+  el(bg, { width: '620px', height: '620px', borderRadius: '50%', background: '#FFB000', filter: 'blur(170px)', opacity: .22 }),
+  el(bg, { width: '700px', height: '700px', borderRadius: '50%', background: '#FF2E00', filter: 'blur(180px)', opacity: .22 }),
+];
+const dots = el(bg, { inset: 0, opacity: .10, backgroundImage: 'radial-gradient(#fff 1.4px, transparent 1.6px)', backgroundSize: '44px 44px' });
+
+/* ---------- Cena 1: logo ---------- */
+const s1 = el(stage, { inset: 0 });
+const ringSize = 470;
+const ring = el(s1, { left: (540 - ringSize / 2) + 'px', top: (800 - ringSize / 2) + 'px', width: ringSize + 'px', height: ringSize + 'px' },
+  `<svg width="${ringSize}" height="${ringSize}" viewBox="0 0 100 100"><defs><linearGradient id="rg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFC300"/><stop offset="1" stop-color="#FF4E00"/></linearGradient></defs><circle id="ringc" cx="50" cy="50" r="46" fill="none" stroke="url(#rg)" stroke-width="2.6" stroke-linecap="round" transform="rotate(-90 50 50)" stroke-dasharray="289" stroke-dashoffset="289"/></svg>`);
+const ringC = ring.querySelector('#ringc');
+const logo1 = el(s1, { left: '390px', top: '650px', width: '300px', height: '300px', filter: 'drop-shadow(0 30px 60px rgba(255,90,0,.45))' }, LOGO);
+const word = el(s1, { left: 0, top: '1100px', width: '1080px', textAlign: 'center', fontSize: '150px', fontWeight: 900, fontStyle: 'italic', letterSpacing: '-4px' });
+const letters = [...'PUSHLIFE'].map((ch, i) => {
+  const s = document.createElement('span');
+  s.textContent = ch; s.style.display = 'inline-block'; s.style.color = i < 4 ? '#fff' : '#FF7A00';
+  word.appendChild(s); return s;
+});
+const tag1 = el(s1, { top: '1300px' }, 'Move more. Scroll less.', 'c sub');
+
+/* ---------- Cena 2: rolagem infinita ---------- */
+const s2 = el(stage, { inset: 0 });
+const feed = el(s2, { left: '-260px', top: '-500px', width: '1600px', height: '3000px', transform: 'rotate(-12deg)' });
+const feedCols = [];
+for (let c = 0; c < 4; c++) {
+  const col = el(feed, { left: (c * 400) + 'px', top: 0, width: '360px' });
+  for (let r = 0; r < 14; r++) {
+    const card = el(col, { left: 0, top: (r * 470) + 'px', width: '360px', height: '440px', borderRadius: '40px',
+      background: `linear-gradient(160deg, hsl(${(c * 70 + r * 37) % 360},18%,${20 + (r % 3) * 3}%), #17171b)`, border: '2px solid rgba(255,255,255,.05)' });
+    el(card, { left: '26px', top: '26px', width: '62px', height: '62px', borderRadius: '50%', background: 'rgba(255,255,255,.18)' });
+    el(card, { left: '104px', top: '36px', width: '160px', height: '16px', borderRadius: '8px', background: 'rgba(255,255,255,.18)' });
+    el(card, { left: '104px', top: '64px', width: '100px', height: '14px', borderRadius: '7px', background: 'rgba(255,255,255,.10)' });
+    el(card, { left: '26px', top: '120px', width: '308px', height: '230px', borderRadius: '24px', background: 'rgba(255,255,255,.07)' });
+    el(card, { left: '26px', top: '372px', width: '42px', height: '42px', borderRadius: '50%', background: 'rgba(255,255,255,.14)' });
+    el(card, { left: '84px', top: '372px', width: '42px', height: '42px', borderRadius: '50%', background: 'rgba(255,255,255,.14)' });
+  }
+  feedCols.push(col);
+}
+const vignette = el(s2, { inset: 0, background: 'radial-gradient(ellipse 70% 45% at 50% 48%, rgba(11,11,14,.92) 30%, rgba(11,11,14,.35) 100%)' });
+function maskLine(parent, top, size, html, cls = '') {
+  const m = el(parent, { top: top + 'px', height: (size * 1.18) + 'px' }, '', 'mask');
+  const inner = el(m, { left: 0, top: 0, width: '1080px', fontSize: size + 'px' }, html, 'h ' + cls);
+  return inner;
+}
+const a1 = maskLine(s2, 760, 130, "Can't stop");
+const a2 = maskLine(s2, 905, 130, 'scrolling?');
+const b1 = maskLine(s2, 760, 130, 'Turn it into');
+const b2 = maskLine(s2, 905, 130, '<span class="grad">exercise.</span>');
+
+/* ---------- Títulos das cenas com o celular ---------- */
+const heads = [];
+function headline(l1, l2, sub) {
+  const g = el(stage, { inset: 0, pointerEvents: 'none' });
+  const x1 = maskLine(g, 150, 104, l1);
+  const x2 = l2 ? maskLine(g, 270, 104, l2) : null;
+  const s = el(g, { top: (l2 ? 405 : 290) + 'px' }, sub, 'c sub');
+  return { g, x1, x2, s };
+}
+const H3 = headline('Do <span class="grad">push-ups.</span>', null, 'The camera counts every rep with AI.');
+const H4 = headline('Earn <span class="grad">screen time.</span>', null, '1 push-up = 1 minute of your apps.');
+const H5 = headline('Block the apps that', '<span class="grad">steal your time.</span>', '');
+
+/* ---------- Celular ---------- */
+const phone = el(stage, {}, '', 'phone');
+const screen = el(phone, {}, '<div class="notch"></div>', 'screen');
+screen.style.position = 'relative';
+
+// Página: câmera
+const pCam = el(screen, {}, '', 'page');
+el(pCam, { left: '36px', top: '86px', fontSize: '44px', fontWeight: 800 }, 'Push-ups');
+el(pCam, { left: '36px', top: '144px', fontSize: '24px' }, 'Phone on the floor, below your face', 'lbl');
+const cam = el(pCam, { left: '24px', top: '200px', width: '516px', height: '516px', borderRadius: '40px', overflow: 'hidden',
+  background: 'radial-gradient(circle at 50% 40%, #3a2c22, #1c1612 70%, #0f0c0a)' });
+const face = el(cam, { left: '168px', top: '120px', width: '180px', height: '230px', borderRadius: '50%',
+  background: 'radial-gradient(circle at 50% 40%, #c98d68, #8c5a3e 70%, #5a3826)', filter: 'blur(5px)' });
+const hair = el(cam, { left: '160px', top: '96px', width: '196px', height: '120px', borderRadius: '50% 50% 30% 30%', background: '#1b120d', filter: 'blur(5px)' });
+const rigSvg = el(cam, { inset: 0 }, '<svg width="516" height="516" id="rig"></svg>');
+const rig = rigSvg.querySelector('#rig');
+const camCount = el(cam, { left: 0, top: '330px', width: '516px', textAlign: 'center', fontSize: '150px', fontWeight: 900, textShadow: '0 8px 30px rgba(0,0,0,.6)' }, '0');
+const cue = el(pCam, { left: '24px', top: '744px', width: '516px', height: '88px', borderRadius: '44px', textAlign: 'center', lineHeight: '88px', fontSize: '34px', fontWeight: 800, background: '#FF6A00' }, 'Go down');
+el(pCam, { left: '36px', top: '868px', fontSize: '26px' }, 'Earned', 'lbl');
+const earned = el(pCam, { left: '36px', top: '904px', fontSize: '76px', fontWeight: 900, color: '#FF8A00' }, '+0 min');
+el(pCam, { left: '36px', top: '1022px', width: '492px', height: '22px', borderRadius: '11px', background: '#26262c' });
+const bar = el(pCam, { left: '36px', top: '1022px', width: '0px', height: '22px', borderRadius: '11px', background: 'linear-gradient(90deg,#FFC300,#FF5A00)' });
+el(pCam, { left: '36px', top: '1062px', fontSize: '24px' }, 'Goal: 10 reps', 'lbl');
+const chips = [];
+for (let i = 0; i < 12; i++) chips.push(el(pCam, { left: '360px', top: '600px', fontSize: '34px', fontWeight: 900, color: '#FFC300', opacity: 0, textShadow: '0 4px 18px rgba(0,0,0,.7)' }, '+1 min'));
+
+// Página: início
+const pHome = el(screen, {}, '', 'page');
+el(pHome, { left: '36px', top: '82px', width: '60px', height: '60px' }, LOGO);
+el(pHome, { left: '110px', top: '88px', fontSize: '40px', fontWeight: 900, fontStyle: 'italic', letterSpacing: '-1px' }, 'PUSH<span style="color:#FF7A00">LIFE</span>');
+const streak = el(pHome, { left: '36px', top: '170px', height: '58px', padding: '0 22px 0 14px', borderRadius: '29px', background: '#2a1a10', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '26px', fontWeight: 800, color: '#FFB15c' }, `${svg('flame', 34)}<span>12-day streak</span>`);
+streak.querySelector('svg path').setAttribute('fill', '#FF7A00');
+el(pHome, { left: '330px', top: '170px', height: '58px', padding: '0 22px', borderRadius: '29px', background: '#1f1f25', lineHeight: '58px', fontSize: '26px', fontWeight: 800, color: '#ddd' }, 'Level 7');
+const card = el(pHome, { left: '24px', top: '260px', width: '516px', height: '350px', borderRadius: '44px', overflow: 'hidden', background: 'linear-gradient(135deg,#FF9A1F,#FF4E00)', boxShadow: '0 30px 60px rgba(255,80,0,.35)' });
+el(card, { right: '-80px', top: '-80px', width: '300px', height: '300px', borderRadius: '50%', background: 'rgba(255,255,255,.12)' });
+el(card, { right: '40px', bottom: '-120px', width: '220px', height: '220px', borderRadius: '50%', background: 'rgba(255,255,255,.08)' });
+el(card, { left: '36px', top: '36px', fontSize: '28px', fontWeight: 700, color: 'rgba(255,255,255,.88)' }, 'Screen time balance');
+const bal = el(card, { left: '32px', top: '86px', fontSize: '150px', fontWeight: 900, letterSpacing: '-5px' }, '0');
+el(card, { left: '36px', top: '268px', fontSize: '26px', fontWeight: 600, color: 'rgba(255,255,255,.9)' }, '+1 min for every push-up');
+const minLbl = el(card, { left: '250px', top: '170px', fontSize: '54px', fontWeight: 800 }, 'min');
+const t1 = el(pHome, { left: '24px', top: '640px', width: '248px', height: '170px' }, '', 'tile');
+el(t1, { left: '28px', top: '28px', fontSize: '24px' }, 'Push-ups today', 'lbl');
+const puToday = el(t1, { left: '28px', top: '70px', fontSize: '66px', fontWeight: 900 }, '0');
+const t2 = el(pHome, { left: '292px', top: '640px', width: '248px', height: '170px' }, '', 'tile');
+el(t2, { left: '28px', top: '28px', fontSize: '24px' }, 'Free hour', 'lbl');
+el(t2, { left: '28px', top: '70px', fontSize: '66px', fontWeight: 900 }, '60<span style="font-size:32px"> min</span>');
+const chart = el(pHome, { left: '24px', top: '840px', width: '516px', height: '300px' }, '', 'tile');
+el(chart, { left: '28px', top: '26px', fontSize: '24px' }, 'This week', 'lbl');
+const bars = [];
+const barH = [.45, .7, .55, .9, .62, .8, 1];
+'MTWTFSS'.split('').forEach((d, i) => {
+  const x = 40 + i * 66;
+  bars.push(el(chart, { left: x + 'px', bottom: '58px', width: '40px', height: '0px', borderRadius: '12px', background: i === 6 ? 'linear-gradient(#FFC300,#FF5A00)' : '#3a3a42' }));
+  el(chart, { left: (x + 10) + 'px', bottom: '18px', fontSize: '22px', fontWeight: 700 }, d, 'lbl');
+});
+
+// Página: bloqueio
+const pBlock = el(screen, {}, '', 'page');
+el(pBlock, { left: '36px', top: '86px', fontSize: '44px', fontWeight: 800 }, 'Blocked apps');
+el(pBlock, { left: '36px', top: '144px', fontSize: '24px' }, 'They only open while you have time', 'lbl');
+const appKeys = ['play', 'camera', 'chat', 'music', 'game', 'heart'];
+const appCols = ['#FF2D55', '#8A3FFC', '#0A9BFF', '#13C46A', '#FFB300', '#FF5E3A'];
+const apps = appKeys.map((k, i) => {
+  const x = 24 + (i % 3) * 188, y = 220 + Math.floor(i / 3) * 196;
+  const a = el(pBlock, { left: x + 'px', top: y + 'px', width: '140px', height: '140px', borderRadius: '38px', background: appCols[i], display: 'flex', alignItems: 'center', justifyContent: 'center' }, svg(k, 96));
+  const lk = el(pBlock, { left: (x + 92) + 'px', top: (y - 16) + 'px', width: '64px', height: '64px', borderRadius: '50%', background: '#FF6A00', border: '5px solid #111114', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0 }, svg('lock', 40));
+  return { a, lk };
+});
+const sheet = el(pBlock, { left: 0, top: '600px', width: '564px', height: '600px', borderRadius: '52px 52px 0 0', background: '#1b1b20', boxShadow: '0 -30px 80px rgba(0,0,0,.6)' });
+const lockBig = el(sheet, { left: '212px', top: '48px', width: '140px', height: '140px', borderRadius: '50%', background: 'linear-gradient(135deg,#FF9A1F,#FF4E00)', display: 'flex', alignItems: 'center', justifyContent: 'center' }, svg('lock', 90));
+el(sheet, { left: 0, top: '214px', width: '564px', textAlign: 'center', fontSize: '56px', fontWeight: 900 }, "Time's up!");
+el(sheet, { left: '50px', top: '296px', width: '464px', textAlign: 'center', fontSize: '28px', lineHeight: 1.35 }, 'Do 10 push-ups to unlock<br>10 more minutes.', 'lbl');
+const btn = el(sheet, { left: '40px', top: '420px', width: '484px', height: '108px', borderRadius: '54px', background: '#FF6A00', textAlign: 'center', lineHeight: '108px', fontSize: '38px', fontWeight: 800, boxShadow: '0 16px 40px rgba(255,90,0,.45)' }, 'Earn time');
+
+/* ---------- Cena 6: recursos ---------- */
+const s6 = el(stage, { inset: 0 });
+const h6a = maskLine(s6, 250, 110, 'Everything');
+const h6b = maskLine(s6, 375, 110, 'you <span class="grad">need.</span>');
+const feats = [['dumbbell', '8 exercises'], ['eye', 'AI rep counting'], ['flame', 'Streaks, levels & badges'], ['target', 'Adaptive daily goal'], ['shield', 'Adult-site blocker'], ['star', 'Free · No ads · Private']];
+const featEls = feats.map(([k, txt], i) => {
+  const r = el(s6, { left: '110px', top: (600 + i * 160) + 'px', width: '860px', height: '128px', borderRadius: '64px', background: 'rgba(255,255,255,.06)', border: '2px solid rgba(255,138,0,.35)', display: 'flex', alignItems: 'center', gap: '28px', padding: '0 24px', fontSize: '46px', fontWeight: 800, letterSpacing: '-1px' },
+    `<div style="width:84px;height:84px;border-radius:50%;background:linear-gradient(135deg,#FF9A1F,#FF4E00);display:flex;align-items:center;justify-content:center;flex:none">${svg(k, 56)}</div><span>${txt}</span>`);
+  return r;
+});
+
+/* ---------- Cena 7: final ---------- */
+const s7 = el(stage, { inset: 0 });
+const ring7 = el(s7, { left: (540 - 420 / 2) + 'px', top: (720 - 420 / 2) + 'px', width: '420px', height: '420px' },
+  `<svg width="420" height="420" viewBox="0 0 100 100"><circle id="ring7" cx="50" cy="50" r="46" fill="none" stroke="url(#rg)" stroke-width="2.6" stroke-linecap="round" transform="rotate(-90 50 50)" stroke-dasharray="289" stroke-dashoffset="289"/></svg>`);
+const ring7C = ring7.querySelector('#ring7');
+const logo7 = el(s7, { left: '405px', top: '585px', width: '270px', height: '270px', filter: 'drop-shadow(0 30px 60px rgba(255,90,0,.45))' }, LOGO);
+const word7 = el(s7, { left: 0, top: '990px', width: '1080px', textAlign: 'center', fontSize: '140px', fontWeight: 900, fontStyle: 'italic', letterSpacing: '-4px' });
+const letters7 = [...'PUSHLIFE'].map((ch, i) => {
+  const s = document.createElement('span');
+  s.textContent = ch; s.style.display = 'inline-block'; s.style.color = i < 4 ? '#fff' : '#FF7A00';
+  word7.appendChild(s); return s;
+});
+const tag7 = el(s7, { top: '1180px' }, 'Move more. Scroll less.', 'c sub');
+const cta = el(s7, { left: '250px', top: '1310px', width: '580px', height: '128px', borderRadius: '64px', background: 'linear-gradient(90deg,#FF9A1F,#FF4E00)', textAlign: 'center', lineHeight: '128px', fontSize: '50px', fontWeight: 900, letterSpacing: '-1px', boxShadow: '0 20px 60px rgba(255,80,0,.45)' }, 'Download free');
+
+/* ---------- Linha do tempo ---------- */
+function rigDraw(ph) {
+  // rosto se aproxima da câmera quando o corpo desce
+  const s = 1 + .55 * ph, cx = 258, cy = 236 + 20 * ph;
+  const w = 180 * s, h = 230 * s;
+  tf(face, `translate(${cx - 258}px, ${cy - 236}px) scale(${s})`);
+  tf(hair, `translate(${cx - 258}px, ${cy - 236 - 10 * ph}px) scale(${s})`);
+  const x0 = cx - w * .58, y0 = cy - h * .62, x1 = cx + w * .58, y1 = cy + h * .56, L = 34;
+  const pts = { le: [cx - w * .2, cy - h * .08], re: [cx + w * .2, cy - h * .08], n: [cx, cy + h * .1], ml: [cx - w * .15, cy + h * .26], mr: [cx + w * .15, cy + h * .26] };
+  const corner = (x, y, dx, dy) => `M${x + dx * L} ${y} L${x} ${y} L${x} ${y + dy * L}`;
+  const lines = [['le', 'n'], ['re', 'n'], ['n', 'ml'], ['n', 'mr'], ['ml', 'mr'], ['le', 're']]
+    .map(([a, b]) => `<line x1="${pts[a][0]}" y1="${pts[a][1]}" x2="${pts[b][0]}" y2="${pts[b][1]}" stroke="rgba(255,195,0,.7)" stroke-width="3"/>`).join('');
+  const dotsS = Object.values(pts).map(([x, y]) => `<circle cx="${x}" cy="${y}" r="8" fill="#FFC300" stroke="#111" stroke-width="2"/>`).join('');
+  rig.innerHTML = `<path d="${corner(x0, y0, 1, 1)} ${corner(x1, y0, -1, 1)} ${corner(x0, y1, 1, -1)} ${corner(x1, y1, -1, -1)}" fill="none" stroke="#FF7A00" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>${lines}${dotsS}`;
+}
+
+const REP0 = 8.5, PER = .56;
+window.render = function (t) {
+  // fundo vivo
+  tf(blobs[0], `translate(${-200 + 120 * Math.sin(t * .35)}px, ${-200 + 160 * Math.cos(t * .27)}px)`);
+  tf(blobs[1], `translate(${600 + 140 * Math.cos(t * .31)}px, ${700 + 200 * Math.sin(t * .22)}px)`);
+  tf(blobs[2], `translate(${-100 + 160 * Math.sin(t * .25 + 1)}px, ${1300 + 140 * Math.cos(t * .3)}px)`);
+  dots.style.backgroundPosition = `0 ${-t * 14}px`;
+
+  // Cena 1 (0–3.6)
+  const v1 = 1 - eio(p(t, 3.1, 3.6));
+  op(s1, v1);
+  s1.style.filter = `blur(${(1 - v1) * 14}px)`;
+  tf(s1, `scale(${1 + (1 - v1) * .08})`);
+  const k = eback(p(t, .1, 1.0));
+  tf(logo1, `scale(${lerp(.3, 1, k)}) rotate(${lerp(-25, 0, eo(p(t, .1, 1.1)))}deg)`);
+  op(logo1, p(t, .1, .35));
+  ringC.setAttribute('stroke-dashoffset', 289 * (1 - eio(p(t, .7, 1.5))));
+  tf(ring, `rotate(${t * 40}deg)`);
+  letters.forEach((s, i) => { const q = eo(p(t, 1.05 + i * .06, 1.5 + i * .06)); op(s, q); tf(s, `translateY(${(1 - q) * 80}px)`); });
+  op(tag1, eo(p(t, 1.9, 2.4))); tf(tag1, `translateY(${(1 - eo(p(t, 1.9, 2.4))) * 30}px)`);
+
+  // Cena 2 (3.4–7.7)
+  const v2 = win(t, 3.4, 7.7, .5, .5);
+  op(s2, v2);
+  const speed = t < 5.6 ? (t - 3.4) * 1100 : (5.6 - 3.4) * 1100 + (1 - Math.exp(-(t - 5.6) * 2.2)) * 480;
+  feedCols.forEach((c, i) => tf(c, `translateY(${-((speed * (i % 2 ? 1.12 : .92)) % 940) - 300}px)`));
+  vignette.style.background = `radial-gradient(ellipse 70% 45% at 50% 48%, rgba(11,11,14,${.88}) 30%, rgba(11,11,14,${t < 5.6 ? .35 : lerp(.35, .7, eo(p(t, 5.6, 6.2)))}) 100%)`;
+  const lineIn = (e, a) => tf(e, `translateY(${(1 - eo5(p(t, a, a + .6))) * 110}%)`);
+  const lineInOut = (e, a, b) => tf(e, `translateY(${t < b ? (1 - eo5(p(t, a, a + .6))) * 110 : -eio(p(t, b, b + .45)) * 110}%)`);
+  lineInOut(a1, 3.65, 5.45); lineInOut(a2, 3.8, 5.55);
+  lineInOut(b1, 5.75, 7.25); lineInOut(b2, 5.9, 7.35);
+
+  // Títulos com celular
+  const headAnim = (H, a, b) => {
+    const vis = t > a - .1 && t < b + .6; H.g.style.display = vis ? 'block' : 'none'; if (!vis) return;
+    lineInOut(H.x1, a, b); if (H.x2) lineInOut(H.x2, a + .12, b + .08);
+    const sv = win(t, a + .35, b + .3, .5, .35); op(H.s, sv); tf(H.s, `translateY(${(1 - eo(p(t, a + .35, a + .85))) * 24}px)`);
+  };
+  headAnim(H3, 7.75, 12.85); headAnim(H4, 13.1, 17.85); headAnim(H5, 18.1, 23.0);
+
+  // Celular: entra 7.5, sai 23.0
+  const pin = eo5(p(t, 7.45, 8.45)), pout = eio(p(t, 23.0, 23.75));
+  const py = (1 - pin) * 1500 + pout * 1600, prot = (1 - pin) * 8 - pout * 6;
+  const fl = Math.sin(t * 1.3) * 6;
+  phone.style.display = (t > 7.4 && t < 23.8) ? 'block' : 'none';
+  tf(phone, `translateY(${py + fl}px) rotate(${prot}deg)`);
+  // páginas: câmera → início (12.9) → bloqueio (17.9)
+  const s12 = eio(p(t, 12.85, 13.45)), s23 = eio(p(t, 17.85, 18.45));
+  tf(pCam, `translateX(${-s12 * 100}%) scale(${1 - s12 * .08})`); op(pCam, 1 - s12 * .6);
+  tf(pHome, `translateX(${(1 - s12) * 100 - s23 * 100}%) scale(${1 - s23 * .08})`); op(pHome, s12 < 1 ? 1 : 1 - s23 * .6);
+  tf(pBlock, `translateX(${(1 - s23) * 100}%)`);
+
+  // câmera / contagem
+  const lt = t - REP0;
+  const ph = lt > 0 ? (1 - Math.cos(2 * Math.PI * lt / PER)) / 2 : 0;
+  const reps = lt > 0 ? Math.min(10, Math.floor(lt / PER)) : 0;
+  rigDraw(reps >= 10 ? 0 : ph);
+  camCount.textContent = reps;
+  const since = lt > 0 ? lt - reps * PER : 9;
+  tf(camCount, `scale(${1 + .28 * Math.exp(-since * 7) * (reps > 0 ? 1 : 0)})`);
+  const goingDown = lt > 0 && Math.sin(2 * Math.PI * lt / PER) > 0;
+  cue.textContent = lt <= 0 ? 'Get ready' : (goingDown ? 'Go down' : 'Push up!');
+  cue.style.background = goingDown ? '#FF6A00' : '#FFB000';
+  cue.style.color = goingDown ? '#fff' : '#1a1000';
+  earned.textContent = `+${reps} min`;
+  bar.style.width = (492 * reps / 10) + 'px';
+  chips.forEach((c, i) => {
+    const ti = REP0 + (i + 1) * PER, q = p(t, ti, ti + .9);
+    if (i >= 10 || t < ti || q >= 1) { op(c, 0); return; }
+    op(c, 1 - eio(p(t, ti + .45, ti + .9)));
+    tf(c, `translate(${(i % 2 ? 30 : -20)}px, ${-eo(q) * 160}px) scale(${.8 + eo(p(t, ti, ti + .2)) * .3})`);
+  });
+
+  // início
+  const bv = Math.round(45 * eio(p(t, 13.7, 15.6)));
+  bal.textContent = bv; minLbl.style.left = (bv >= 10 ? 250 : 150) + 'px';
+  puToday.textContent = bv;
+  bars.forEach((b, i) => { b.style.height = (180 * barH[i] * eo(p(t, 14.4 + i * .1, 15.2 + i * .1))) + 'px'; });
+  tf(card, `scale(${1 + .03 * Math.exp(-Math.max(0, t - 15.6) * 3) * (t > 15.6 ? 1 : 0)})`);
+
+  // bloqueio
+  apps.forEach(({ a, lk }, i) => {
+    const q = p(t, 18.9 + i * .12, 19.35 + i * .12);
+    op(lk, q > 0 ? 1 : 0); tf(lk, `scale(${eback(q)})`);
+    a.style.filter = `grayscale(${eo(q) * .85}) brightness(${1 - eo(q) * .45})`;
+  });
+  const sh = eo5(p(t, 20.3, 21.1));
+  tf(sheet, `translateY(${(1 - sh) * 640}px)`);
+  tf(lockBig, `scale(${eback(p(t, 20.7, 21.3))}) rotate(${Math.sin(Math.max(0, t - 21.2) * 14) * 8 * Math.exp(-Math.max(0, t - 21.2) * 3)}deg)`);
+  const press = t > 22.3 ? 1 - .05 * Math.sin(Math.PI * p(t, 22.3, 22.6)) : 1 + .025 * Math.sin(t * 6);
+  tf(btn, `scale(${press})`);
+
+  // Cena 6 (23.3–27.2)
+  const v6 = t > 23.2 && t < 27.4;
+  s6.style.display = v6 ? 'block' : 'none';
+  if (v6) {
+    lineInOut(h6a, 23.4, 26.5); lineInOut(h6b, 23.52, 26.58);
+    featEls.forEach((f, i) => {
+      const a = 23.9 + i * .17, q = eo5(p(t, a, a + .7)), out = eio(p(t, 26.4 + i * .04, 26.85 + i * .04));
+      op(f, q * (1 - out));
+      tf(f, `translateX(${(1 - q) * (i % 2 ? 240 : -240)}px) translateY(${-out * 60}px)`);
+    });
+  }
+
+  // Cena 7 (27.0–30)
+  const v7 = t > 26.9;
+  s7.style.display = v7 ? 'block' : 'none';
+  if (v7) {
+    const k7 = eback(p(t, 27.0, 27.8));
+    tf(logo7, `scale(${lerp(.3, 1, k7)}) rotate(${lerp(-20, 0, eo(p(t, 27.0, 27.9)))}deg)`);
+    op(logo7, p(t, 27.0, 27.25));
+    ring7C.setAttribute('stroke-dashoffset', 289 * (1 - eio(p(t, 27.4, 28.2))));
+    tf(ring7, `rotate(${t * 40}deg)`);
+    letters7.forEach((s, i) => { const q = eo(p(t, 27.6 + i * .05, 28.0 + i * .05)); op(s, q); tf(s, `translateY(${(1 - q) * 70}px)`); });
+    const tq = eo(p(t, 28.3, 28.8)); op(tag7, tq); tf(tag7, `translateY(${(1 - tq) * 24}px)`);
+    const cq = eback(p(t, 28.6, 29.2)); op(cta, p(t, 28.6, 28.8));
+    tf(cta, `scale(${cq * (1 + .03 * Math.sin(Math.max(0, t - 29.2) * 5))})`);
+  }
+};
+window.render(0);
+</script></body></html>
