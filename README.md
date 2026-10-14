@@ -24,6 +24,22 @@ Instagram, TikTok e outros apps bloqueados. Inspirado no PushScroll, gratuito e 
 Extra: boas-vindas completas na primeira abertura (23 telas: perguntas, resultado, projeção, como funciona,
 permissões, escolha dos apps, plano pronto e primeiro treino).
 
+## Atualização obrigatória (Uptodown)
+
+O app lê o arquivo [`update.json`](update.json) toda vez que é aberto. Se a versão instalada for mais velha
+que `minVersionCode`, ele mostra só a tela "Nova atualização disponível", e o botão **Atualizar** abre o
+link `url` (a página do PushLife na Uptodown). Sem internet, vale a última resposta que o app guardou.
+
+Depois de publicar uma versão nova na Uptodown:
+
+1. Veja o **versionCode** dela: está no título da release no GitHub ("versionCode 1xx") e no app em
+   Perfil > Sobre, entre parênteses.
+2. No GitHub, abra `update.json`, clique no lápis e troque `minVersionCode` por esse número.
+3. Se quiser, escreva as novidades em `notes` (pt, en, es). Salve com "Commit changes".
+
+Em até ~5 minutos quem tiver uma versão menor fica travado até atualizar. Use `0` para não travar ninguém.
+Mudar só o `update.json` não gera APK novo.
+
 ## Tecnologia
 
 - Kotlin + Jetpack Compose (Material 3), Android 8.0 ou mais novo

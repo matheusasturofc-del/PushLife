@@ -57,6 +57,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.core.content.pm.PackageInfoCompat
 import com.pushlife.app.AppGraph
 import com.pushlife.app.R
 import com.pushlife.app.blocking.BlockerService
@@ -214,7 +215,11 @@ fun ProfileScreen(modifier: Modifier = Modifier) {
         item { Section(R.string.profile_about) }
         item {
             val version = remember {
-                runCatching { context.packageManager.getPackageInfo(context.packageName, 0).versionName }.getOrNull().orEmpty()
+                // Nome e número da versão; o número é o que vai no update.json.
+                runCatching {
+                    val info = context.packageManager.getPackageInfo(context.packageName, 0)
+                    "${info.versionName} (${PackageInfoCompat.getLongVersionCode(info)})"
+                }.getOrNull().orEmpty()
             }
             SettingRow(stringResource(R.string.app_name), stringResource(R.string.profile_version, version)) {
                 TextButton(onClick = { context.startSafely(Intent(Intent.ACTION_VIEW, Uri.parse(PRIVACY_URL))) }) {

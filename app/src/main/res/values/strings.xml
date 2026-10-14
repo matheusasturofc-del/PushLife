@@ -438,4 +438,9 @@
     <string name="ob_perms_hint">PushLife needs these to block apps, show the block screen, count your exercise and keep running in the background.</string>
     <string name="ob_perms_count">%1$d of %2$d allowed</string>
     <string name="ob_perms_later">Continue (I\'ll finish later)</string>
+    <string name="update_title">New update available</string>
+    <string name="update_body">To keep using PushLife, install the newest version. It only takes a minute.</string>
+    <string name="update_notes">What\'s new</string>
+    <string name="update_button">Update</string>
+    <string name="update_installed">Installed version: %1$s</string>
 </resources>
