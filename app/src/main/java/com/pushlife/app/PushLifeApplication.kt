@@ -2,6 +2,7 @@ package com.pushlife.app
 
 import android.app.Application
 import android.content.Context
+import com.pushlife.app.data.Accounts
 import com.pushlife.app.data.AppLanguage
 import com.pushlife.app.data.BankRepository
 import com.pushlife.app.data.BlockSettingsRepository
@@ -19,6 +20,7 @@ class PushLifeApplication : Application() {
         // Na versão das capturas de tela, datas e dias da semana também ficam em inglês.
         if (resources.getBoolean(R.bool.english_only)) Locale.setDefault(Locale.US)
         AppGraph.load(this)
+        Accounts.init(this)
     }
 }
 

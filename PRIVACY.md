@@ -1,9 +1,10 @@
 # Política de privacidade do PushLife
 
-*Última atualização: 13 de outubro de 2026*
+*Última atualização: 14 de outubro de 2026*
 
-O PushLife foi feito para funcionar **dentro do seu celular**. Não temos servidores, não criamos contas e
-não coletamos, vendemos nem compartilhamos dados pessoais.
+O PushLife foi feito para funcionar **dentro do seu celular**. A única coisa que sai dele é a sua **conta**:
+e-mail, nome, @ e o backup do seu progresso, para você não perder nada e poder entrar em outro celular.
+Não vendemos nem compartilhamos dados pessoais, e o app não tem anúncios.
 
 ## O que o app usa e por quê
 
@@ -16,16 +17,26 @@ não coletamos, vendemos nem compartilhamos dados pessoais.
 | VPN local (filtro de sites adultos, opcional) | Bloquear sites adultos pelo endereço (DNS) | Só as consultas de endereço dos sites, que vão para o serviço "Cloudflare for Families" (1.1.1.3) para serem filtradas. O resto da sua internet não passa pela VPN |
 | Notificações | Lembretes, avisos de tempo e resumo da semana | Não |
 
-## Seus dados
+## Sua conta
 
-- Saldo, histórico de exercícios, conquistas e ajustes ficam guardados só no celular.
+- Para criar a conta pedimos **e-mail, senha, nome e um @** (nome de usuário).
+- A conta usa o **Firebase**, do Google: o login fica no Firebase Authentication (a senha nunca fica com a
+  gente) e o nome, o @ e o backup ficam no Cloud Firestore.
+- O backup é uma cópia do que o app guarda (saldo, histórico de exercícios, conquistas, respostas das
+  boas-vindas, ajustes e a lista de apps bloqueados). Ele é enviado automaticamente quando você sai do app.
+- O seu @ é guardado numa lista para que ninguém use o mesmo. O resto da conta só você acessa.
+- Para apagar a conta e os dados da nuvem, mande um e-mail para o contato abaixo.
+
+## Seus dados no celular
+
+- Saldo, histórico de exercícios, conquistas e ajustes ficam guardados no celular (e, com conta, no backup).
 - O backup é um arquivo que **você** salva onde quiser (por exemplo, no seu Google Drive) pelo seletor de
   arquivos do Android. O PushLife não tem acesso ao seu Drive.
 - "Apagar todos os dados", no Perfil, remove tudo do aparelho. Desinstalar o app também.
 
 ## Crianças
 
-O app não é direcionado a menores de 13 anos e não coleta dados de ninguém.
+O app não é direcionado a menores de 13 anos.
 
 ## Contato
 
@@ -35,20 +46,23 @@ Dúvidas: matheusasturofc@gmail.com
 
 ## PushLife privacy policy (English)
 
-PushLife works **on your phone**. We have no servers, create no accounts and do not collect, sell or share
-personal data. The camera is used only for on-device rep counting (ML Kit); no image or video is stored or
+PushLife works **on your phone**. The only thing that leaves it is your **account**: email, name, @ and a
+backup of your progress, stored with Google Firebase (Authentication and Cloud Firestore) so you can sign in
+on another phone. Your @ is kept in a list so nobody else can use it. We do not sell or share personal data
+and there are no ads. To delete your account and cloud data, email the contact below. The camera is used only for on-device rep counting (ML Kit); no image or video is stored or
 sent. Usage access and "display over other apps" are used only to know which app is open and to show the
 block screen. The optional adult-site filter is a local VPN that only filters site addresses (DNS): those
 lookups are sent to Cloudflare for Families (1.1.1.3); the rest of your traffic does not go through it.
-Your balance, history and settings stay on the device; backups are files you save yourself.
+Your balance, history and settings stay on the device and, with an account, in your cloud backup.
 Contact: matheusasturofc@gmail.com
 
 ## Política de privacidad de PushLife (Español)
 
-PushLife funciona **en tu teléfono**. No tenemos servidores, no creamos cuentas y no recopilamos, vendemos ni
-compartimos datos personales. La cámara solo se usa para contar repeticiones en el dispositivo (ML Kit);
+PushLife funciona **en tu teléfono**. Lo único que sale de él es tu **cuenta**: correo, nombre, @ y una copia
+de tu progreso, guardados en Google Firebase (Authentication y Cloud Firestore) para que puedas entrar en otro
+teléfono. Tu @ se guarda en una lista para que nadie más lo use. No vendemos ni compartimos datos personales y
+no hay anuncios. Para borrar tu cuenta y los datos en la nube, escribe al contacto de abajo. La cámara solo se usa para contar repeticiones en el dispositivo (ML Kit);
 ninguna imagen ni video se guarda o envía. El acceso a datos de uso y "mostrar sobre otras apps" solo sirven
 para saber qué app está abierta y mostrar la pantalla de bloqueo. El filtro opcional de sitios para adultos es
 una VPN local que solo filtra las direcciones de los sitios (DNS): esas consultas van a Cloudflare for Families
-(1.1.1.3); el resto de tu tráfico no pasa por ella. Tus datos quedan en el teléfono; las copias de seguridad
-son archivos que guardas tú. Contacto: matheusasturofc@gmail.com
+(1.1.1.3); el resto de tu tráfico no pasa por ella. Tus datos quedan en el teléfono y, con cuenta, en tu copia en la nube. Contacto: matheusasturofc@gmail.com

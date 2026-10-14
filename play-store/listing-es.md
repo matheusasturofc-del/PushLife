@@ -17,4 +17,4 @@ YouTube…) y solo se abren mientras tengas saldo. Para ganarlo, entrena: cada f
 • Bloqueo opcional de sitios para adultos en cualquier navegador.
 • Rachas, niveles, logros, retos semanales y gráficos de progreso.
 • Una meta diaria que se adapta a ti y recordatorios a la hora que elijas.
-• Gratis, sin anuncios, sin cuenta y sin recopilar datos. En español, portugués e inglés.
+• Gratis y sin anuncios. Tu cuenta guarda tu progreso en la nube. En español, portugués e inglés.

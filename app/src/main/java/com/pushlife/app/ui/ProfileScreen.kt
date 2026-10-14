@@ -55,17 +55,18 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.core.content.pm.PackageInfoCompat
 import com.pushlife.app.AppGraph
 import com.pushlife.app.R
-import com.pushlife.app.blocking.BlockerService
 import com.pushlife.app.core.Profile
 import com.pushlife.app.core.progress.Levels
+import com.pushlife.app.data.Accounts
 import com.pushlife.app.data.AppLanguage
 import com.pushlife.app.data.Backup
 import com.pushlife.app.data.ProgressCenter
-import com.pushlife.app.filter.DnsFilterService
 import com.pushlife.app.reminder.Reminders
 import com.pushlife.app.ui.theme.Ink
 import com.pushlife.app.ui.theme.Orange
@@ -92,6 +93,10 @@ fun ProfileScreen(modifier: Modifier = Modifier) {
     var pickTime by remember { mutableStateOf(false) }
     var confirmRestore by remember { mutableStateOf<Uri?>(null) }
     var confirmWipe by remember { mutableStateOf(false) }
+    var showSignUp by remember { mutableStateOf(false) }
+    var showLogin by remember { mutableStateOf(false) }
+    var pendingRestore by remember { mutableStateOf<Accounts.LoginResult?>(null) }
+    val account by Accounts.current.collectAsStateWithLifecycle()
 
     fun save(change: (Profile) -> Profile) = AppGraph.profile.save(change(AppGraph.profile.state.value))
 
@@ -134,6 +139,9 @@ fun ProfileScreen(modifier: Modifier = Modifier) {
                         IconButton(onClick = { editName = true }) {
                             Icon(Icons.Rounded.Edit, contentDescription = stringResource(R.string.profile_edit_name))
                         }
+                    }
+                    if (profile.username.isNotEmpty()) {
+                        Text("@${profile.username}", style = MaterialTheme.typography.titleMedium, color = Orange)
                     }
                     Text(
                         stringResource(R.string.progress_level, stats.level) + " · " + stringResource(Levels.rank(stats.level).title),
@@ -225,7 +233,43 @@ fun ProfileScreen(modifier: Modifier = Modifier) {
                         Text(stringResource(R.string.backup_import))
                     }
                 }
-                Text(stringResource(R.string.account_soon), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        }
+
+        item { Section(R.string.account_title) }
+        item {
+            Column(
+                Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surfaceContainer, RoundedCornerShape(16.dp)).padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                val current = account
+                when {
+                    !Accounts.available -> Text(stringResource(R.string.account_soon), style = MaterialTheme.typography.bodyMedium)
+                    current != null -> {
+                        Text(
+                            stringResource(R.string.account_signed_in, profile.username.ifEmpty { current.email }),
+                            style = MaterialTheme.typography.titleMedium,
+                        )
+                        Text(current.email, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(stringResource(R.string.account_cloud_backup), style = MaterialTheme.typography.bodyMedium)
+                        OutlinedButton(onClick = {
+                            Accounts.backup(context, force = true)
+                            Accounts.signOut()
+                            save { it.copy(username = "") }
+                        }) { Text(stringResource(R.string.account_sign_out)) }
+                    }
+                    else -> {
+                        Text(stringResource(R.string.account_none), style = MaterialTheme.typography.bodyMedium)
+                        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                            FilledTonalButton(onClick = { showSignUp = true }, modifier = Modifier.weight(1f)) {
+                                Text(stringResource(R.string.account_create))
+                            }
+                            OutlinedButton(onClick = { showLogin = true }, modifier = Modifier.weight(1f)) {
+                                Text(stringResource(R.string.login_button))
+                            }
+                        }
+                    }
+                }
             }
         }
 
@@ -317,6 +361,7 @@ fun ProfileScreen(modifier: Modifier = Modifier) {
                 TextButton(onClick = {
                     confirmWipe = false
                     Reminders.cancel(context)
+                    Accounts.signOut() // senão o app vazio sobrescreveria o backup da conta
                     Backup.wipe(context)
                     afterDataChange(context)
                 }) { Text(stringResource(R.string.profile_wipe_yes), color = MaterialTheme.colorScheme.error) }
@@ -324,15 +369,62 @@ fun ProfileScreen(modifier: Modifier = Modifier) {
             dismissButton = { TextButton(onClick = { confirmWipe = false }) { Text(stringResource(R.string.disable_cancel_generic)) } },
         )
     }
+
+    if (showSignUp) {
+        FullScreenDialog(onDismiss = { showSignUp = false }) {
+            SignUpScreen(profile.name, onBack = { showSignUp = false }, onDone = {
+                showSignUp = false
+                context.toast(R.string.account_created)
+            })
+        }
+    }
+
+    if (showLogin) {
+        FullScreenDialog(onDismiss = { showLogin = false }) {
+            LoginScreen(onBack = { showLogin = false }, onLoggedIn = { result ->
+                showLogin = false
+                save { it.copy(username = result.username) }
+                if (result.backup != null) pendingRestore = result else Accounts.backup(context, force = true)
+            })
+        }
+    }
+
+    pendingRestore?.let { result ->
+        // Este celular já tem dados: a pessoa escolhe com quais ficar.
+        AlertDialog(
+            onDismissRequest = {},
+            title = { Text(stringResource(R.string.account_restore_title)) },
+            text = { Text(stringResource(R.string.account_restore_body)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    pendingRestore = null
+                    if (Backup.import(context, result.backup.orEmpty())) {
+                        save { it.copy(username = result.username) }
+                        afterDataChange(context)
+                    } else {
+                        context.toast(R.string.backup_invalid)
+                    }
+                }) { Text(stringResource(R.string.account_restore_yes)) }
+            },
+            dismissButton = {
+                TextButton(onClick = {
+                    pendingRestore = null
+                    Accounts.backup(context, force = true)
+                }) { Text(stringResource(R.string.account_restore_no)) }
+            },
+        )
+    }
+}
+
+@Composable
+private fun FullScreenDialog(onDismiss: () -> Unit, content: @Composable () -> Unit) {
+    Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)) {
+        content()
+    }
 }
 
 /** Depois de restaurar ou apagar: ajusta serviços e lembretes e recria a tela com os dados novos. */
-private fun afterDataChange(context: Context) {
-    BlockerService.syncWithSettings(context)
-    DnsFilterService.syncWithSettings(context)
-    AppGraph.profile.state.value.reminder?.let { Reminders.schedule(context, it) } ?: Reminders.cancel(context)
-    (context as? Activity)?.recreate()
-}
+private fun afterDataChange(context: Context) = reloadAfterDataChange(context)
 
 private fun Context.toast(@StringRes text: Int) = Toast.makeText(this, text, Toast.LENGTH_SHORT).show()
 

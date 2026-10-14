@@ -1,0 +1,24 @@
+rules_version = '2';
+
+// Regras do banco do PushLife (Cloud Firestore). Cole tudo isto em
+// Firebase > Firestore Database > Regras e clique em "Publicar".
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // usernames/{arroba} = { uid }. Qualquer um pode ver se um @ existe, mas só dá para
+    // CRIAR (nunca sobrescrever): é isso que impede dois usuários com o mesmo @.
+    match /usernames/{name} {
+      allow get: if true;
+      allow create: if request.auth != null
+        && request.resource.data.keys().hasOnly(['uid'])
+        && request.resource.data.uid == request.auth.uid
+        && name.matches('^[a-z][a-z0-9_.]{2,19}$');
+      allow delete: if request.auth != null && resource.data.uid == request.auth.uid;
+    }
+
+    // users/{uid} = perfil e backup. Só o dono da conta lê e escreve.
+    match /users/{uid} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+  }
+}

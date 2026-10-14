@@ -17,6 +17,8 @@ enum class Goal { LESS_PHONE, NIGHT_SCROLL, DISCIPLINE, STUDY, WORK, FITNESS }
 data class Profile(
     val onboardingDone: Boolean = false,
     val name: String = "",
+    /** O @ da conta (sem o "@"); vazio se a pessoa não tem conta. */
+    val username: String = "",
     val goals: Set<Goal> = emptySet(),
     val phoneHours: Float = 5f,
     val targetHours: Float = 3f,

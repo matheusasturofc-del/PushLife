@@ -17,4 +17,4 @@ and they only open while you have balance. To earn it, work out: every push-up i
 • Optional adult-site blocking in every browser.
 • Day streaks, levels, achievements, weekly challenges and progress charts.
 • A daily goal that adapts to you and reminders at the time you choose.
-• Free, no ads, no account, no data collection. In English, Portuguese and Spanish.
+• Free and no ads. Your account keeps your progress safe in the cloud. In English, Portuguese and Spanish.

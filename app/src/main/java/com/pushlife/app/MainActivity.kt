@@ -15,6 +15,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import com.pushlife.app.blocking.BlockerService
 import com.pushlife.app.core.Exercise
+import com.pushlife.app.data.Accounts
 import com.pushlife.app.data.AppLanguage
 import com.pushlife.app.data.ProgressCenter
 import com.pushlife.app.data.UpdateChecker
@@ -86,6 +87,12 @@ class MainActivity : ComponentActivity() {
         DnsFilterService.syncWithSettings(this)
         ProgressCenter.adjustGoalIfDue()
         lifecycleScope.launch { UpdateChecker.refresh(this@MainActivity) }
+    }
+
+    override fun onStop() {
+        super.onStop()
+        // Com conta, o progresso vai para a nuvem quando o app sai da tela.
+        Accounts.backup(this)
     }
 
     private fun handleIntent(intent: Intent?) {

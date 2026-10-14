@@ -15,7 +15,7 @@ object Backup {
     private const val VERSION = 1
     private val FILES = listOf("bank", "profile", "blocking", "progress")
 
-    fun export(context: Context): String {
+    fun export(context: Context, pretty: Boolean = true): String {
         val prefs = JSONObject()
         for (file in FILES) {
             val values = JSONObject()
@@ -38,7 +38,7 @@ object Backup {
             .put("version", VERSION)
             .put("createdAt", System.currentTimeMillis())
             .put("prefs", prefs)
-            .toString(2)
+            .let { if (pretty) it.toString(2) else it.toString() }
     }
 
     /** Substitui os dados atuais pelos do backup. Retorna false se o arquivo não for um backup do PushLife. */

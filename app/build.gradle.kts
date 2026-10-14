@@ -6,6 +6,10 @@ plugins {
     alias(libs.plugins.kotlin.compose)
 }
 
+// Contas (Firebase): só liga quando o arquivo do projeto Firebase (google-services.json) estiver na pasta app.
+// Sem ele o app funciona normalmente, só sem login. Veja CONTAS.md.
+if (file("google-services.json").exists()) apply(plugin = "com.google.gms.google-services")
+
 // Versão só em inglês, para tirar as capturas de tela da loja: ./gradlew assembleDebug -PenglishOnly
 val englishOnly = project.hasProperty("englishOnly")
 
@@ -19,7 +23,7 @@ android {
         targetSdk = 35
         // No GitHub cada build ganha um número maior (a Play Store exige que ele sempre suba).
         versionCode = System.getenv("GITHUB_RUN_NUMBER")?.toIntOrNull()?.plus(100) ?: 7
-        versionName = "1.0.0"
+        versionName = "1.1.0"
 
         // Só processadores de celular (ARM). Sem isso o APK carrega ~60 MB de bibliotecas x86 inúteis.
         ndk {
@@ -97,6 +101,12 @@ dependencies {
     implementation(libs.androidx.camera.view)
     implementation(libs.mlkit.face.detection)
     implementation(libs.mlkit.pose.detection)
+
+    // Contas e backup na nuvem
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.auth)
+    implementation(libs.firebase.firestore)
+    implementation(libs.kotlinx.coroutines.play.services)
 
     testImplementation(libs.junit)
 }

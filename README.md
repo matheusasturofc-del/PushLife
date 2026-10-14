@@ -24,6 +24,10 @@ Instagram, TikTok e outros apps bloqueados. Inspirado no PushScroll, gratuito e 
 Extra: boas-vindas completas na primeira abertura (23 telas: perguntas, resultado, projeção, como funciona,
 permissões, escolha dos apps, plano pronto e primeiro treino).
 
+## Contas (e-mail, @ único e backup na nuvem)
+
+Usam o Firebase. O passo a passo para ligar está em [CONTAS.md](CONTAS.md); sem ele o app funciona sem contas.
+
 ## Atualização obrigatória (Uptodown)
 
 O app lê o arquivo [`update.json`](update.json) toda vez que é aberto. Se a versão instalada for mais velha

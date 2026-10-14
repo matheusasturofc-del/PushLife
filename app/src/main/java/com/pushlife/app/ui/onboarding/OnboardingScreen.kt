@@ -117,6 +117,7 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -154,12 +155,24 @@ import com.pushlife.app.core.Projection
 import com.pushlife.app.core.Quiz
 import com.pushlife.app.core.QuitReason
 import com.pushlife.app.core.TriedMethod
+import com.pushlife.app.core.Username
+import com.pushlife.app.data.Accounts
+import com.pushlife.app.data.Backup
 import com.pushlife.app.reminder.Reminders
+import com.pushlife.app.ui.EmailPasswordFields
+import com.pushlife.app.ui.HandleStatus
+import com.pushlife.app.ui.LoginScreen
+import com.pushlife.app.ui.UsernameField
+import com.pushlife.app.ui.accountErrorText
+import com.pushlife.app.ui.emailPasswordValid
 import com.pushlife.app.ui.formatDuration
+import com.pushlife.app.ui.rememberHandleStatus
+import com.pushlife.app.ui.reloadAfterDataChange
 import com.pushlife.app.ui.theme.Ink
 import com.pushlife.app.ui.theme.Orange
 import com.pushlife.app.ui.theme.Yellow
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.text.NumberFormat
 import java.time.LocalTime
@@ -168,7 +181,7 @@ import java.time.format.FormatStyle
 
 /** As telas das boas-vindas, na ordem em que aparecem. */
 private enum class Step {
-    WELCOME, NAME, GOALS, USAGE, TARGET, APPS, REASONS, STATE, RESULT, PROJECTION, GOOD_NEWS, TRIED,
+    WELCOME, NAME, ACCOUNT, GOALS, USAGE, TARGET, APPS, REASONS, STATE, RESULT, PROJECTION, GOOD_NEWS, TRIED,
     REPLACE, HOW_PUSH, HOW_SCROLL, REMINDER, FREQUENCY, SETUP, USAGE_ACCESS, OVERLAY, PERMISSIONS, SELECT_APPS, PLAN, FIRST_WORKOUT,
 }
 
@@ -246,6 +259,15 @@ fun OnboardingScreen(onFinished: (startExercise: Exercise?) -> Unit) {
     val context = LocalContext.current
     var step by rememberSaveable { mutableStateOf(Step.WELCOME) }
     var name by rememberSaveable { mutableStateOf("") }
+    var username by rememberSaveable { mutableStateOf("") }
+    var usernameEdited by rememberSaveable { mutableStateOf(false) }
+    var email by rememberSaveable { mutableStateOf("") }
+    var password by rememberSaveable { mutableStateOf("") }
+    var showLogin by rememberSaveable { mutableStateOf(false) }
+    var accountLoading by remember { mutableStateOf(false) }
+    var accountError by remember { mutableStateOf<Int?>(null) }
+    val account by Accounts.current.collectAsStateWithLifecycle()
+    val scope = rememberCoroutineScope()
     var goals by rememberSaveable { mutableStateOf(emptyList<Goal>()) }
     var phoneHours by rememberSaveable { mutableFloatStateOf(5f) }
     var targetHours by rememberSaveable { mutableFloatStateOf(Projection.suggestedTarget(5f)) }
@@ -258,9 +280,35 @@ fun OnboardingScreen(onFinished: (startExercise: Exercise?) -> Unit) {
     var reminderOn by rememberSaveable { mutableStateOf(false) }
     var protectNow by rememberSaveable { mutableStateOf(true) }
 
+    // Sem Firebase configurado, ou já com conta (entrou sem backup), a tela de criar conta é pulada.
+    fun skipped(s: Step) = s == Step.ACCOUNT && (!Accounts.available || Accounts.current.value != null)
     fun go(next: Step) { step = next }
-    fun next() { step = Step.entries[(step.ordinal + 1).coerceAtMost(Step.entries.lastIndex)] }
-    fun back() { if (step.ordinal > 0) step = Step.entries[step.ordinal - 1] }
+    fun next() {
+        var i = (step.ordinal + 1).coerceAtMost(Step.entries.lastIndex)
+        while (skipped(Step.entries[i]) && i < Step.entries.lastIndex) i++
+        step = Step.entries[i]
+    }
+    fun back() {
+        var i = step.ordinal - 1
+        while (i > 0 && skipped(Step.entries[i])) i--
+        if (i >= 0) step = Step.entries[i]
+    }
+    fun createAccount() {
+        if (accountLoading || !emailPasswordValid(email, password)) return
+        scope.launch {
+            accountLoading = true
+            accountError = null
+            try {
+                Accounts.signUp(email, password, username, name.trim())
+                next()
+            } catch (e: Accounts.AccountException) {
+                accountError = accountErrorText(e.error)
+                if (e.error == Accounts.Error.USERNAME_TAKEN) go(Step.NAME)
+            } finally {
+                accountLoading = false
+            }
+        }
+    }
     fun finish(startExercise: Exercise?) {
         val reminder = if (reminderOn) LocalTime.of(reminderHour, reminderMinute) else null
         if (reminder != null) Reminders.schedule(context, reminder) else Reminders.cancel(context)
@@ -268,6 +316,7 @@ fun OnboardingScreen(onFinished: (startExercise: Exercise?) -> Unit) {
             Profile(
                 onboardingDone = true,
                 name = name.trim(),
+                username = if (Accounts.current.value != null) username else "",
                 goals = goals.toSet(),
                 phoneHours = phoneHours,
                 targetHours = targetHours,
@@ -283,12 +332,14 @@ fun OnboardingScreen(onFinished: (startExercise: Exercise?) -> Unit) {
             AppGraph.blocking.setEnabled(true)
             BlockerService.syncWithSettings(context)
         }
+        Accounts.backup(context, force = true)
         onFinished(startExercise)
     }
 
     BackHandler(enabled = step != Step.WELCOME) { back() }
 
     val displayName = name.trim()
+    val handleStatus = rememberHandleStatus(if (Accounts.available && account == null) username else "")
     Box(
         Modifier
             .fillMaxSize()
@@ -297,25 +348,46 @@ fun OnboardingScreen(onFinished: (startExercise: Exercise?) -> Unit) {
     ) {
         AnimatedContent(targetState = step, transitionSpec = { fadeIn() togetherWith fadeOut() }, label = "onboarding") { current ->
             when (current) {
-                Step.WELCOME -> WelcomeStep(onStart = ::next)
+                Step.WELCOME -> WelcomeStep(onStart = ::next, onLogin = if (Accounts.available) ({ showLogin = true }) else null)
 
                 Step.NAME -> StepLayout(
                     current, ::back, ::next,
                     kicker = stringResource(R.string.ob_name_kicker),
                     title = stringResource(R.string.ob_name_title),
-                    buttonEnabled = displayName.isNotEmpty(),
+                    buttonEnabled = displayName.isNotEmpty() && (!Accounts.available || account != null || handleStatus == HandleStatus.FREE),
                 ) {
                     Spacer(Modifier.height(24.dp))
                     OutlinedTextField(
                         value = name,
-                        onValueChange = { name = it.take(30) },
+                        onValueChange = {
+                            name = it.take(30)
+                            if (!usernameEdited) username = Username.suggest(name)
+                        },
                         placeholder = { Text(stringResource(R.string.ob_name_hint)) },
                         singleLine = true,
                         shape = RoundedCornerShape(50),
                         keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words, imeAction = ImeAction.Next),
-                        keyboardActions = KeyboardActions(onNext = { if (displayName.isNotEmpty()) next() }),
                         modifier = Modifier.fillMaxWidth(),
                     )
+                    if (Accounts.available && account == null) {
+                        // O @ não pode repetir: o campo confere no servidor enquanto a pessoa digita.
+                        UsernameField(username, { username = it; usernameEdited = true }, handleStatus)
+                    } else if (account != null && username.isNotEmpty()) {
+                        Text("@$username", style = MaterialTheme.typography.titleMedium, color = Orange)
+                    }
+                }
+
+                Step.ACCOUNT -> StepLayout(
+                    current, ::back, ::createAccount,
+                    kicker = "@$username",
+                    title = stringResource(R.string.ob_account_title),
+                    hint = stringResource(R.string.ob_account_hint),
+                    buttonEnabled = !accountLoading && emailPasswordValid(email, password),
+                    buttonText = stringResource(if (accountLoading) R.string.account_creating else R.string.account_create),
+                ) {
+                    Spacer(Modifier.height(8.dp))
+                    EmailPasswordFields(email, { email = it }, password, { password = it }, onDone = ::createAccount)
+                    accountError?.let { Text(stringResource(it), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium) }
                 }
 
                 Step.GOALS -> StepLayout(
@@ -511,6 +583,27 @@ fun OnboardingScreen(onFinished: (startExercise: Exercise?) -> Unit) {
                 }
             }
         }
+
+        if (showLogin) {
+            LoginScreen(
+                onBack = { showLogin = false },
+                onLoggedIn = { result ->
+                    val backup = result.backup
+                    if (backup != null && Backup.import(context, backup)) {
+                        // Conta com progresso salvo: traz tudo e vai direto para o app.
+                        AppGraph.profile.save(AppGraph.profile.state.value.copy(username = result.username))
+                        reloadAfterDataChange(context)
+                    } else {
+                        // Conta sem backup ainda: continua as boas-vindas de onde faz sentido.
+                        if (result.name.isNotBlank()) name = result.name
+                        username = result.username
+                        usernameEdited = true
+                        showLogin = false
+                        go(Step.GOALS)
+                    }
+                },
+            )
+        }
     }
 }
 
@@ -525,7 +618,7 @@ private fun Context.startSafely(intent: Intent) {
 // ---------- Telas ----------
 
 @Composable
-private fun WelcomeStep(onStart: () -> Unit) {
+private fun WelcomeStep(onStart: () -> Unit, onLogin: (() -> Unit)?) {
     Column(Modifier.fillMaxSize().systemBarsPadding().padding(24.dp), verticalArrangement = Arrangement.spacedBy(20.dp)) {
         Spacer(Modifier.weight(1f))
         Image(painterResource(R.drawable.ic_logo), contentDescription = null, modifier = Modifier.size(96.dp))
@@ -538,6 +631,9 @@ private fun WelcomeStep(onStart: () -> Unit) {
         Spacer(Modifier.weight(1f))
         Button(onClick = onStart, modifier = Modifier.fillMaxWidth().height(64.dp)) {
             Text(stringResource(R.string.ob_start), style = MaterialTheme.typography.titleLarge)
+        }
+        if (onLogin != null) {
+            TextButton(onClick = onLogin, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.ob_have_account)) }
         }
     }
 }

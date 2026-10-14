@@ -17,4 +17,4 @@ YouTube…) e eles só abrem enquanto você tiver saldo. Para ganhar saldo, trei
 • Bloqueio de sites adultos opcional, em qualquer navegador.
 • Sequência de dias, níveis, conquistas, desafios semanais e gráficos de progresso.
 • Meta diária que evolui com você e lembretes no horário que você escolher.
-• Grátis, sem anúncios, sem conta e sem coleta de dados. Em português, inglês e espanhol.
+• Grátis e sem anúncios. Sua conta guarda seu progresso na nuvem. Em português, inglês e espanhol.
