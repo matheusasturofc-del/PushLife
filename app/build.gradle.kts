@@ -1,3 +1,4 @@
+import java.util.Properties
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
@@ -8,7 +9,7 @@ plugins {
 
 // Contas (Supabase): endereço e chave pública do projeto, em supabase.properties na raiz.
 // Sem o arquivo o app funciona normalmente, só sem login. Veja CONTAS.md.
-val supabase = java.util.Properties().apply {
+val supabase = Properties().apply {
     rootProject.file("supabase.properties").takeIf { it.exists() }?.inputStream()?.use { load(it) }
 }
 
