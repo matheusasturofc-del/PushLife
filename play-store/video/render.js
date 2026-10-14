@@ -1,4 +1,4 @@
-// Uso: node render.js preview t1 t2 ...  |  node render.js video saida.mp4
+// Uso: node render.js preview t1 t2 ...  |  AUDIO=musica.wav node render.js video saida.mp4
 const { chromium } = require('playwright');
 const { spawn } = require('child_process');
 const path = require('path');
@@ -17,9 +17,9 @@ const path = require('path');
   } else {
     const out = rest[0], FPS = 30, DUR = 30;
     const ff = spawn('ffmpeg', ['-y', '-loglevel', 'error', '-f', 'image2pipe', '-framerate', String(FPS), '-i', '-',
-      '-f', 'lavfi', '-i', 'anullsrc=r=44100:cl=stereo', '-shortest',
+      ...(process.env.AUDIO ? ['-i', process.env.AUDIO] : ['-f', 'lavfi', '-i', 'anullsrc=r=44100:cl=stereo']), '-shortest',
       '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-crf', '17', '-preset', 'slow', '-profile:v', 'high', '-r', String(FPS),
-      '-c:a', 'aac', '-b:a', '128k', '-movflags', '+faststart', out], { stdio: ['pipe', 'inherit', 'inherit'] });
+      '-c:a', 'aac', '-b:a', '192k', '-movflags', '+faststart', out], { stdio: ['pipe', 'inherit', 'inherit'] });
     for (let f = 0; f < FPS * DUR; f++) {
       await page.evaluate(x => window.render(x), f / FPS);
       const buf = await page.screenshot({ type: 'jpeg', quality: 96 });

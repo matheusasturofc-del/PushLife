@@ -243,7 +243,7 @@ function rigDraw(ph) {
   rig.innerHTML = `<path d="${corner(x0, y0, 1, 1)} ${corner(x1, y0, -1, 1)} ${corner(x0, y1, 1, -1)} ${corner(x1, y1, -1, -1)}" fill="none" stroke="#FF7A00" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>${lines}${dotsS}`;
 }
 
-const REP0 = 8.5, PER = .56;
+const REP0 = 8.5, PER = .5;
 window.render = function (t) {
   // fundo vivo
   tf(blobs[0], `translate(${-200 + 120 * Math.sin(t * .35)}px, ${-200 + 160 * Math.cos(t * .27)}px)`);
@@ -252,7 +252,7 @@ window.render = function (t) {
   dots.style.backgroundPosition = `0 ${-t * 14}px`;
 
   // Cena 1 (0–3.6)
-  const v1 = 1 - eio(p(t, 3.1, 3.6));
+  const v1 = 1 - eio(p(t, 3.4, 3.9));
   op(s1, v1);
   s1.style.filter = `blur(${(1 - v1) * 14}px)`;
   tf(s1, `scale(${1 + (1 - v1) * .08})`);
@@ -261,19 +261,19 @@ window.render = function (t) {
   op(logo1, p(t, .1, .35));
   ringC.setAttribute('stroke-dashoffset', 289 * (1 - eio(p(t, .7, 1.5))));
   tf(ring, `rotate(${t * 40}deg)`);
-  letters.forEach((s, i) => { const q = eo(p(t, 1.05 + i * .06, 1.5 + i * .06)); op(s, q); tf(s, `translateY(${(1 - q) * 80}px)`); });
-  op(tag1, eo(p(t, 1.9, 2.4))); tf(tag1, `translateY(${(1 - eo(p(t, 1.9, 2.4))) * 30}px)`);
+  letters.forEach((s, i) => { const q = eo(p(t, 1.0 + i * .125, 1.4 + i * .125)); op(s, q); tf(s, `translateY(${(1 - q) * 80}px)`); });
+  op(tag1, eo(p(t, 2.5, 3.0))); tf(tag1, `translateY(${(1 - eo(p(t, 2.5, 3.0))) * 30}px)`);
 
   // Cena 2 (3.4–7.7)
-  const v2 = win(t, 3.4, 7.7, .5, .5);
+  const v2 = win(t, 3.6, 7.9, .4, .45);
   op(s2, v2);
-  const speed = t < 5.6 ? (t - 3.4) * 1100 : (5.6 - 3.4) * 1100 + (1 - Math.exp(-(t - 5.6) * 2.2)) * 480;
+  const speed = t < 5.9 ? Math.max(0, t - 3.6) * 1100 : (5.9 - 3.6) * 1100 + (1 - Math.exp(-(t - 5.9) * 2.2)) * 480;
   feedCols.forEach((c, i) => tf(c, `translateY(${-((speed * (i % 2 ? 1.12 : .92)) % 940) - 300}px)`));
-  vignette.style.background = `radial-gradient(ellipse 70% 45% at 50% 48%, rgba(11,11,14,${.88}) 30%, rgba(11,11,14,${t < 5.6 ? .35 : lerp(.35, .7, eo(p(t, 5.6, 6.2)))}) 100%)`;
+  vignette.style.background = `radial-gradient(ellipse 70% 45% at 50% 48%, rgba(11,11,14,${.88}) 30%, rgba(11,11,14,${t < 5.9 ? .35 : lerp(.35, .7, eo(p(t, 5.9, 6.4)))}) 100%)`;
   const lineIn = (e, a) => tf(e, `translateY(${(1 - eo5(p(t, a, a + .6))) * 110}%)`);
   const lineInOut = (e, a, b) => tf(e, `translateY(${t < b ? (1 - eo5(p(t, a, a + .6))) * 110 : -eio(p(t, b, b + .45)) * 110}%)`);
-  lineInOut(a1, 3.65, 5.45); lineInOut(a2, 3.8, 5.55);
-  lineInOut(b1, 5.75, 7.25); lineInOut(b2, 5.9, 7.35);
+  lineInOut(a1, 3.85, 5.6); lineInOut(a2, 4.1, 5.7);
+  lineInOut(b1, 5.85, 7.35); lineInOut(b2, 6.1, 7.45);
 
   // Títulos com celular
   const headAnim = (H, a, b) => {
@@ -281,16 +281,16 @@ window.render = function (t) {
     lineInOut(H.x1, a, b); if (H.x2) lineInOut(H.x2, a + .12, b + .08);
     const sv = win(t, a + .35, b + .3, .5, .35); op(H.s, sv); tf(H.s, `translateY(${(1 - eo(p(t, a + .35, a + .85))) * 24}px)`);
   };
-  headAnim(H3, 7.75, 12.85); headAnim(H4, 13.1, 17.85); headAnim(H5, 18.1, 23.0);
+  headAnim(H3, 7.85, 13.55); headAnim(H4, 13.85, 17.55); headAnim(H5, 17.85, 23.3);
 
   // Celular: entra 7.5, sai 23.0
-  const pin = eo5(p(t, 7.45, 8.45)), pout = eio(p(t, 23.0, 23.75));
+  const pin = eo5(p(t, 7.5, 8.5)), pout = eio(p(t, 23.5, 24.2));
   const py = (1 - pin) * 1500 + pout * 1600, prot = (1 - pin) * 8 - pout * 6;
   const fl = Math.sin(t * 1.3) * 6;
-  phone.style.display = (t > 7.4 && t < 23.8) ? 'block' : 'none';
+  phone.style.display = (t > 7.45 && t < 24.3) ? 'block' : 'none';
   tf(phone, `translateY(${py + fl}px) rotate(${prot}deg)`);
   // páginas: câmera → início (12.9) → bloqueio (17.9)
-  const s12 = eio(p(t, 12.85, 13.45)), s23 = eio(p(t, 17.85, 18.45));
+  const s12 = eio(p(t, 13.65, 14.15)), s23 = eio(p(t, 17.65, 18.15));
   tf(pCam, `translateX(${-s12 * 100}%) scale(${1 - s12 * .08})`); op(pCam, 1 - s12 * .6);
   tf(pHome, `translateX(${(1 - s12) * 100 - s23 * 100}%) scale(${1 - s23 * .08})`); op(pHome, s12 < 1 ? 1 : 1 - s23 * .6);
   tf(pBlock, `translateX(${(1 - s23) * 100}%)`);
@@ -317,49 +317,49 @@ window.render = function (t) {
   });
 
   // início
-  const bv = Math.round(45 * eio(p(t, 13.7, 15.6)));
+  const bv = Math.round(45 * eio(p(t, 14.2, 16.0)));
   bal.textContent = bv; minLbl.style.left = (bv >= 10 ? 250 : 150) + 'px';
   puToday.textContent = bv;
-  bars.forEach((b, i) => { b.style.height = (180 * barH[i] * eo(p(t, 14.4 + i * .1, 15.2 + i * .1))) + 'px'; });
-  tf(card, `scale(${1 + .03 * Math.exp(-Math.max(0, t - 15.6) * 3) * (t > 15.6 ? 1 : 0)})`);
+  bars.forEach((b, i) => { b.style.height = (180 * barH[i] * eo(p(t, 15.0 + i * .125, 15.7 + i * .125))) + 'px'; });
+  tf(card, `scale(${1 + .04 * Math.exp(-Math.max(0, t - 16.0) * 4) * (t > 16.0 ? 1 : 0)})`);
 
   // bloqueio
   apps.forEach(({ a, lk }, i) => {
-    const q = p(t, 18.9 + i * .12, 19.35 + i * .12);
+    const q = p(t, 19.0 + i * .25, 19.4 + i * .25);
     op(lk, q > 0 ? 1 : 0); tf(lk, `scale(${eback(q)})`);
     a.style.filter = `grayscale(${eo(q) * .85}) brightness(${1 - eo(q) * .45})`;
   });
-  const sh = eo5(p(t, 20.3, 21.1));
+  const sh = eo5(p(t, 20.75, 21.5));
   tf(sheet, `translateY(${(1 - sh) * 640}px)`);
-  tf(lockBig, `scale(${eback(p(t, 20.7, 21.3))}) rotate(${Math.sin(Math.max(0, t - 21.2) * 14) * 8 * Math.exp(-Math.max(0, t - 21.2) * 3)}deg)`);
-  const press = t > 22.3 ? 1 - .05 * Math.sin(Math.PI * p(t, 22.3, 22.6)) : 1 + .025 * Math.sin(t * 6);
+  tf(lockBig, `scale(${eback(p(t, 21.0, 21.45))}) rotate(${Math.sin(Math.max(0, t - 21.45) * 14) * 8 * Math.exp(-Math.max(0, t - 21.45) * 3)}deg)`);
+  const press = t > 22.5 ? 1 - .05 * Math.sin(Math.PI * p(t, 22.5, 22.8)) : 1 + .025 * Math.sin(t * Math.PI * 2);
   tf(btn, `scale(${press})`);
 
   // Cena 6 (23.3–27.2)
-  const v6 = t > 23.2 && t < 27.4;
+  const v6 = t > 23.7 && t < 27.3;
   s6.style.display = v6 ? 'block' : 'none';
   if (v6) {
-    lineInOut(h6a, 23.4, 26.5); lineInOut(h6b, 23.52, 26.58);
+    lineInOut(h6a, 23.85, 26.5); lineInOut(h6b, 24.0, 26.58);
     featEls.forEach((f, i) => {
-      const a = 23.9 + i * .17, q = eo5(p(t, a, a + .7)), out = eio(p(t, 26.4 + i * .04, 26.85 + i * .04));
+      const a = 24.2 + i * .25, q = eo5(p(t, a, a + .7)), out = eio(p(t, 26.4 + i * .04, 26.85 + i * .04));
       op(f, q * (1 - out));
       tf(f, `translateX(${(1 - q) * (i % 2 ? 240 : -240)}px) translateY(${-out * 60}px)`);
     });
   }
 
   // Cena 7 (27.0–30)
-  const v7 = t > 26.9;
+  const v7 = t > 26.8;
   s7.style.display = v7 ? 'block' : 'none';
   if (v7) {
-    const k7 = eback(p(t, 27.0, 27.8));
-    tf(logo7, `scale(${lerp(.3, 1, k7)}) rotate(${lerp(-20, 0, eo(p(t, 27.0, 27.9)))}deg)`);
-    op(logo7, p(t, 27.0, 27.25));
+    const k7 = eback(p(t, 26.85, 27.5));
+    tf(logo7, `scale(${lerp(.3, 1, k7)}) rotate(${lerp(-20, 0, eo(p(t, 26.85, 27.7)))}deg)`);
+    op(logo7, p(t, 26.85, 27.05));
     ring7C.setAttribute('stroke-dashoffset', 289 * (1 - eio(p(t, 27.4, 28.2))));
     tf(ring7, `rotate(${t * 40}deg)`);
-    letters7.forEach((s, i) => { const q = eo(p(t, 27.6 + i * .05, 28.0 + i * .05)); op(s, q); tf(s, `translateY(${(1 - q) * 70}px)`); });
-    const tq = eo(p(t, 28.3, 28.8)); op(tag7, tq); tf(tag7, `translateY(${(1 - tq) * 24}px)`);
-    const cq = eback(p(t, 28.6, 29.2)); op(cta, p(t, 28.6, 28.8));
-    tf(cta, `scale(${cq * (1 + .03 * Math.sin(Math.max(0, t - 29.2) * 5))})`);
+    letters7.forEach((s, i) => { const q = eo(p(t, 27.45 + i * .125, 27.85 + i * .125)); op(s, q); tf(s, `translateY(${(1 - q) * 70}px)`); });
+    const tq = eo(p(t, 28.5, 29.0)); op(tag7, tq); tf(tag7, `translateY(${(1 - tq) * 24}px)`);
+    const cq = eback(p(t, 28.9, 29.35)); op(cta, p(t, 28.9, 29.05));
+    tf(cta, `scale(${cq * (1 + .035 * Math.sin(Math.max(0, t - 29.35) * Math.PI * 2))})`);
   }
 };
 window.render(0);
