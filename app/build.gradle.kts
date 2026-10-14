@@ -107,6 +107,8 @@ dependencies {
     implementation(libs.firebase.auth)
     implementation(libs.firebase.firestore)
     implementation(libs.kotlinx.coroutines.play.services)
+    // O Firebase troca o ListenableFuture (usado pela câmera) por um pacote vazio; o Guava completo traz de volta.
+    implementation(libs.guava)
 
     testImplementation(libs.junit)
 }
