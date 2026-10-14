@@ -508,4 +508,10 @@
     <string name="reset_code_body">Type the 6-digit code we sent and choose your new password.</string>
     <string name="reset_new_password">New password</string>
     <string name="reset_save">Save and sign in</string>
+    <string name="account_delete">Delete account</string>
+    <string name="account_delete_title">Delete your account?</string>
+    <string name="account_delete_body">This permanently deletes your account, your @, your cloud backup and all data on this phone. It cannot be undone.</string>
+    <string name="account_delete_yes">Delete forever</string>
+    <string name="account_deleting">Deleting…</string>
+    <string name="account_deleted">Account deleted.</string>
 </resources>

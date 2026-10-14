@@ -130,6 +130,22 @@ object Accounts {
         return loadProfile()
     }
 
+    /** Apagar a conta, passo 1: manda um código para o e-mail da conta. */
+    suspend fun requestDeleteCode() {
+        val email = api().loadSession()?.email ?: throw AccountException(Error.UNKNOWN)
+        guard { api().request("POST", "/auth/v1/otp", JSONObject().put("email", email).put("create_user", false)) }
+    }
+
+    /** Apagar a conta, passo 2: com o código do e-mail, apaga para sempre a conta, o @ e o backup na nuvem. */
+    suspend fun deleteAccount(code: String) {
+        val email = api().loadSession()?.email ?: throw AccountException(Error.UNKNOWN)
+        verify("email", email, code)
+        guard { api().request("POST", "/rest/v1/rpc/delete_my_account", JSONObject(), token = api().accessToken()) }
+        api().clearSession()
+        _current.value = null
+        lastBackupMs = 0L
+    }
+
     fun signOut() {
         val s = api ?: return
         val token = s.loadSession()?.accessToken

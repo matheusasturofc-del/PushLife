@@ -501,4 +501,10 @@
     <string name="reset_code_body">Escribe el código de 6 dígitos que enviamos y elige tu contraseña nueva.</string>
     <string name="reset_new_password">Contraseña nueva</string>
     <string name="reset_save">Guardar y entrar</string>
+    <string name="account_delete">Eliminar cuenta</string>
+    <string name="account_delete_title">¿Eliminar tu cuenta?</string>
+    <string name="account_delete_body">Esto elimina para siempre tu cuenta, tu @, la copia en la nube y todos los datos de este teléfono. No se puede deshacer.</string>
+    <string name="account_delete_yes">Eliminar para siempre</string>
+    <string name="account_deleting">Eliminando…</string>
+    <string name="account_deleted">Cuenta eliminada.</string>
 </resources>

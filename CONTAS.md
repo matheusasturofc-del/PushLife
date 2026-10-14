@@ -52,7 +52,7 @@ assunto e cole o arquivo inteiro no campo do corpo (*Message body*), depois cliq
 | Modelo | Assunto | Corpo |
 |---|---|---|
 | **Confirm signup** | `Seu código do PushLife: {{ .Token }}` | [`supabase/email-confirmar-cadastro.html`](supabase/email-confirmar-cadastro.html) |
-| **Magic Link** | `Seu código para entrar no PushLife: {{ .Token }}` | [`supabase/email-entrar.html`](supabase/email-entrar.html) |
+| **Magic Link** | `Seu código do PushLife: {{ .Token }}` | [`supabase/email-entrar.html`](supabase/email-entrar.html) |
 | **Reset Password** | `Código para sua senha nova: {{ .Token }}` | [`supabase/email-nova-senha.html`](supabase/email-nova-senha.html) |
 
 ### 7. Ligar no app
@@ -81,7 +81,10 @@ assunto e cole o arquivo inteiro no campo do corpo (*Message body*), depois cliq
   cada 5 minutos).
 - **Perfil → Conta:** quem já usava o app antes pode criar a conta ou entrar por ali. Também dá para sair.
 - **Apagar todos os dados:** sai da conta antes, para não apagar o backup da nuvem.
-- **Apagar a conta de alguém:** no Supabase, abra **Authentication** → **Users** → apague a pessoa. O
-  perfil e o backup somem juntos.
+- **Apagar a conta (Perfil → Conta → Apagar conta):** chega um código no e-mail da conta. Com o código
+  certo o app apaga para sempre a conta, o @, o backup na nuvem e os dados do celular, e volta para as
+  boas-vindas. Usa a função `delete_my_account`, que está no fim do `supabase/schema.sql`.
+- **Apagar a conta de alguém pelo painel:** no Supabase, abra **Authentication** → **Users** → apague a
+  pessoa. O perfil e o backup somem juntos.
 - **Projeto pausado:** no plano grátis, se ninguém usar o app por 1 semana, o Supabase pausa o projeto.
   Para voltar, é só entrar no site e clicar em **Restore**.

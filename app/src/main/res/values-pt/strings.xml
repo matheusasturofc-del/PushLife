@@ -501,4 +501,10 @@
     <string name="reset_code_body">Digite o código de 6 dígitos que enviamos e escolha sua senha nova.</string>
     <string name="reset_new_password">Senha nova</string>
     <string name="reset_save">Salvar e entrar</string>
+    <string name="account_delete">Apagar conta</string>
+    <string name="account_delete_title">Apagar sua conta?</string>
+    <string name="account_delete_body">Isso apaga para sempre sua conta, seu @, o backup na nuvem e todos os dados deste celular. Não dá para desfazer.</string>
+    <string name="account_delete_yes">Apagar para sempre</string>
+    <string name="account_deleting">Apagando…</string>
+    <string name="account_deleted">Conta apagada.</string>
 </resources>

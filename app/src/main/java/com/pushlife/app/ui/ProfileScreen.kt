@@ -46,6 +46,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -57,6 +58,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.core.content.pm.PackageInfoCompat
 import com.pushlife.app.AppGraph
@@ -71,6 +74,7 @@ import com.pushlife.app.reminder.Reminders
 import com.pushlife.app.ui.theme.Ink
 import com.pushlife.app.ui.theme.Orange
 import com.pushlife.app.ui.theme.Yellow
+import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
@@ -96,6 +100,9 @@ fun ProfileScreen(modifier: Modifier = Modifier) {
     var showSignUp by remember { mutableStateOf(false) }
     var showLogin by remember { mutableStateOf(false) }
     var pendingRestore by remember { mutableStateOf<Accounts.LoginResult?>(null) }
+    var confirmDeleteAccount by remember { mutableStateOf(false) }
+    var deletingAccount by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
     val account by Accounts.current.collectAsStateWithLifecycle()
 
     fun save(change: (Profile) -> Profile) = AppGraph.profile.save(change(AppGraph.profile.state.value))
@@ -257,6 +264,9 @@ fun ProfileScreen(modifier: Modifier = Modifier) {
                             Accounts.signOut()
                             save { it.copy(username = "") }
                         }) { Text(stringResource(R.string.account_sign_out)) }
+                        TextButton(onClick = { confirmDeleteAccount = true }) {
+                            Text(stringResource(R.string.account_delete), color = MaterialTheme.colorScheme.error)
+                        }
                     }
                     else -> {
                         Text(stringResource(R.string.account_none), style = MaterialTheme.typography.bodyMedium)
@@ -387,6 +397,85 @@ fun ProfileScreen(modifier: Modifier = Modifier) {
                 if (result.backup != null) pendingRestore = result else Accounts.backup(context, force = true)
             })
         }
+    }
+
+    if (confirmDeleteAccount) {
+        // Para não apagar sem querer: só apaga com o código que chega no e-mail da conta.
+        var codeSent by remember { mutableStateOf(false) }
+        var code by remember { mutableStateOf("") }
+        var error by remember { mutableStateOf<Int?>(null) }
+        fun attempt(action: suspend () -> Unit) {
+            if (deletingAccount) return
+            scope.launch {
+                deletingAccount = true
+                error = null
+                try {
+                    action()
+                } catch (e: Accounts.AccountException) {
+                    error = accountErrorText(e.error)
+                } finally {
+                    deletingAccount = false
+                }
+            }
+        }
+        AlertDialog(
+            onDismissRequest = { if (!deletingAccount) confirmDeleteAccount = false },
+            title = { Text(stringResource(R.string.account_delete_title)) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text(stringResource(R.string.account_delete_body))
+                    if (codeSent) {
+                        Text(stringResource(R.string.code_sent_to, account?.email.orEmpty()), style = MaterialTheme.typography.bodyMedium)
+                        OutlinedTextField(
+                            value = code,
+                            onValueChange = { code = it.filter { c -> c.isDigit() }.take(CODE_LENGTH) },
+                            label = { Text(stringResource(R.string.code_label)) },
+                            singleLine = true,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
+                        )
+                    }
+                    AccountError(error)
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    enabled = !deletingAccount && (!codeSent || code.length == CODE_LENGTH),
+                    onClick = {
+                        if (!codeSent) {
+                            attempt {
+                                Accounts.requestDeleteCode()
+                                codeSent = true
+                            }
+                        } else {
+                            attempt {
+                                Accounts.deleteAccount(code)
+                                confirmDeleteAccount = false
+                                Reminders.cancel(context)
+                                Backup.wipe(context)
+                                context.toast(R.string.account_deleted)
+                                afterDataChange(context)
+                            }
+                        }
+                    },
+                ) {
+                    Text(
+                        stringResource(
+                            when {
+                                deletingAccount -> R.string.account_deleting
+                                codeSent -> R.string.account_delete_yes
+                                else -> R.string.code_send
+                            },
+                        ),
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                }
+            },
+            dismissButton = {
+                TextButton(enabled = !deletingAccount, onClick = { confirmDeleteAccount = false }) {
+                    Text(stringResource(R.string.disable_cancel_generic))
+                }
+            },
+        )
     }
 
     pendingRestore?.let { result ->

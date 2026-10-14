@@ -26,7 +26,8 @@ Não vendemos nem compartilhamos dados pessoais, e o app não tem anúncios.
 - O backup é uma cópia do que o app guarda (saldo, histórico de exercícios, conquistas, respostas das
   boas-vindas, ajustes e a lista de apps bloqueados). Ele é enviado automaticamente quando você sai do app.
 - O seu @ é guardado numa lista para que ninguém use o mesmo. O resto da conta só você acessa.
-- Para apagar a conta e os dados da nuvem, mande um e-mail para o contato abaixo.
+- Para apagar a conta e os dados da nuvem, use **Perfil → Conta → Apagar conta** (confirmado por um código
+  no seu e-mail) ou mande um e-mail para o contato abaixo.
 
 ## Seus dados no celular
 
@@ -50,7 +51,8 @@ Dúvidas: matheusasturofc@gmail.com
 PushLife works **on your phone**. The only thing that leaves it is your **account**: email, name, @ and a
 backup of your progress, stored with Supabase (servers in São Paulo) so you can sign in on another phone. A
 6-digit code is emailed to you to create the account, sign in or change your password. Your @ is kept in a list so nobody else can use it. We do not sell or share personal data
-and there are no ads. To delete your account and cloud data, email the contact below. The camera is used only for on-device rep counting (ML Kit); no image or video is stored or
+and there are no ads. To delete your account and cloud data, use Profile → Account → Delete account (confirmed with a code sent
+to your email) or email the contact below. The camera is used only for on-device rep counting (ML Kit); no image or video is stored or
 sent. Usage access and "display over other apps" are used only to know which app is open and to show the
 block screen. The optional adult-site filter is a local VPN that only filters site addresses (DNS): those
 lookups are sent to Cloudflare for Families (1.1.1.3); the rest of your traffic does not go through it.
@@ -62,7 +64,8 @@ Contact: matheusasturofc@gmail.com
 PushLife funciona **en tu teléfono**. Lo único que sale de él es tu **cuenta**: correo, nombre, @ y una copia
 de tu progreso, guardados en Supabase (servidores en São Paulo) para que puedas entrar en otro teléfono. Te
 enviamos un código de 6 dígitos al correo para crear la cuenta, entrar o cambiar la contraseña. Tu @ se guarda en una lista para que nadie más lo use. No vendemos ni compartimos datos personales y
-no hay anuncios. Para borrar tu cuenta y los datos en la nube, escribe al contacto de abajo. La cámara solo se usa para contar repeticiones en el dispositivo (ML Kit);
+no hay anuncios. Para borrar tu cuenta y los datos en la nube, usa Perfil → Cuenta → Eliminar cuenta (confirmado con un código
+en tu correo) o escribe al contacto de abajo. La cámara solo se usa para contar repeticiones en el dispositivo (ML Kit);
 ninguna imagen ni video se guarda o envía. El acceso a datos de uso y "mostrar sobre otras apps" solo sirven
 para saber qué app está abierta y mostrar la pantalla de bloqueo. El filtro opcional de sitios para adultos es
 una VPN local que solo filtra las direcciones de los sitios (DNS): esas consultas van a Cloudflare for Families
