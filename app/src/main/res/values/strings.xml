@@ -487,4 +487,20 @@
     <string name="account_restore_body">This account has saved progress. Replace the data on this phone with the account data?</string>
     <string name="account_restore_yes">Use account data</string>
     <string name="account_restore_no">Keep this phone\'s data</string>
+    <!-- Código por e-mail -->
+    <string name="code_send">Send code</string>
+    <string name="code_title">Check your email</string>
+    <string name="code_body_signup">Type the 6-digit code we sent to confirm your email and create your account.</string>
+    <string name="code_body_login">Type the 6-digit code we sent to your email to sign in.</string>
+    <string name="code_sent_to">Code sent to %1$s</string>
+    <string name="code_label">6-digit code</string>
+    <string name="code_spam_hint">Didn\'t get it? Check the Spam and Promotions folders.</string>
+    <string name="code_resend">Resend code</string>
+    <string name="code_resend_in">Resend in %1$ds</string>
+    <string name="code_change_email">Change email</string>
+    <string name="err_code_wrong">Wrong code. Check your email and try again.</string>
+    <string name="err_code_expired">This code expired. Ask for a new one.</string>
+    <string name="err_too_many">Too many tries. Wait a little and ask for a new code.</string>
+    <string name="err_wait">Wait a minute before asking for another code.</string>
+    <string name="err_email_failed">We couldn\'t send the email now. Try again in a few minutes.</string>
 </resources>

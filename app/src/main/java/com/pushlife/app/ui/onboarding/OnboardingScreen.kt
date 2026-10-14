@@ -159,6 +159,9 @@ import com.pushlife.app.core.Username
 import com.pushlife.app.data.Accounts
 import com.pushlife.app.data.Backup
 import com.pushlife.app.reminder.Reminders
+import com.pushlife.app.ui.AccountError
+import com.pushlife.app.ui.CODE_LENGTH
+import com.pushlife.app.ui.CodeEntry
 import com.pushlife.app.ui.EmailPasswordFields
 import com.pushlife.app.ui.HandleStatus
 import com.pushlife.app.ui.LoginScreen
@@ -263,6 +266,8 @@ fun OnboardingScreen(onFinished: (startExercise: Exercise?) -> Unit) {
     var usernameEdited by rememberSaveable { mutableStateOf(false) }
     var email by rememberSaveable { mutableStateOf("") }
     var password by rememberSaveable { mutableStateOf("") }
+    var codeSent by rememberSaveable { mutableStateOf(false) }
+    var code by rememberSaveable { mutableStateOf("") }
     var showLogin by rememberSaveable { mutableStateOf(false) }
     var accountLoading by remember { mutableStateOf(false) }
     var accountError by remember { mutableStateOf<Int?>(null) }
@@ -293,19 +298,38 @@ fun OnboardingScreen(onFinished: (startExercise: Exercise?) -> Unit) {
         while (i > 0 && skipped(Step.entries[i])) i--
         if (i >= 0) step = Step.entries[i]
     }
-    fun createAccount() {
-        if (accountLoading || !emailPasswordValid(email, password)) return
+    fun accountAttempt(action: suspend () -> Unit) {
+        if (accountLoading) return
         scope.launch {
             accountLoading = true
             accountError = null
             try {
-                Accounts.signUp(email, password, username, name.trim())
-                next()
+                action()
             } catch (e: Accounts.AccountException) {
                 accountError = accountErrorText(e.error)
-                if (e.error == Accounts.Error.USERNAME_TAKEN) go(Step.NAME)
+                if (e.error == Accounts.Error.EMAIL_IN_USE) codeSent = false
+                if (e.error == Accounts.Error.USERNAME_TAKEN) {
+                    codeSent = false
+                    go(Step.NAME)
+                }
             } finally {
                 accountLoading = false
+            }
+        }
+    }
+    fun sendSignUpCode() = accountAttempt {
+        Accounts.requestSignUpCode(email, username)
+        code = ""
+        codeSent = true
+    }
+    // Criar conta em dois passos: manda o código para o e-mail e, com o código certo, cria a conta.
+    fun createAccount() {
+        if (!codeSent) {
+            if (emailPasswordValid(email, password)) sendSignUpCode()
+        } else if (code.length == CODE_LENGTH) {
+            accountAttempt {
+                Accounts.verifySignUp(email, code, password, username, name.trim())
+                next()
             }
         }
     }
@@ -336,7 +360,7 @@ fun OnboardingScreen(onFinished: (startExercise: Exercise?) -> Unit) {
         onFinished(startExercise)
     }
 
-    BackHandler(enabled = step != Step.WELCOME) { back() }
+    BackHandler(enabled = step != Step.WELCOME) { if (step == Step.ACCOUNT && codeSent) codeSent = false else back() }
 
     val displayName = name.trim()
     val handleStatus = rememberHandleStatus(if (Accounts.available && account == null) username else "")
@@ -378,16 +402,26 @@ fun OnboardingScreen(onFinished: (startExercise: Exercise?) -> Unit) {
                 }
 
                 Step.ACCOUNT -> StepLayout(
-                    current, ::back, ::createAccount,
+                    current, { if (codeSent) codeSent = false else back() }, ::createAccount,
                     kicker = "@$username",
-                    title = stringResource(R.string.ob_account_title),
-                    hint = stringResource(R.string.ob_account_hint),
-                    buttonEnabled = !accountLoading && emailPasswordValid(email, password),
-                    buttonText = stringResource(if (accountLoading) R.string.account_creating else R.string.account_create),
+                    title = stringResource(if (codeSent) R.string.code_title else R.string.ob_account_title),
+                    hint = stringResource(if (codeSent) R.string.code_body_signup else R.string.ob_account_hint),
+                    buttonEnabled = !accountLoading && if (codeSent) code.length == CODE_LENGTH else emailPasswordValid(email, password),
+                    buttonText = stringResource(
+                        when {
+                            accountLoading -> R.string.account_creating
+                            codeSent -> R.string.account_create
+                            else -> R.string.code_send
+                        },
+                    ),
                 ) {
                     Spacer(Modifier.height(8.dp))
-                    EmailPasswordFields(email, { email = it }, password, { password = it }, onDone = ::createAccount)
-                    accountError?.let { Text(stringResource(it), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium) }
+                    if (codeSent) {
+                        CodeEntry(email, code, { code = it }, onComplete = ::createAccount, onResend = { sendSignUpCode() }, onChangeEmail = { codeSent = false })
+                    } else {
+                        EmailPasswordFields(email, { email = it }, password, { password = it }, onDone = ::createAccount)
+                    }
+                    AccountError(accountError)
                 }
 
                 Step.GOALS -> StepLayout(

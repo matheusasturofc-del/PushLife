@@ -8,6 +8,7 @@ import androidx.annotation.StringRes
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -39,6 +40,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -48,12 +50,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.pushlife.app.AppGraph
 import com.pushlife.app.R
 import com.pushlife.app.blocking.BlockerService
@@ -174,15 +179,64 @@ fun accountErrorText(error: Accounts.Error): Int = when (error) {
     Accounts.Error.WEAK_PASSWORD -> R.string.err_weak_password
     Accounts.Error.BAD_EMAIL -> R.string.err_bad_email
     Accounts.Error.WRONG_CREDENTIALS -> R.string.err_wrong_credentials
+    Accounts.Error.CODE_WRONG -> R.string.err_code_wrong
+    Accounts.Error.CODE_EXPIRED -> R.string.err_code_expired
+    Accounts.Error.TOO_MANY -> R.string.err_too_many
+    Accounts.Error.WAIT -> R.string.err_wait
+    Accounts.Error.EMAIL_FAILED -> R.string.err_email_failed
     Accounts.Error.UNKNOWN -> R.string.err_unknown
+}
+
+const val CODE_LENGTH = 6
+private const val RESEND_SECONDS = 60
+
+/**
+ * Onde a pessoa digita o código que chegou no e-mail. Quando completa os 6 dígitos, chama [onComplete].
+ * "Reenviar" só libera depois de 1 minuto (o servidor também exige isso).
+ */
+@Composable
+fun CodeEntry(email: String, code: String, onCode: (String) -> Unit, onComplete: () -> Unit, onResend: () -> Unit, onChangeEmail: () -> Unit) {
+    var wait by rememberSaveable { mutableIntStateOf(RESEND_SECONDS) }
+    LaunchedEffect(wait > 0) {
+        while (wait > 0) {
+            delay(1000)
+            wait--
+        }
+    }
+    Text(stringResource(R.string.code_sent_to, email), style = MaterialTheme.typography.bodyLarge)
+    OutlinedTextField(
+        value = code,
+        onValueChange = { typed ->
+            val digits = typed.filter { it.isDigit() }.take(CODE_LENGTH)
+            onCode(digits)
+            if (digits.length == CODE_LENGTH && digits != code) onComplete()
+        },
+        label = { Text(stringResource(R.string.code_label)) },
+        singleLine = true,
+        shape = RoundedCornerShape(20.dp),
+        textStyle = MaterialTheme.typography.headlineMedium.copy(letterSpacing = 10.sp, textAlign = TextAlign.Center, fontWeight = FontWeight.Black),
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword, imeAction = ImeAction.Done),
+        keyboardActions = KeyboardActions(onDone = { if (code.length == CODE_LENGTH) onComplete() }),
+        modifier = Modifier.fillMaxWidth(),
+    )
+    Text(stringResource(R.string.code_spam_hint), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        TextButton(enabled = wait == 0, onClick = {
+            wait = RESEND_SECONDS
+            onResend()
+        }) {
+            Text(if (wait > 0) stringResource(R.string.code_resend_in, wait) else stringResource(R.string.code_resend))
+        }
+        TextButton(onClick = onChangeEmail) { Text(stringResource(R.string.code_change_email)) }
+    }
 }
 
 /** Tela cheia com voltar, conteúdo rolável e o botão principal embaixo. */
 @Composable
 private fun AccountScaffold(
     onBack: () -> Unit,
-    @StringRes title: Int,
-    @StringRes body: Int,
+    title: String,
+    body: String,
     buttonText: String,
     buttonEnabled: Boolean,
     onButton: () -> Unit,
@@ -205,8 +259,8 @@ private fun AccountScaffold(
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             Image(painterResource(R.drawable.ic_logo), contentDescription = null, modifier = Modifier.size(64.dp))
-            Text(stringResource(title), style = MaterialTheme.typography.headlineLarge)
-            Text(stringResource(body), style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(title, style = MaterialTheme.typography.headlineLarge)
+            Text(body, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Spacer(Modifier.height(4.dp))
             content()
         }
@@ -216,23 +270,33 @@ private fun AccountScaffold(
     }
 }
 
-/** "Já tem uma conta?": entra com e-mail e senha e devolve o que estava salvo na nuvem. */
+/** Mostra o erro da conta em vermelho, se houver. */
+@Composable
+fun AccountError(@StringRes error: Int?) {
+    error?.let { Text(stringResource(it), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium) }
+}
+
+/**
+ * "Já tem uma conta?": e-mail e senha → código no e-mail → entra e devolve o que estava salvo na nuvem.
+ */
 @Composable
 fun LoginScreen(onBack: () -> Unit, onLoggedIn: (Accounts.LoginResult) -> Unit) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     var email by rememberSaveable { mutableStateOf("") }
     var password by rememberSaveable { mutableStateOf("") }
+    var codeSent by rememberSaveable { mutableStateOf(false) }
+    var code by rememberSaveable { mutableStateOf("") }
     var loading by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<Int?>(null) }
 
-    fun submit() {
-        if (loading || !emailPasswordValid(email, password)) return
+    fun attempt(action: suspend () -> Unit) {
+        if (loading) return
         scope.launch {
             loading = true
             error = null
             try {
-                onLoggedIn(Accounts.signIn(email, password))
+                action()
             } catch (e: Accounts.AccountException) {
                 error = accountErrorText(e.error)
             } finally {
@@ -241,35 +305,60 @@ fun LoginScreen(onBack: () -> Unit, onLoggedIn: (Accounts.LoginResult) -> Unit) 
         }
     }
 
+    fun sendCode() = attempt {
+        Accounts.requestLoginCode(email, password)
+        code = ""
+        codeSent = true
+    }
+
+    fun submit() {
+        if (!codeSent) {
+            if (emailPasswordValid(email, password)) sendCode()
+        } else if (code.length == CODE_LENGTH) {
+            attempt { onLoggedIn(Accounts.verifyLogin(email, code)) }
+        }
+    }
+
     AccountScaffold(
-        onBack = onBack,
-        title = R.string.login_title,
-        body = R.string.login_body,
-        buttonText = stringResource(if (loading) R.string.login_loading else R.string.login_button),
-        buttonEnabled = !loading && emailPasswordValid(email, password),
+        onBack = { if (codeSent) codeSent = false else onBack() },
+        title = stringResource(if (codeSent) R.string.code_title else R.string.login_title),
+        body = stringResource(if (codeSent) R.string.code_body_login else R.string.login_body),
+        buttonText = stringResource(
+            when {
+                loading -> R.string.login_loading
+                codeSent -> R.string.login_button
+                else -> R.string.code_send
+            },
+        ),
+        buttonEnabled = !loading && if (codeSent) code.length == CODE_LENGTH else emailPasswordValid(email, password),
         onButton = ::submit,
     ) {
-        EmailPasswordFields(email, { email = it }, password, { password = it }, onDone = ::submit)
-        error?.let { Text(stringResource(it), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium) }
-        TextButton(onClick = {
-            if (!email.contains('@')) {
-                error = R.string.login_need_email
-                return@TextButton
-            }
-            scope.launch {
-                try {
-                    Accounts.sendPasswordReset(email)
-                    error = null
-                    Toast.makeText(context, context.getString(R.string.login_reset_sent, email), Toast.LENGTH_LONG).show()
-                } catch (e: Accounts.AccountException) {
-                    error = accountErrorText(e.error)
+        if (codeSent) {
+            CodeEntry(email, code, { code = it }, onComplete = ::submit, onResend = { sendCode() }, onChangeEmail = { codeSent = false })
+            AccountError(error)
+        } else {
+            EmailPasswordFields(email, { email = it }, password, { password = it }, onDone = ::submit)
+            AccountError(error)
+            TextButton(onClick = {
+                if (!email.contains('@')) {
+                    error = R.string.login_need_email
+                    return@TextButton
                 }
-            }
-        }) { Text(stringResource(R.string.login_forgot)) }
+                scope.launch {
+                    try {
+                        Accounts.sendPasswordReset(email)
+                        error = null
+                        Toast.makeText(context, context.getString(R.string.login_reset_sent, email), Toast.LENGTH_LONG).show()
+                    } catch (e: Accounts.AccountException) {
+                        error = accountErrorText(e.error)
+                    }
+                }
+            }) { Text(stringResource(R.string.login_forgot)) }
+        }
     }
 }
 
-/** Criar conta depois das boas-vindas (pelo Perfil): @, e-mail e senha numa tela só. */
+/** Criar conta depois das boas-vindas (pelo Perfil): @, e-mail e senha → código no e-mail → conta criada. */
 @Composable
 fun SignUpScreen(initialName: String, onBack: () -> Unit, onDone: () -> Unit) {
     val context = LocalContext.current
@@ -277,40 +366,69 @@ fun SignUpScreen(initialName: String, onBack: () -> Unit, onDone: () -> Unit) {
     var handle by rememberSaveable { mutableStateOf(Username.suggest(initialName)) }
     var email by rememberSaveable { mutableStateOf("") }
     var password by rememberSaveable { mutableStateOf("") }
+    var codeSent by rememberSaveable { mutableStateOf(false) }
+    var code by rememberSaveable { mutableStateOf("") }
     var loading by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<Int?>(null) }
-    val status = rememberHandleStatus(handle)
-    val ready = !loading && status == HandleStatus.FREE && emailPasswordValid(email, password)
+    val status = rememberHandleStatus(if (codeSent) "" else handle)
+    val formReady = status == HandleStatus.FREE && emailPasswordValid(email, password)
 
-    fun submit() {
-        if (!ready) return
+    fun attempt(action: suspend () -> Unit) {
+        if (loading) return
         scope.launch {
             loading = true
             error = null
             try {
-                Accounts.signUp(email, password, handle, initialName.trim())
-                AppGraph.profile.save(AppGraph.profile.state.value.copy(username = handle))
-                Accounts.backup(context, force = true)
-                onDone()
+                action()
             } catch (e: Accounts.AccountException) {
                 error = accountErrorText(e.error)
+                if (e.error == Accounts.Error.USERNAME_TAKEN || e.error == Accounts.Error.EMAIL_IN_USE) codeSent = false
             } finally {
                 loading = false
             }
         }
     }
 
+    fun sendCode() = attempt {
+        Accounts.requestSignUpCode(email, handle)
+        code = ""
+        codeSent = true
+    }
+
+    fun submit() {
+        if (!codeSent) {
+            if (formReady) sendCode()
+        } else if (code.length == CODE_LENGTH) {
+            attempt {
+                Accounts.verifySignUp(email, code, password, handle, initialName.trim())
+                AppGraph.profile.save(AppGraph.profile.state.value.copy(username = handle))
+                Accounts.backup(context, force = true)
+                onDone()
+            }
+        }
+    }
+
     AccountScaffold(
-        onBack = onBack,
-        title = R.string.signup_title,
-        body = R.string.ob_account_hint,
-        buttonText = stringResource(if (loading) R.string.account_creating else R.string.account_create),
-        buttonEnabled = ready,
+        onBack = { if (codeSent) codeSent = false else onBack() },
+        title = stringResource(if (codeSent) R.string.code_title else R.string.signup_title),
+        body = stringResource(if (codeSent) R.string.code_body_signup else R.string.ob_account_hint),
+        buttonText = stringResource(
+            when {
+                loading -> R.string.account_creating
+                codeSent -> R.string.account_create
+                else -> R.string.code_send
+            },
+        ),
+        buttonEnabled = !loading && if (codeSent) code.length == CODE_LENGTH else formReady,
         onButton = ::submit,
     ) {
-        UsernameField(handle, { handle = it }, status)
-        EmailPasswordFields(email, { email = it }, password, { password = it }, onDone = ::submit)
-        error?.let { Text(stringResource(it), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium) }
+        if (codeSent) {
+            CodeEntry(email, code, { code = it }, onComplete = ::submit, onResend = { sendCode() }, onChangeEmail = { codeSent = false })
+        } else {
+            UsernameField(handle, { handle = it }, status)
+            EmailPasswordFields(email, { email = it }, password, { password = it }, onDone = ::submit)
+        }
+        AccountError(error)
     }
 }
 

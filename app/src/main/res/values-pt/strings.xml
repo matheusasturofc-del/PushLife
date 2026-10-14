@@ -480,4 +480,20 @@
     <string name="account_restore_body">Essa conta tem progresso salvo. Trocar os dados deste celular pelos da conta?</string>
     <string name="account_restore_yes">Usar os da conta</string>
     <string name="account_restore_no">Manter os deste celular</string>
+    <!-- Código por e-mail -->
+    <string name="code_send">Enviar código</string>
+    <string name="code_title">Confira seu e-mail</string>
+    <string name="code_body_signup">Digite o código de 6 dígitos que enviamos para confirmar seu e-mail e criar sua conta.</string>
+    <string name="code_body_login">Digite o código de 6 dígitos que enviamos para o seu e-mail para entrar.</string>
+    <string name="code_sent_to">Código enviado para %1$s</string>
+    <string name="code_label">Código de 6 dígitos</string>
+    <string name="code_spam_hint">Não chegou? Veja as pastas Spam e Promoções.</string>
+    <string name="code_resend">Reenviar código</string>
+    <string name="code_resend_in">Reenviar em %1$ds</string>
+    <string name="code_change_email">Trocar e-mail</string>
+    <string name="err_code_wrong">Código errado. Confira o e-mail e tente de novo.</string>
+    <string name="err_code_expired">Esse código expirou. Peça um novo.</string>
+    <string name="err_too_many">Muitas tentativas. Espere um pouco e peça um novo código.</string>
+    <string name="err_wait">Espere 1 minuto para pedir outro código.</string>
+    <string name="err_email_failed">Não conseguimos enviar o e-mail agora. Tente de novo em alguns minutos.</string>
 </resources>

@@ -1,0 +1,82 @@
+name: Publicar servidor (códigos por e-mail)
+
+# Publica as Cloud Functions do Firebase (pasta functions) e as regras do Firestore.
+# Precisa dos segredos do repositório: FIREBASE_SERVICE_ACCOUNT, GMAIL_USER e GMAIL_APP_PASSWORD.
+# Veja CONTAS.md.
+
+on:
+  push:
+    branches: [claude/great-pasteur-y7qbv5, main]
+    paths: ['functions/**', 'firebase.json', 'firestore.rules', 'app/google-services.json', '.github/workflows/functions.yml']
+  workflow_dispatch:
+
+concurrency:
+  group: functions-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Conferir segredos
+        id: check
+        env:
+          SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          GMAIL_USER: ${{ secrets.GMAIL_USER }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+        run: |
+          if [ -z "$SA" ] || [ -z "$GMAIL_USER" ] || [ -z "$GMAIL_APP_PASSWORD" ]; then
+            echo "Faltam segredos (FIREBASE_SERVICE_ACCOUNT, GMAIL_USER, GMAIL_APP_PASSWORD). Veja CONTAS.md."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/setup-node@v4
+        if: steps.check.outputs.ready == 'true'
+        with:
+          node-version: 22
+
+      - name: Testar
+        if: steps.check.outputs.ready == 'true'
+        working-directory: functions
+        run: |
+          npm ci --no-audit --no-fund
+          npm test
+
+      - uses: google-github-actions/auth@v2
+        if: steps.check.outputs.ready == 'true'
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+        if: steps.check.outputs.ready == 'true'
+
+      - name: Montar configuração
+        if: steps.check.outputs.ready == 'true'
+        env:
+          GMAIL_USER: ${{ secrets.GMAIL_USER }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+        run: |
+          PROJECT=$(jq -r '.project_info.project_id' app/google-services.json)
+          KEY=$(jq -r '.client[0].api_key[0].current_key' app/google-services.json)
+          echo "PROJECT=$PROJECT" >> "$GITHUB_ENV"
+          # A senha de app do Google vem com espaços ("abcd efgh ..."); sem eles funciona igual.
+          printf 'GMAIL_USER=%s\nGMAIL_APP_PASSWORD=%s\nWEB_API_KEY=%s\n' "$GMAIL_USER" "${GMAIL_APP_PASSWORD// /}" "$KEY" > functions/.env
+          gcloud services enable cloudfunctions.googleapis.com cloudbuild.googleapis.com artifactregistry.googleapis.com \
+            run.googleapis.com iamcredentials.googleapis.com firestore.googleapis.com --project "$PROJECT"
+
+      - name: Publicar
+        if: steps.check.outputs.ready == 'true'
+        run: npx --yes firebase-tools@15.33.0 deploy --only functions,firestore:rules --project "$PROJECT" --non-interactive --force
+
+      # O servidor cria a sessão do app (token); para isso a conta de serviço dele precisa poder assinar.
+      - name: Permissão para criar sessões
+        if: steps.check.outputs.ready == 'true'
+        run: |
+          NUM=$(gcloud projects describe "$PROJECT" --format='value(projectNumber)')
+          SA="$NUM-compute@developer.gserviceaccount.com"
+          gcloud iam service-accounts add-iam-policy-binding "$SA" \
+            --member="serviceAccount:$SA" --role=roles/iam.serviceAccountTokenCreator --project "$PROJECT" --quiet
