@@ -47,11 +47,9 @@ A partir daí, cada push gera também o **PushLife-playstore.aab** (aba Actions 
 | Classificação de conteúdo | Responda o questionário (app de saúde e fitness, sem conteúdo adulto). |
 | Público-alvo | 13 anos ou mais. |
 
-## 5. Login e backup automático na nuvem (próxima etapa, opcional)
+## 5. Login e backup automático na nuvem
 
-Precisa de um projeto Firebase (grátis) criado por você:
-
-1. https://console.firebase.google.com → Adicionar projeto → nome "PushLife".
-2. Adicionar app Android com o pacote `com.pushlife.app`.
-3. Baixe o `google-services.json`, ative "Authentication → E-mail/senha" e o "Firestore Database".
-4. Me mande quando tiver feito: eu conecto o app (o arquivo vai como segredo no GitHub, não no código).
+Feito com o Supabase (grátis, sem cartão). O passo a passo está em [CONTAS.md](../CONTAS.md).
+No formulário "Segurança dos dados" da Play Store, informe: e-mail, nome de usuário e dados do app
+(progresso) são coletados para a conta e o backup, criptografados em trânsito, e a pessoa pode pedir para
+apagar a conta.

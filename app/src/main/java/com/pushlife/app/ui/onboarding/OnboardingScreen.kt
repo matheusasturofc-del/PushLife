@@ -285,7 +285,7 @@ fun OnboardingScreen(onFinished: (startExercise: Exercise?) -> Unit) {
     var reminderOn by rememberSaveable { mutableStateOf(false) }
     var protectNow by rememberSaveable { mutableStateOf(true) }
 
-    // Sem Firebase configurado, ou já com conta (entrou sem backup), a tela de criar conta é pulada.
+    // Sem Supabase configurado, ou já com conta (entrou sem backup), a tela de criar conta é pulada.
     fun skipped(s: Step) = s == Step.ACCOUNT && (!Accounts.available || Accounts.current.value != null)
     fun go(next: Step) { step = next }
     fun next() {
@@ -318,7 +318,7 @@ fun OnboardingScreen(onFinished: (startExercise: Exercise?) -> Unit) {
         }
     }
     fun sendSignUpCode() = accountAttempt {
-        Accounts.requestSignUpCode(email, username)
+        Accounts.requestSignUpCode(email, password, username, name.trim())
         code = ""
         codeSent = true
     }
@@ -328,7 +328,7 @@ fun OnboardingScreen(onFinished: (startExercise: Exercise?) -> Unit) {
             if (emailPasswordValid(email, password)) sendSignUpCode()
         } else if (code.length == CODE_LENGTH) {
             accountAttempt {
-                Accounts.verifySignUp(email, code, password, username, name.trim())
+                Accounts.verifySignUp(email, code)
                 next()
             }
         }
@@ -417,7 +417,7 @@ fun OnboardingScreen(onFinished: (startExercise: Exercise?) -> Unit) {
                 ) {
                     Spacer(Modifier.height(8.dp))
                     if (codeSent) {
-                        CodeEntry(email, code, { code = it }, onComplete = ::createAccount, onResend = { sendSignUpCode() }, onChangeEmail = { codeSent = false })
+                        CodeEntry(email, code, { code = it }, onComplete = ::createAccount, onResend = { accountAttempt { Accounts.resendSignUpCode(email) } }, onChangeEmail = { codeSent = false })
                     } else {
                         EmailPasswordFields(email, { email = it }, password, { password = it }, onDone = ::createAccount)
                     }

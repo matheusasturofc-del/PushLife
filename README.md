@@ -19,14 +19,15 @@ Instagram, TikTok e outros apps bloqueados. Inspirado no PushScroll, gratuito e 
 | 4 | Mais exercícios, instruções e aviso de postura | pronto |
 | 5 | Sequência, metas, níveis, conquistas, gráficos, notificações | pronto |
 | 6 | Bloqueio de sites adultos | pronto |
-| 7 | Perfil, backup em arquivo (Google Drive) e preparação para a Play Store | pronto (login com e-mail depende do Firebase) |
+| 7 | Perfil, backup em arquivo (Google Drive) e preparação para a Play Store | pronto (contas: veja CONTAS.md) |
 
 Extra: boas-vindas completas na primeira abertura (23 telas: perguntas, resultado, projeção, como funciona,
 permissões, escolha dos apps, plano pronto e primeiro treino).
 
 ## Contas (e-mail, @ único e backup na nuvem)
 
-Usam o Firebase. O passo a passo para ligar está em [CONTAS.md](CONTAS.md); sem ele o app funciona sem contas.
+Usam o Supabase (grátis, sem cartão), com código de 6 dígitos no e-mail para criar conta e entrar. O passo a
+passo para ligar está em [CONTAS.md](CONTAS.md); sem ele o app funciona sem contas.
 
 ## Atualização obrigatória (Uptodown)
 

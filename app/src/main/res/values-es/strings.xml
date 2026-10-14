@@ -496,4 +496,9 @@
     <string name="err_too_many">Demasiados intentos. Espera un poco y pide un código nuevo.</string>
     <string name="err_wait">Espera 1 minuto para pedir otro código.</string>
     <string name="err_email_failed">No pudimos enviar el correo ahora. Inténtalo en unos minutos.</string>
+    <string name="reset_title">Contraseña nueva</string>
+    <string name="reset_body">Escribe tu correo y te enviaremos un código para crear una contraseña nueva.</string>
+    <string name="reset_code_body">Escribe el código de 6 dígitos que enviamos y elige tu contraseña nueva.</string>
+    <string name="reset_new_password">Contraseña nueva</string>
+    <string name="reset_save">Guardar y entrar</string>
 </resources>

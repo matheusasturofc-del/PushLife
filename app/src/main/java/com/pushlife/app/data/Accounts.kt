@@ -1,36 +1,30 @@
 package com.pushlife.app.data
 
 import android.content.Context
-import com.google.firebase.FirebaseApp
-import com.google.firebase.FirebaseNetworkException
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FieldValue
-import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.FirebaseFirestoreException
-import com.google.firebase.firestore.SetOptions
-import com.google.firebase.firestore.Source
-import com.google.firebase.functions.FirebaseFunctions
-import com.google.firebase.functions.FirebaseFunctionsException
 import com.pushlife.app.AppGraph
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.tasks.await
-import java.util.Locale
+import kotlinx.coroutines.launch
+import org.json.JSONArray
+import org.json.JSONObject
+import java.io.IOException
+import java.time.Instant
 
 /**
- * Contas com e-mail, senha e um código de 6 dígitos mandado por e-mail (para criar a conta e para entrar).
+ * Contas com e-mail, senha e um código de 6 dígitos mandado por e-mail (Supabase Auth).
  *
- * Quem gera, manda e confere o código é o servidor (pasta functions, Cloud Functions). Ele também cria a
- * conta e reserva o @; no fim devolve um token e o app entra com ele.
+ * - Criar conta: e-mail, senha e @ → código no e-mail → conta confirmada e já conectada.
+ * - Entrar: e-mail e senha → código no e-mail → conectado.
+ * - Esqueci a senha: código no e-mail → senha nova → conectado.
  *
- * No Firestore:
- * - `usernames/{arroba}` → { uid }: existir o documento = @ ocupado.
- * - `users/{uid}` → { username, name, email, backup, backupAt }: perfil e backup de cada conta.
- *
- * Sem o arquivo google-services.json no projeto o Firebase não existe: [available] fica false
- * e o app esconde tudo de conta.
+ * No banco (tabela `profiles`, uma linha por conta): @ (único), nome e o backup do app.
+ * A linha nasce junto com a conta (gatilho no banco), então o @ fica reservado na hora do cadastro.
+ * Veja supabase/schema.sql e CONTAS.md.
  */
 object Accounts {
     enum class Error {
@@ -45,123 +39,182 @@ object Accounts {
     /** O que vem da nuvem ao entrar: o backup é null se a conta ainda não tinha salvo nada. */
     data class LoginResult(val name: String, val username: String, val backup: String?)
 
-    private const val REGION = "southamerica-east1"
     private const val BACKUP_EVERY_MS = 5 * 60 * 1000L
-    private const val MAX_BACKUP_CHARS = 900_000 // documento do Firestore aceita até 1 MB
+    private val io = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
-    private var auth: FirebaseAuth? = null
-    private var db: FirebaseFirestore? = null
-    private var functions: FirebaseFunctions? = null
+    private var api: Supabase? = null
     private var lastBackupMs = 0L
+
+    /** "email" no login normal; "signup" quando a conta existe mas o e-mail nunca foi confirmado. */
+    private var loginCodeType = "email"
 
     private val _current = MutableStateFlow<Account?>(null)
     val current: StateFlow<Account?> = _current.asStateFlow()
 
-    val available: Boolean get() = auth != null
+    val available: Boolean get() = api != null
 
     fun init(context: Context) {
-        val app = runCatching { FirebaseApp.getApps(context).firstOrNull() ?: FirebaseApp.initializeApp(context) }.getOrNull() ?: return
-        val a = FirebaseAuth.getInstance(app)
-        auth = a
-        db = FirebaseFirestore.getInstance(app)
-        functions = FirebaseFunctions.getInstance(app, REGION)
-        a.addAuthStateListener { fa -> _current.value = fa.currentUser?.let { Account(it.uid, it.email.orEmpty()) } }
+        val s = Supabase(context)
+        if (!s.configured) return
+        api = s
+        _current.value = s.loadSession()?.let { Account(it.uid, it.email) }
     }
 
-    /** true se ninguém usa esse @ (pergunta direto ao servidor, nunca ao cache). */
+    /** true se ninguém usa esse @. */
     suspend fun isUsernameFree(handle: String): Boolean = guard {
-        !usernames().document(handle).get(Source.SERVER).await().exists()
+        api().request("POST", "/rest/v1/rpc/username_available", JSONObject().put("name", handle)).toString() == "true"
     }
 
-    /** Passo 1 do cadastro: confere e-mail e @ e manda o código para o e-mail. */
-    suspend fun requestSignUpCode(email: String, handle: String) {
-        call("requestCode", mapOf("purpose" to "signup", "email" to email.trim(), "username" to handle, "lang" to lang()))
+    // ---------- criar conta ----------
+
+    /** Passo 1: cria a conta (ainda não confirmada) e o Supabase manda o código para o e-mail. */
+    suspend fun requestSignUpCode(email: String, password: String, handle: String, name: String) {
+        if (!isUsernameFree(handle)) throw AccountException(Error.USERNAME_TAKEN)
+        val body = JSONObject()
+            .put("email", email.trim())
+            .put("password", password)
+            .put("data", JSONObject().put("username", handle).put("name", name))
+        val res = guard { api().request("POST", "/auth/v1/signup", body) as? JSONObject }
+        // E-mail que já tem conta confirmada: o Supabase finge que deu certo, mas sem "identities".
+        val identities = (res?.optJSONObject("user") ?: res)?.optJSONArray("identities")
+        if (identities != null && identities.length() == 0) throw AccountException(Error.EMAIL_IN_USE)
     }
 
-    /** Passo 2 do cadastro: com o código certo, o servidor cria a conta e o app já entra nela. */
-    suspend fun verifySignUp(email: String, code: String, password: String, handle: String, name: String) {
-        val data = call(
-            "verifyCode",
-            mapOf("purpose" to "signup", "email" to email.trim(), "code" to code, "password" to password, "username" to handle, "name" to name),
-        )
-        signInWithToken(data)
+    suspend fun resendSignUpCode(email: String) {
+        guard { api().request("POST", "/auth/v1/resend", JSONObject().put("type", "signup").put("email", email.trim())) }
     }
 
-    /** Passo 1 do login: confere a senha e manda o código para o e-mail. */
+    /** Passo 2: com o código certo a conta é confirmada e o app já entra nela. */
+    suspend fun verifySignUp(email: String, code: String) {
+        verify("signup", email, code)
+    }
+
+    // ---------- entrar ----------
+
+    /** Passo 1: confere a senha e manda o código para o e-mail. */
     suspend fun requestLoginCode(email: String, password: String) {
-        call("requestCode", mapOf("purpose" to "login", "email" to email.trim(), "password" to password, "lang" to lang()))
-    }
-
-    /** Passo 2 do login: entra e devolve o que estava salvo na conta. */
-    suspend fun verifyLogin(email: String, code: String): LoginResult {
-        signInWithToken(call("verifyCode", mapOf("purpose" to "login", "email" to email.trim(), "code" to code)))
-        val uid = auth?.currentUser?.uid ?: throw AccountException(Error.UNKNOWN)
-        return guard {
-            val doc = users().document(uid).get(Source.SERVER).await()
-            LoginResult(
-                name = doc.getString("name").orEmpty(),
-                username = doc.getString("username").orEmpty(),
-                backup = doc.getString("backup"),
-            )
+        val mail = email.trim()
+        try {
+            guard { api().request("POST", "/auth/v1/token?grant_type=password", JSONObject().put("email", mail).put("password", password)) }
+        } catch (e: AccountException) {
+            // Criou a conta mas nunca digitou o código: manda o código do cadastro de novo.
+            if ((e.cause as? Supabase.ApiError)?.code == "email_not_confirmed") {
+                resendSignUpCode(mail)
+                loginCodeType = "signup"
+                return
+            }
+            throw e
         }
+        guard { api().request("POST", "/auth/v1/otp", JSONObject().put("email", mail).put("create_user", false)) }
+        loginCodeType = "email"
     }
 
-    suspend fun sendPasswordReset(email: String) = guard { auth!!.sendPasswordResetEmail(email.trim()).await() }
+    /** Passo 2: entra e devolve o que estava salvo na conta. */
+    suspend fun verifyLogin(email: String, code: String): LoginResult {
+        verify(loginCodeType, email, code)
+        return loadProfile()
+    }
+
+    // ---------- esqueci a senha ----------
+
+    suspend fun requestPasswordReset(email: String) {
+        guard { api().request("POST", "/auth/v1/recover", JSONObject().put("email", email.trim())) }
+    }
+
+    /** Código do e-mail + senha nova: troca a senha e já entra. */
+    suspend fun resetPassword(email: String, code: String, newPassword: String): LoginResult {
+        verify("recovery", email, code)
+        guard {
+            api().request("PUT", "/auth/v1/user", JSONObject().put("password", newPassword), token = api().accessToken())
+        }
+        return loadProfile()
+    }
 
     fun signOut() {
-        auth?.signOut()
+        val s = api ?: return
+        val token = s.loadSession()?.accessToken
+        s.clearSession()
+        _current.value = null
         lastBackupMs = 0L
+        if (token != null) io.launch { runCatching { s.request("POST", "/auth/v1/logout", token = token) } }
     }
 
-    /** Envia o backup para a conta (no máximo a cada 5 min, a não ser que [force]). Funciona offline: o Firestore manda depois. */
+    // ---------- backup ----------
+
+    /** Envia o backup para a conta (no máximo a cada 5 min, a não ser que [force]). Falhou? Tenta na próxima. */
     fun backup(context: Context, force: Boolean = false) {
-        val user = auth?.currentUser ?: return
+        val s = api ?: return
+        val uid = s.loadSession()?.uid ?: return
         if (!AppGraph.profile.state.value.onboardingDone) return // nunca sobrescreve a nuvem com um app vazio
         val now = System.currentTimeMillis()
         if (!force && now - lastBackupMs < BACKUP_EVERY_MS) return
         val json = Backup.export(context, pretty = false)
-        if (json.length > MAX_BACKUP_CHARS) return
         lastBackupMs = now
-        users().document(user.uid).set(mapOf("backup" to json, "backupAt" to FieldValue.serverTimestamp()), SetOptions.merge())
+        io.launch {
+            val ok = runCatching {
+                s.request(
+                    "PATCH", "/rest/v1/profiles?id=eq.$uid",
+                    JSONObject().put("backup", json).put("backup_at", Instant.now().toString()),
+                    token = s.accessToken(),
+                    prefer = "return=minimal",
+                )
+            }.isSuccess
+            if (!ok) lastBackupMs = 0L
+        }
     }
 
-    private suspend fun signInWithToken(data: Map<*, *>) {
-        val token = data["token"] as? String ?: throw AccountException(Error.UNKNOWN)
-        guard { auth!!.signInWithCustomToken(token).await() }
+    // ---------- interno ----------
+
+    private fun api() = api ?: throw AccountException(Error.NOT_CONFIGURED)
+
+    private suspend fun verify(type: String, email: String, code: String) {
+        val json = guard {
+            api().request("POST", "/auth/v1/verify", JSONObject().put("type", type).put("email", email.trim()).put("token", code)) as? JSONObject
+        } ?: throw AccountException(Error.UNKNOWN)
+        val session = api().saveSession(json)
+        _current.value = Account(session.uid, session.email)
     }
 
-    private suspend fun call(name: String, payload: Map<String, Any>): Map<*, *> = guard {
-        val f = functions ?: throw AccountException(Error.NOT_CONFIGURED)
-        f.getHttpsCallable(name).call(payload).await().getData() as? Map<*, *> ?: emptyMap<String, Any>()
+    private suspend fun loadProfile(): LoginResult = guard {
+        val s = api().loadSession() ?: throw AccountException(Error.UNKNOWN)
+        val rows = api().request("GET", "/rest/v1/profiles?id=eq.${s.uid}&select=username,name,backup", token = api().accessToken()) as? JSONArray
+        val row = rows?.optJSONObject(0)
+        LoginResult(
+            name = row?.optString("name").orEmpty(),
+            username = row?.optString("username").orEmpty(),
+            backup = row?.takeUnless { it.isNull("backup") }?.optString("backup"),
+        )
     }
 
-    private fun lang() = Locale.getDefault().language
-
-    private fun usernames() = db?.collection("usernames") ?: throw AccountException(Error.NOT_CONFIGURED)
-    private fun users() = db?.collection("users") ?: throw AccountException(Error.NOT_CONFIGURED)
-
-    /** Traduz os erros do Firebase e do servidor para os nossos. */
-    private inline fun <T> guard(block: () -> T): T = try {
+    /** Traduz os erros do Supabase para os nossos. */
+    private suspend fun <T> guard(block: suspend () -> T): T = try {
         block()
     } catch (e: AccountException) {
         throw e
     } catch (e: CancellationException) {
         throw e
-    } catch (e: FirebaseFunctionsException) {
-        // O servidor manda o nome do erro na mensagem (ex.: "USERNAME_TAKEN").
-        val known = Error.entries.firstOrNull { it.name == e.message }
-        throw AccountException(
-            known ?: when (e.code) {
-                FirebaseFunctionsException.Code.UNAVAILABLE, FirebaseFunctionsException.Code.DEADLINE_EXCEEDED -> Error.NETWORK
-                else -> Error.UNKNOWN
-            },
-            e,
-        )
-    } catch (e: FirebaseNetworkException) {
+    } catch (e: IOException) {
         throw AccountException(Error.NETWORK, e)
-    } catch (e: FirebaseFirestoreException) {
-        throw AccountException(if (e.code == FirebaseFirestoreException.Code.UNAVAILABLE) Error.NETWORK else Error.UNKNOWN, e)
+    } catch (e: Supabase.ApiError) {
+        throw AccountException(map(e), e)
     } catch (e: Exception) {
         throw AccountException(Error.UNKNOWN, e)
+    }
+
+    private fun map(e: Supabase.ApiError): Error {
+        val msg = e.message.lowercase()
+        return when {
+            e.code == "weak_password" || "password should" in msg -> Error.WEAK_PASSWORD
+            e.code == "email_address_invalid" || e.code == "validation_failed" || "invalid format" in msg -> Error.BAD_EMAIL
+            e.code == "invalid_credentials" || "invalid login" in msg -> Error.WRONG_CREDENTIALS
+            e.code == "otp_expired" || "token has expired" in msg || "otp" in msg -> Error.CODE_WRONG
+            e.code == "user_already_exists" || e.code == "email_exists" -> Error.EMAIL_IN_USE
+            e.code.startsWith("over_") || e.status == 429 || "security purposes" in msg -> Error.WAIT
+            "sending" in msg && "email" in msg -> Error.EMAIL_FAILED
+            // O gatilho que cria o perfil falha quando o @ foi pego no meio do caminho.
+            "database error saving new user" in msg || e.code == "23505" -> Error.USERNAME_TAKEN
+            e.code == "email_not_confirmed" -> Error.WRONG_CREDENTIALS
+            else -> Error.UNKNOWN
+        }
     }
 }

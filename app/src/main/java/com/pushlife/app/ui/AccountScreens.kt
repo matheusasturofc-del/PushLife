@@ -2,7 +2,6 @@ package com.pushlife.app.ui
 
 import android.app.Activity
 import android.content.Context
-import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.annotation.StringRes
 import androidx.compose.foundation.Image
@@ -278,14 +277,15 @@ fun AccountError(@StringRes error: Int?) {
 
 /**
  * "Já tem uma conta?": e-mail e senha → código no e-mail → entra e devolve o que estava salvo na nuvem.
+ * "Esqueci minha senha": código no e-mail + senha nova → entra.
  */
 @Composable
 fun LoginScreen(onBack: () -> Unit, onLoggedIn: (Accounts.LoginResult) -> Unit) {
-    val context = LocalContext.current
     val scope = rememberCoroutineScope()
     var email by rememberSaveable { mutableStateOf("") }
     var password by rememberSaveable { mutableStateOf("") }
     var codeSent by rememberSaveable { mutableStateOf(false) }
+    var resetting by rememberSaveable { mutableStateOf(false) }
     var code by rememberSaveable { mutableStateOf("") }
     var loading by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<Int?>(null) }
@@ -306,56 +306,107 @@ fun LoginScreen(onBack: () -> Unit, onLoggedIn: (Accounts.LoginResult) -> Unit) 
     }
 
     fun sendCode() = attempt {
-        Accounts.requestLoginCode(email, password)
+        if (resetting) Accounts.requestPasswordReset(email) else Accounts.requestLoginCode(email, password)
         code = ""
         codeSent = true
     }
 
     fun submit() {
-        if (!codeSent) {
-            if (emailPasswordValid(email, password)) sendCode()
-        } else if (code.length == CODE_LENGTH) {
-            attempt { onLoggedIn(Accounts.verifyLogin(email, code)) }
+        when {
+            !codeSent && resetting -> if (email.contains('@')) sendCode()
+            !codeSent -> if (emailPasswordValid(email, password)) sendCode()
+            code.length != CODE_LENGTH -> {}
+            resetting -> if (password.length >= 6) attempt { onLoggedIn(Accounts.resetPassword(email, code, password)) }
+            else -> attempt { onLoggedIn(Accounts.verifyLogin(email, code)) }
         }
     }
 
+    val canSubmit = when {
+        !codeSent && resetting -> email.contains('@')
+        !codeSent -> emailPasswordValid(email, password)
+        resetting -> code.length == CODE_LENGTH && password.length >= 6
+        else -> code.length == CODE_LENGTH
+    }
+
     AccountScaffold(
-        onBack = { if (codeSent) codeSent = false else onBack() },
-        title = stringResource(if (codeSent) R.string.code_title else R.string.login_title),
-        body = stringResource(if (codeSent) R.string.code_body_login else R.string.login_body),
+        onBack = {
+            when {
+                codeSent -> codeSent = false
+                resetting -> resetting = false
+                else -> onBack()
+            }
+        },
+        title = stringResource(
+            when {
+                codeSent -> R.string.code_title
+                resetting -> R.string.reset_title
+                else -> R.string.login_title
+            },
+        ),
+        body = stringResource(
+            when {
+                codeSent && resetting -> R.string.reset_code_body
+                codeSent -> R.string.code_body_login
+                resetting -> R.string.reset_body
+                else -> R.string.login_body
+            },
+        ),
         buttonText = stringResource(
             when {
                 loading -> R.string.login_loading
-                codeSent -> R.string.login_button
-                else -> R.string.code_send
+                !codeSent -> R.string.code_send
+                resetting -> R.string.reset_save
+                else -> R.string.login_button
             },
         ),
-        buttonEnabled = !loading && if (codeSent) code.length == CODE_LENGTH else emailPasswordValid(email, password),
+        buttonEnabled = !loading && canSubmit,
         onButton = ::submit,
     ) {
-        if (codeSent) {
-            CodeEntry(email, code, { code = it }, onComplete = ::submit, onResend = { sendCode() }, onChangeEmail = { codeSent = false })
-            AccountError(error)
-        } else {
-            EmailPasswordFields(email, { email = it }, password, { password = it }, onDone = ::submit)
-            AccountError(error)
-            TextButton(onClick = {
-                if (!email.contains('@')) {
-                    error = R.string.login_need_email
-                    return@TextButton
-                }
-                scope.launch {
-                    try {
-                        Accounts.sendPasswordReset(email)
-                        error = null
-                        Toast.makeText(context, context.getString(R.string.login_reset_sent, email), Toast.LENGTH_LONG).show()
-                    } catch (e: Accounts.AccountException) {
-                        error = accountErrorText(e.error)
-                    }
-                }
-            }) { Text(stringResource(R.string.login_forgot)) }
+        when {
+            codeSent -> {
+                CodeEntry(email, code, { code = it }, onComplete = { if (!resetting) submit() }, onResend = { sendCode() }, onChangeEmail = { codeSent = false })
+                if (resetting) NewPasswordField(password) { password = it }
+            }
+            resetting -> EmailField(email) { email = it }
+            else -> {
+                EmailPasswordFields(email, { email = it }, password, { password = it }, onDone = ::submit)
+                TextButton(onClick = {
+                    resetting = true
+                    password = ""
+                    error = null
+                }) { Text(stringResource(R.string.login_forgot)) }
+            }
         }
+        AccountError(error)
     }
+}
+
+@Composable
+private fun EmailField(email: String, onEmail: (String) -> Unit) {
+    OutlinedTextField(
+        value = email,
+        onValueChange = { onEmail(it.trim().take(120)) },
+        label = { Text(stringResource(R.string.account_email)) },
+        singleLine = true,
+        shape = RoundedCornerShape(50),
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, autoCorrectEnabled = false, imeAction = ImeAction.Done),
+        modifier = Modifier.fillMaxWidth(),
+    )
+}
+
+@Composable
+private fun NewPasswordField(password: String, onPassword: (String) -> Unit) {
+    OutlinedTextField(
+        value = password,
+        onValueChange = { onPassword(it.take(64)) },
+        label = { Text(stringResource(R.string.reset_new_password)) },
+        supportingText = { Text(stringResource(R.string.account_password_hint)) },
+        singleLine = true,
+        shape = RoundedCornerShape(50),
+        visualTransformation = PasswordVisualTransformation(),
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, autoCorrectEnabled = false, imeAction = ImeAction.Done),
+        modifier = Modifier.fillMaxWidth(),
+    )
 }
 
 /** Criar conta depois das boas-vindas (pelo Perfil): @, e-mail e senha → código no e-mail → conta criada. */
@@ -390,7 +441,7 @@ fun SignUpScreen(initialName: String, onBack: () -> Unit, onDone: () -> Unit) {
     }
 
     fun sendCode() = attempt {
-        Accounts.requestSignUpCode(email, handle)
+        Accounts.requestSignUpCode(email, password, handle, initialName.trim())
         code = ""
         codeSent = true
     }
@@ -400,7 +451,7 @@ fun SignUpScreen(initialName: String, onBack: () -> Unit, onDone: () -> Unit) {
             if (formReady) sendCode()
         } else if (code.length == CODE_LENGTH) {
             attempt {
-                Accounts.verifySignUp(email, code, password, handle, initialName.trim())
+                Accounts.verifySignUp(email, code)
                 AppGraph.profile.save(AppGraph.profile.state.value.copy(username = handle))
                 Accounts.backup(context, force = true)
                 onDone()
@@ -423,7 +474,7 @@ fun SignUpScreen(initialName: String, onBack: () -> Unit, onDone: () -> Unit) {
         onButton = ::submit,
     ) {
         if (codeSent) {
-            CodeEntry(email, code, { code = it }, onComplete = ::submit, onResend = { sendCode() }, onChangeEmail = { codeSent = false })
+            CodeEntry(email, code, { code = it }, onComplete = ::submit, onResend = { attempt { Accounts.resendSignUpCode(email) } }, onChangeEmail = { codeSent = false })
         } else {
             UsernameField(handle, { handle = it }, status)
             EmailPasswordFields(email, { email = it }, password, { password = it }, onDone = ::submit)

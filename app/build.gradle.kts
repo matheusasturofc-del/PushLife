@@ -6,9 +6,11 @@ plugins {
     alias(libs.plugins.kotlin.compose)
 }
 
-// Contas (Firebase): só liga quando o arquivo do projeto Firebase (google-services.json) estiver na pasta app.
-// Sem ele o app funciona normalmente, só sem login. Veja CONTAS.md.
-if (file("google-services.json").exists()) apply(plugin = "com.google.gms.google-services")
+// Contas (Supabase): endereço e chave pública do projeto, em supabase.properties na raiz.
+// Sem o arquivo o app funciona normalmente, só sem login. Veja CONTAS.md.
+val supabase = java.util.Properties().apply {
+    rootProject.file("supabase.properties").takeIf { it.exists() }?.inputStream()?.use { load(it) }
+}
 
 // Versão só em inglês, para tirar as capturas de tela da loja: ./gradlew assembleDebug -PenglishOnly
 val englishOnly = project.hasProperty("englishOnly")
@@ -32,6 +34,8 @@ android {
 
         if (englishOnly) resourceConfigurations += "en"
         resValue("bool", "english_only", englishOnly.toString())
+        resValue("string", "supabase_url", supabase.getProperty("url", ""))
+        resValue("string", "supabase_key", supabase.getProperty("key", ""))
     }
 
     signingConfigs {
@@ -101,15 +105,6 @@ dependencies {
     implementation(libs.androidx.camera.view)
     implementation(libs.mlkit.face.detection)
     implementation(libs.mlkit.pose.detection)
-
-    // Contas e backup na nuvem
-    implementation(platform(libs.firebase.bom))
-    implementation(libs.firebase.auth)
-    implementation(libs.firebase.firestore)
-    implementation(libs.firebase.functions)
-    implementation(libs.kotlinx.coroutines.play.services)
-    // O Firebase troca o ListenableFuture (usado pela câmera) por um pacote vazio; o Guava completo traz de volta.
-    implementation(libs.guava)
 
     testImplementation(libs.junit)
 }

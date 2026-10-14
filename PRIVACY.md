@@ -20,8 +20,9 @@ Não vendemos nem compartilhamos dados pessoais, e o app não tem anúncios.
 ## Sua conta
 
 - Para criar a conta pedimos **e-mail, senha, nome e um @** (nome de usuário).
-- A conta usa o **Firebase**, do Google: o login fica no Firebase Authentication (a senha nunca fica com a
-  gente) e o nome, o @ e o backup ficam no Cloud Firestore.
+- A conta usa o **Supabase** (servidores em São Paulo): o login fica no Supabase Auth, com a senha
+  guardada de forma criptografada, e o nome, o @ e o backup ficam no banco do Supabase.
+- Para criar a conta, entrar ou trocar a senha, mandamos um código de 6 dígitos para o seu e-mail.
 - O backup é uma cópia do que o app guarda (saldo, histórico de exercícios, conquistas, respostas das
   boas-vindas, ajustes e a lista de apps bloqueados). Ele é enviado automaticamente quando você sai do app.
 - O seu @ é guardado numa lista para que ninguém use o mesmo. O resto da conta só você acessa.
@@ -47,8 +48,8 @@ Dúvidas: matheusasturofc@gmail.com
 ## PushLife privacy policy (English)
 
 PushLife works **on your phone**. The only thing that leaves it is your **account**: email, name, @ and a
-backup of your progress, stored with Google Firebase (Authentication and Cloud Firestore) so you can sign in
-on another phone. Your @ is kept in a list so nobody else can use it. We do not sell or share personal data
+backup of your progress, stored with Supabase (servers in São Paulo) so you can sign in on another phone. A
+6-digit code is emailed to you to create the account, sign in or change your password. Your @ is kept in a list so nobody else can use it. We do not sell or share personal data
 and there are no ads. To delete your account and cloud data, email the contact below. The camera is used only for on-device rep counting (ML Kit); no image or video is stored or
 sent. Usage access and "display over other apps" are used only to know which app is open and to show the
 block screen. The optional adult-site filter is a local VPN that only filters site addresses (DNS): those
@@ -59,8 +60,8 @@ Contact: matheusasturofc@gmail.com
 ## Política de privacidad de PushLife (Español)
 
 PushLife funciona **en tu teléfono**. Lo único que sale de él es tu **cuenta**: correo, nombre, @ y una copia
-de tu progreso, guardados en Google Firebase (Authentication y Cloud Firestore) para que puedas entrar en otro
-teléfono. Tu @ se guarda en una lista para que nadie más lo use. No vendemos ni compartimos datos personales y
+de tu progreso, guardados en Supabase (servidores en São Paulo) para que puedas entrar en otro teléfono. Te
+enviamos un código de 6 dígitos al correo para crear la cuenta, entrar o cambiar la contraseña. Tu @ se guarda en una lista para que nadie más lo use. No vendemos ni compartimos datos personales y
 no hay anuncios. Para borrar tu cuenta y los datos en la nube, escribe al contacto de abajo. La cámara solo se usa para contar repeticiones en el dispositivo (ML Kit);
 ninguna imagen ni video se guarda o envía. El acceso a datos de uso y "mostrar sobre otras apps" solo sirven
 para saber qué app está abierta y mostrar la pantalla de bloqueo. El filtro opcional de sitios para adultos es

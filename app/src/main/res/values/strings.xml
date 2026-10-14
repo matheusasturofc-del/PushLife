@@ -503,4 +503,9 @@
     <string name="err_too_many">Too many tries. Wait a little and ask for a new code.</string>
     <string name="err_wait">Wait a minute before asking for another code.</string>
     <string name="err_email_failed">We couldn\'t send the email now. Try again in a few minutes.</string>
+    <string name="reset_title">New password</string>
+    <string name="reset_body">Type your email to get a code for a new password.</string>
+    <string name="reset_code_body">Type the 6-digit code we sent and choose your new password.</string>
+    <string name="reset_new_password">New password</string>
+    <string name="reset_save">Save and sign in</string>
 </resources>
