@@ -514,4 +514,32 @@
     <string name="account_delete_yes">Delete forever</string>
     <string name="account_deleting">Deleting…</string>
     <string name="account_deleted">Account deleted.</string>
+    <!-- Desafio para desligar o filtro adulto -->
+    <string name="challenge_title">Turn off the filter?</string>
+    <string name="challenge_body">To turn it off, rewrite the whole text below within 3 minutes. No pasting. If time runs out, the filter stays on.</string>
+    <string name="challenge_start">Start (3 minutes)</string>
+    <string name="challenge_keep">Keep the filter on</string>
+    <string name="challenge_retry">Try again</string>
+    <string name="challenge_time_up">Time is up! The filter stays on.</string>
+    <string name="challenge_lines">Lines: %1$d of %2$d</string>
+    <string name="challenge_hint">Type the text here…</string>
+    <string name="challenge_no_paste">No pasting. Type the text.</string>
+    <string name="challenge_mistake">Something is different from the text. Check the last word.</string>
+    <string-array name="filter_challenge_lines">
+        <item>Pornography steals my time and my energy.</item>
+        <item>It is addictive and always asks for more.</item>
+        <item>It changes the way I see people.</item>
+        <item>It hurts my real relationships.</item>
+        <item>It takes my focus away from study and work.</item>
+        <item>It leaves me tired and unmotivated.</item>
+        <item>It brings down my self esteem.</item>
+        <item>It makes me hide things from the people I love.</item>
+        <item>Every relapse leaves guilt and emptiness.</item>
+        <item>I am stronger than this urge.</item>
+        <item>The urge passes if I do not give in.</item>
+        <item>I want a real life, not a screen.</item>
+        <item>I choose to take care of my mind.</item>
+        <item>I choose my body, my time and my dreams.</item>
+        <item>That is why I keep the filter on.</item>
+    </string-array>
 </resources>

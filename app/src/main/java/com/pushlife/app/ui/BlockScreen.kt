@@ -245,14 +245,14 @@ fun BlockScreen(modifier: Modifier = Modifier) {
         )
     }
     if (askDisableFilter) {
-        DisableDialog(
-            title = R.string.filter_disable_title,
-            onConfirm = {
+        // Desligar o filtro adulto é de propósito difícil: reescrever o texto em até 3 minutos.
+        FilterChallengeDialog(
+            onDisable = {
                 askDisableFilter = false
                 AppGraph.blocking.setAdultFilter(false)
                 DnsFilterService.syncWithSettings(context)
             },
-            onDismiss = { askDisableFilter = false },
+            onKeep = { askDisableFilter = false },
         )
     }
 }

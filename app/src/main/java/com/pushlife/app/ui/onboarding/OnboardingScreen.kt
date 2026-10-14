@@ -184,8 +184,9 @@ import java.time.format.FormatStyle
 
 /** As telas das boas-vindas, na ordem em que aparecem. */
 private enum class Step {
-    WELCOME, NAME, ACCOUNT, GOALS, USAGE, TARGET, APPS, REASONS, STATE, RESULT, PROJECTION, GOOD_NEWS, TRIED,
-    REPLACE, HOW_PUSH, HOW_SCROLL, REMINDER, FREQUENCY, SETUP, USAGE_ACCESS, OVERLAY, PERMISSIONS, SELECT_APPS, PLAN, FIRST_WORKOUT,
+    WELCOME, NAME, GOALS, USAGE, TARGET, APPS, REASONS, STATE, RESULT, PROJECTION, GOOD_NEWS, TRIED,
+    REPLACE, HOW_PUSH, HOW_SCROLL, REMINDER, FREQUENCY, SETUP, USAGE_ACCESS, OVERLAY, PERMISSIONS, SELECT_APPS, PLAN,
+    ACCOUNT, FIRST_WORKOUT,
 }
 
 private const val MAX_PICKS = 3
@@ -273,6 +274,8 @@ fun OnboardingScreen(onFinished: (startExercise: Exercise?) -> Unit) {
     var accountError by remember { mutableStateOf<Int?>(null) }
     val account by Accounts.current.collectAsStateWithLifecycle()
     val scope = rememberCoroutineScope()
+    // O @ só é conferido na tela de criar conta (no fim das boas-vindas).
+    val handleStatus = rememberHandleStatus(if (step == Step.ACCOUNT && account == null && !codeSent) username else "")
     var goals by rememberSaveable { mutableStateOf(emptyList<Goal>()) }
     var phoneHours by rememberSaveable { mutableFloatStateOf(5f) }
     var targetHours by rememberSaveable { mutableFloatStateOf(Projection.suggestedTarget(5f)) }
@@ -308,10 +311,7 @@ fun OnboardingScreen(onFinished: (startExercise: Exercise?) -> Unit) {
             } catch (e: Accounts.AccountException) {
                 accountError = accountErrorText(e.error)
                 if (e.error == Accounts.Error.EMAIL_IN_USE) codeSent = false
-                if (e.error == Accounts.Error.USERNAME_TAKEN) {
-                    codeSent = false
-                    go(Step.NAME)
-                }
+                if (e.error == Accounts.Error.USERNAME_TAKEN) codeSent = false
             } finally {
                 accountLoading = false
             }
@@ -325,7 +325,7 @@ fun OnboardingScreen(onFinished: (startExercise: Exercise?) -> Unit) {
     // Criar conta em dois passos: manda o código para o e-mail e, com o código certo, cria a conta.
     fun createAccount() {
         if (!codeSent) {
-            if (emailPasswordValid(email, password)) sendSignUpCode()
+            if (handleStatus == HandleStatus.FREE && emailPasswordValid(email, password)) sendSignUpCode()
         } else if (code.length == CODE_LENGTH) {
             accountAttempt {
                 Accounts.verifySignUp(email, code)
@@ -363,7 +363,6 @@ fun OnboardingScreen(onFinished: (startExercise: Exercise?) -> Unit) {
     BackHandler(enabled = step != Step.WELCOME) { if (step == Step.ACCOUNT && codeSent) codeSent = false else back() }
 
     val displayName = name.trim()
-    val handleStatus = rememberHandleStatus(if (Accounts.available && account == null) username else "")
     Box(
         Modifier
             .fillMaxSize()
@@ -378,7 +377,7 @@ fun OnboardingScreen(onFinished: (startExercise: Exercise?) -> Unit) {
                     current, ::back, ::next,
                     kicker = stringResource(R.string.ob_name_kicker),
                     title = stringResource(R.string.ob_name_title),
-                    buttonEnabled = displayName.isNotEmpty() && (!Accounts.available || account != null || handleStatus == HandleStatus.FREE),
+                    buttonEnabled = displayName.isNotEmpty(),
                 ) {
                     Spacer(Modifier.height(24.dp))
                     OutlinedTextField(
@@ -393,20 +392,15 @@ fun OnboardingScreen(onFinished: (startExercise: Exercise?) -> Unit) {
                         keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words, imeAction = ImeAction.Next),
                         modifier = Modifier.fillMaxWidth(),
                     )
-                    if (Accounts.available && account == null) {
-                        // O @ não pode repetir: o campo confere no servidor enquanto a pessoa digita.
-                        UsernameField(username, { username = it; usernameEdited = true }, handleStatus)
-                    } else if (account != null && username.isNotEmpty()) {
-                        Text("@$username", style = MaterialTheme.typography.titleMedium, color = Orange)
-                    }
                 }
 
                 Step.ACCOUNT -> StepLayout(
                     current, { if (codeSent) codeSent = false else back() }, ::createAccount,
-                    kicker = "@$username",
+                    kicker = if (codeSent) "@$username" else null,
                     title = stringResource(if (codeSent) R.string.code_title else R.string.ob_account_title),
                     hint = stringResource(if (codeSent) R.string.code_body_signup else R.string.ob_account_hint),
-                    buttonEnabled = !accountLoading && if (codeSent) code.length == CODE_LENGTH else emailPasswordValid(email, password),
+                    buttonEnabled = !accountLoading &&
+                        if (codeSent) code.length == CODE_LENGTH else handleStatus == HandleStatus.FREE && emailPasswordValid(email, password),
                     buttonText = stringResource(
                         when {
                             accountLoading -> R.string.account_creating
@@ -419,6 +413,8 @@ fun OnboardingScreen(onFinished: (startExercise: Exercise?) -> Unit) {
                     if (codeSent) {
                         CodeEntry(email, code, { code = it }, onComplete = ::createAccount, onResend = { accountAttempt { Accounts.resendSignUpCode(email) } }, onChangeEmail = { codeSent = false })
                     } else {
+                        // O @ não pode repetir: o campo confere no servidor enquanto a pessoa digita.
+                        UsernameField(username, { username = it; usernameEdited = true }, handleStatus)
                         EmailPasswordFields(email, { email = it }, password, { password = it }, onDone = ::createAccount)
                     }
                     AccountError(accountError)

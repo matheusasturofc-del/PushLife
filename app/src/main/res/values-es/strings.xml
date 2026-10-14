@@ -507,4 +507,32 @@
     <string name="account_delete_yes">Eliminar para siempre</string>
     <string name="account_deleting">Eliminando…</string>
     <string name="account_deleted">Cuenta eliminada.</string>
+    <!-- Desafio para desligar o filtro adulto -->
+    <string name="challenge_title">¿Desactivar el filtro?</string>
+    <string name="challenge_body">Para desactivarlo, reescribe todo el texto de abajo en menos de 3 minutos. No vale pegar. Si se acaba el tiempo, el filtro sigue activado.</string>
+    <string name="challenge_start">Empezar (3 minutos)</string>
+    <string name="challenge_keep">Mantener el filtro activado</string>
+    <string name="challenge_retry">Intentar de nuevo</string>
+    <string name="challenge_time_up">¡Se acabó el tiempo! El filtro sigue activado.</string>
+    <string name="challenge_lines">Líneas: %1$d de %2$d</string>
+    <string name="challenge_hint">Escribe el texto aquí…</string>
+    <string name="challenge_no_paste">No vale pegar. Escribe el texto.</string>
+    <string name="challenge_mistake">Hay algo distinto al texto. Revisa la última palabra.</string>
+    <string-array name="filter_challenge_lines">
+        <item>La pornografía roba mi tiempo y mi energía.</item>
+        <item>Es adictiva y siempre pide más.</item>
+        <item>Cambia la forma en que veo a las personas.</item>
+        <item>Daña mis relaciones de verdad.</item>
+        <item>Me quita el foco de los estudios y del trabajo.</item>
+        <item>Me deja cansado y sin ganas.</item>
+        <item>Baja mi autoestima.</item>
+        <item>Me hace esconder cosas de quien amo.</item>
+        <item>Cada recaída deja culpa y vacío.</item>
+        <item>Soy más fuerte que este impulso.</item>
+        <item>Las ganas pasan si no cedo.</item>
+        <item>Quiero una vida real, no una pantalla.</item>
+        <item>Elijo cuidar mi mente.</item>
+        <item>Elijo mi cuerpo, mi tiempo y mis sueños.</item>
+        <item>Por eso mantengo el filtro activado.</item>
+    </string-array>
 </resources>

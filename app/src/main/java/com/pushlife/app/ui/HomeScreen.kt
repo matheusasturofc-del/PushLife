@@ -53,13 +53,6 @@ import com.pushlife.app.ui.theme.Ink
 import com.pushlife.app.ui.theme.Orange
 import com.pushlife.app.ui.theme.Yellow
 
-// Fases do plano; CURRENT_PHASE é a última concluída.
-private const val CURRENT_PHASE = 7
-private val PHASES = listOf(
-    R.string.phase_1, R.string.phase_2, R.string.phase_3, R.string.phase_4,
-    R.string.phase_5, R.string.phase_6, R.string.phase_7,
-)
-
 @Composable
 fun HomeScreen(onStartTraining: () -> Unit, modifier: Modifier = Modifier) {
     val bank by AppGraph.bank.state.collectAsStateWithLifecycle()
@@ -90,7 +83,6 @@ fun HomeScreen(onStartTraining: () -> Unit, modifier: Modifier = Modifier) {
             Spacer(Modifier.size(8.dp))
             Text(stringResource(R.string.start_training), style = MaterialTheme.typography.titleLarge)
         }
-        Roadmap()
     }
 }
 
@@ -155,56 +147,3 @@ private fun BalanceCard(bank: BankState, today: LocalDate, dailyGoal: Int) {
     }
 }
 
-@Composable
-private fun Roadmap() {
-    Card(
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
-        shape = RoundedCornerShape(20.dp),
-    ) {
-        Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text(stringResource(R.string.roadmap_title), style = MaterialTheme.typography.headlineSmall)
-            PHASES.forEachIndexed { index, name -> PhaseRow(number = index + 1, name = name) }
-        }
-    }
-}
-
-@Composable
-private fun PhaseRow(number: Int, @StringRes name: Int) {
-    val done = number <= CURRENT_PHASE
-    val next = number == CURRENT_PHASE + 1
-    val colors = MaterialTheme.colorScheme
-    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        Box(
-            modifier = Modifier
-                .size(32.dp)
-                .background(if (done) colors.primary else colors.surfaceVariant, CircleShape),
-            contentAlignment = Alignment.Center,
-        ) {
-            if (done) {
-                Icon(Icons.Rounded.Check, contentDescription = stringResource(R.string.phase_done), tint = colors.onPrimary)
-            } else {
-                Text("$number", style = MaterialTheme.typography.titleMedium, color = colors.onSurfaceVariant)
-            }
-        }
-        Column(Modifier.weight(1f)) {
-            Text(stringResource(R.string.phase_number, number).uppercase(), style = MaterialTheme.typography.labelMedium, color = colors.onSurfaceVariant)
-            Text(stringResource(name), style = MaterialTheme.typography.titleMedium)
-        }
-        when {
-            done -> Tag(stringResource(R.string.phase_done))
-            next -> Tag(stringResource(R.string.phase_next))
-        }
-    }
-}
-
-@Composable
-private fun Tag(text: String) {
-    Text(
-        text.uppercase(),
-        style = MaterialTheme.typography.labelMedium,
-        color = MaterialTheme.colorScheme.onSecondaryContainer,
-        modifier = Modifier
-            .background(MaterialTheme.colorScheme.secondaryContainer, RoundedCornerShape(8.dp))
-            .padding(horizontal = 8.dp, vertical = 4.dp),
-    )
-}

@@ -507,4 +507,32 @@
     <string name="account_delete_yes">Apagar para sempre</string>
     <string name="account_deleting">Apagando…</string>
     <string name="account_deleted">Conta apagada.</string>
+    <!-- Desafio para desligar o filtro adulto -->
+    <string name="challenge_title">Desligar o filtro?</string>
+    <string name="challenge_body">Para desligar, reescreva o texto abaixo inteiro em até 3 minutos. Colar não vale. Se o tempo acabar, o filtro continua ligado.</string>
+    <string name="challenge_start">Começar (3 minutos)</string>
+    <string name="challenge_keep">Manter o filtro ligado</string>
+    <string name="challenge_retry">Tentar de novo</string>
+    <string name="challenge_time_up">Tempo esgotado! O filtro continua ligado.</string>
+    <string name="challenge_lines">Linhas: %1$d de %2$d</string>
+    <string name="challenge_hint">Digite o texto aqui…</string>
+    <string name="challenge_no_paste">Colar não vale. Digite o texto.</string>
+    <string name="challenge_mistake">Tem algo diferente do texto. Confira a última palavra.</string>
+    <string-array name="filter_challenge_lines">
+        <item>A pornografia rouba meu tempo e minha energia.</item>
+        <item>Ela vicia e sempre pede mais.</item>
+        <item>Ela muda o jeito como eu vejo as pessoas.</item>
+        <item>Ela atrapalha meus relacionamentos de verdade.</item>
+        <item>Ela tira meu foco dos estudos e do trabalho.</item>
+        <item>Ela me deixa cansado e sem vontade.</item>
+        <item>Ela derruba minha autoestima.</item>
+        <item>Ela me faz esconder coisas de quem eu amo.</item>
+        <item>Cada recaída deixa culpa e vazio.</item>
+        <item>Eu sou mais forte que esse impulso.</item>
+        <item>A vontade passa se eu não ceder.</item>
+        <item>Eu quero uma vida real, não uma tela.</item>
+        <item>Eu escolho cuidar da minha mente.</item>
+        <item>Eu escolho meu corpo, meu tempo e meus sonhos.</item>
+        <item>Por isso eu mantenho o filtro ligado.</item>
+    </string-array>
 </resources>
