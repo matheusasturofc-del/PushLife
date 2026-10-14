@@ -6,6 +6,9 @@ plugins {
     alias(libs.plugins.kotlin.compose)
 }
 
+// Versão só em inglês, para tirar as capturas de tela da loja: ./gradlew assembleDebug -PenglishOnly
+val englishOnly = project.hasProperty("englishOnly")
+
 android {
     namespace = "com.pushlife.app"
     compileSdk = 35
@@ -22,6 +25,9 @@ android {
         ndk {
             abiFilters += listOf("arm64-v8a", "armeabi-v7a")
         }
+
+        if (englishOnly) resourceConfigurations += "en"
+        resValue("bool", "english_only", englishOnly.toString())
     }
 
     signingConfigs {
@@ -62,6 +68,7 @@ android {
 
     buildFeatures {
         compose = true
+        resValues = true
     }
 }
 

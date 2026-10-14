@@ -32,6 +32,12 @@ jobs:
       - name: Renomear APK
         run: cp app/build/outputs/apk/debug/app-debug.apk PushLife.apk
 
+      # Mesma versão, só que sempre em inglês (para as capturas de tela da loja).
+      - name: Gerar APK só em inglês
+        run: |
+          ./gradlew --no-daemon assembleDebug -PenglishOnly
+          cp app/build/outputs/apk/debug/app-debug.apk PushLife-english.apk
+
       - uses: actions/upload-artifact@v4
         with:
           name: PushLife-apk
@@ -66,7 +72,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "build-${{ github.run_number }}" PushLife.apk \
+          gh release create "build-${{ github.run_number }}" PushLife.apk PushLife-english.apk \
             --target "${{ github.sha }}" \
             --title "PushLife (teste) #${{ github.run_number }} · versionCode $((${{ github.run_number }} + 100))" \
             --notes "Versão de teste gerada automaticamente a partir de ${{ github.sha }}. versionCode: $((${{ github.run_number }} + 100)) (é este número que vai no update.json)." \
