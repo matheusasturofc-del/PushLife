@@ -4,8 +4,6 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
-import android.os.Build
-import android.provider.Settings
 import android.text.format.DateFormat
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -38,6 +36,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -63,6 +62,7 @@ import com.pushlife.app.R
 import com.pushlife.app.blocking.BlockerService
 import com.pushlife.app.core.Profile
 import com.pushlife.app.core.progress.Levels
+import com.pushlife.app.data.AppLanguage
 import com.pushlife.app.data.Backup
 import com.pushlife.app.data.ProgressCenter
 import com.pushlife.app.filter.DnsFilterService
@@ -184,11 +184,28 @@ fun ProfileScreen(modifier: Modifier = Modifier) {
 
         item { Section(R.string.profile_language) }
         item {
-            SettingRow(stringResource(R.string.profile_language), stringResource(R.string.profile_language_hint)) {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                    FilledTonalButton(onClick = {
-                        context.startSafely(Intent(Settings.ACTION_APP_LOCALE_SETTINGS, Uri.fromParts("package", context.packageName, null)))
-                    }) { Text(stringResource(R.string.perm_open)) }
+            // Segue o celular; quem quiser fixa um idioma aqui e o app reabre traduzido.
+            val current = remember { AppLanguage.get(context) }
+            Column(
+                Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surfaceContainer, RoundedCornerShape(16.dp)).padding(vertical = 8.dp),
+            ) {
+                Text(
+                    stringResource(R.string.profile_language_hint),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+                )
+                AppLanguage.TAGS.forEach { tag ->
+                    Row(
+                        Modifier
+                            .fillMaxWidth()
+                            .clickable(enabled = tag != current) { (context as? Activity)?.let { AppLanguage.set(it, tag) } }
+                            .padding(horizontal = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        RadioButton(selected = tag == current, onClick = null, modifier = Modifier.padding(12.dp))
+                        Text(languageName(tag), style = MaterialTheme.typography.titleMedium)
+                    }
                 }
             }
         }
@@ -318,6 +335,15 @@ private fun afterDataChange(context: Context) {
 }
 
 private fun Context.toast(@StringRes text: Int) = Toast.makeText(this, text, Toast.LENGTH_SHORT).show()
+
+/** Nome de cada idioma escrito nele mesmo (assim todo mundo acha o seu). */
+@Composable
+private fun languageName(tag: String): String = when (tag) {
+    "pt" -> "Português"
+    "en" -> "English"
+    "es" -> "Español"
+    else -> stringResource(R.string.language_auto)
+}
 
 private fun Context.startSafely(intent: Intent) {
     runCatching { startActivity(intent) }

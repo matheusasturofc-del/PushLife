@@ -605,7 +605,7 @@ private fun ResultStep(yours: Int, goal: Int) {
     Column(Modifier.fillMaxWidth().padding(top = 8.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(14.dp)) {
         Text(stringResource(R.string.ob_result_title), style = MaterialTheme.typography.headlineLarge, textAlign = TextAlign.Center)
         Text(stringResource(R.string.ob_result_body), style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.Center)
-        Row(Modifier.height(260.dp).padding(top = 12.dp), horizontalArrangement = Arrangement.spacedBy(40.dp), verticalAlignment = Alignment.Bottom) {
+        Row(Modifier.height(300.dp).padding(top = 12.dp), horizontalArrangement = Arrangement.spacedBy(40.dp), verticalAlignment = Alignment.Bottom) {
             Bar(yourBar.value, if (showNumbers) "$yours%" else "", Brush.verticalGradient(listOf(Orange, Yellow.copy(alpha = 0.6f))), R.string.ob_result_yours)
             Bar(goalBar.value, if (showNumbers) "$goal%" else "", Brush.verticalGradient(listOf(Yellow, Yellow.copy(alpha = 0.5f))), R.string.ob_result_goal)
         }
@@ -624,15 +624,14 @@ private fun ResultStep(yours: Int, goal: Int) {
 @Composable
 private fun Bar(fraction: Float, label: String, brush: Brush, @StringRes caption: Int) {
     Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        // O número fica em cima da barra: dentro dela, barras baixas (ex.: 10%) cortavam o texto.
+        Text(label, style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onBackground)
         Box(
             Modifier
                 .width(84.dp)
                 .height((200 * fraction.coerceIn(0.04f, 1f)).dp)
                 .background(brush, RoundedCornerShape(14.dp)),
-            contentAlignment = Alignment.TopCenter,
-        ) {
-            Text(label, style = MaterialTheme.typography.titleLarge, color = Ink, modifier = Modifier.padding(top = 8.dp))
-        }
+        )
         Text(stringResource(caption), style = MaterialTheme.typography.titleMedium)
     }
 }

@@ -19,6 +19,7 @@ import com.pushlife.app.AppGraph
 import com.pushlife.app.MainActivity
 import com.pushlife.app.R
 import com.pushlife.app.core.BlockerEngine
+import com.pushlife.app.data.AppLanguage
 import com.pushlife.app.reminder.Notifier
 import com.pushlife.app.ui.formatDuration
 import java.time.LocalDate
@@ -38,6 +39,10 @@ class BlockerService : Service() {
             onTick()
             handler.postDelayed(this, TICK_MS)
         }
+    }
+
+    override fun attachBaseContext(base: Context) {
+        super.attachBaseContext(AppLanguage.wrap(base))
     }
 
     override fun onCreate() {

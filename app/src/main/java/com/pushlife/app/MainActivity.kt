@@ -1,5 +1,6 @@
 package com.pushlife.app
 
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -14,6 +15,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import com.pushlife.app.blocking.BlockerService
 import com.pushlife.app.core.Exercise
+import com.pushlife.app.data.AppLanguage
 import com.pushlife.app.data.ProgressCenter
 import com.pushlife.app.data.UpdateChecker
 import com.pushlife.app.filter.DnsFilterService
@@ -31,6 +33,10 @@ class MainActivity : ComponentActivity() {
 
     /** Exercício para abrir direto (fim das boas-vindas); null depois de usado. */
     private var pendingExercise by mutableStateOf<Exercise?>(null)
+
+    override fun attachBaseContext(newBase: Context) {
+        super.attachBaseContext(AppLanguage.wrap(newBase))
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

@@ -8,6 +8,7 @@ import com.pushlife.app.AppGraph
 import com.pushlife.app.core.filter.Dns
 import com.pushlife.app.core.filter.DomainBlocklist
 import com.pushlife.app.core.filter.Packets
+import com.pushlife.app.data.AppLanguage
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -30,6 +31,10 @@ class DnsFilterService : VpnService() {
     private var tun: ParcelFileDescriptor? = null
     private var reader: Thread? = null
     private var workers: ExecutorService? = null
+
+    override fun attachBaseContext(base: Context) {
+        super.attachBaseContext(AppLanguage.wrap(base))
+    }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         if (intent?.action == ACTION_STOP || !AppGraph.blocking.state.value.adultFilter) {

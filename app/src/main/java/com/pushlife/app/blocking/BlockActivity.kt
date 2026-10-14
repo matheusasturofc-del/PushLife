@@ -39,6 +39,7 @@ import com.pushlife.app.AppGraph
 import com.pushlife.app.MainActivity
 import com.pushlife.app.R
 import com.pushlife.app.core.Rules
+import com.pushlife.app.data.AppLanguage
 import com.pushlife.app.ui.theme.Ink
 import com.pushlife.app.ui.theme.Orange
 import com.pushlife.app.ui.theme.PushLifeTheme
@@ -47,6 +48,10 @@ import java.time.LocalDate
 
 /** Tela que cobre um app bloqueado quando o saldo acaba. */
 class BlockActivity : ComponentActivity() {
+    override fun attachBaseContext(newBase: Context) {
+        super.attachBaseContext(AppLanguage.wrap(newBase))
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()

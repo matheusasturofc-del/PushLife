@@ -308,7 +308,7 @@
     <string name="profile_notify_weekly">Resumo da semana (domingo)</string>
     <string name="profile_notify_low">Tempo de tela acabando</string>
     <string name="profile_language">Idioma</string>
-    <string name="profile_language_hint">Português, inglês ou espanhol. Segue o celular, a não ser que você escolha outro.</string>
+    <string name="profile_language_hint">Segue o idioma do celular. Escolha outro abaixo para mudar.</string>
     <string name="profile_backup">Backup</string>
     <string name="backup_body">Salve um arquivo com seu saldo, histórico e ajustes. No seletor de arquivos, escolha o Google Drive para guardar na nuvem.</string>
     <string name="backup_export">Salvar backup</string>
@@ -436,4 +436,5 @@
     <string name="update_notes">Novidades</string>
     <string name="update_button">Atualizar</string>
     <string name="update_installed">Versão instalada: %1$s</string>
+    <string name="language_auto">Automático (idioma do celular)</string>
 </resources>

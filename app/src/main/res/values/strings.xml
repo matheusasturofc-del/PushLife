@@ -315,7 +315,7 @@
     <string name="profile_notify_weekly">Weekly summary (Sundays)</string>
     <string name="profile_notify_low">Screen time running out</string>
     <string name="profile_language">Language</string>
-    <string name="profile_language_hint">Portuguese, English or Spanish. Follows your phone unless you choose one.</string>
+    <string name="profile_language_hint">Follows your phone\'s language. Pick one below to change it.</string>
     <string name="profile_backup">Backup</string>
     <string name="backup_body">Save a file with your balance, history and settings. Choose Google Drive in the file picker to keep it in the cloud.</string>
     <string name="backup_export">Save backup</string>
@@ -443,4 +443,5 @@
     <string name="update_notes">What\'s new</string>
     <string name="update_button">Update</string>
     <string name="update_installed">Installed version: %1$s</string>
+    <string name="language_auto">Automatic (phone language)</string>
 </resources>

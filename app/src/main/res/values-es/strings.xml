@@ -308,7 +308,7 @@
     <string name="profile_notify_weekly">Resumen semanal (domingos)</string>
     <string name="profile_notify_low">Tiempo de pantalla acabándose</string>
     <string name="profile_language">Idioma</string>
-    <string name="profile_language_hint">Portugués, inglés o español. Sigue al teléfono, salvo que elijas otro.</string>
+    <string name="profile_language_hint">Sigue el idioma del teléfono. Elige otro abajo para cambiarlo.</string>
     <string name="profile_backup">Copia de seguridad</string>
     <string name="backup_body">Guarda un archivo con tu saldo, historial y ajustes. En el selector de archivos, elige Google Drive para guardarlo en la nube.</string>
     <string name="backup_export">Guardar copia</string>
@@ -436,4 +436,5 @@
     <string name="update_notes">Novedades</string>
     <string name="update_button">Actualizar</string>
     <string name="update_installed">Versión instalada: %1$s</string>
+    <string name="language_auto">Automático (idioma del teléfono)</string>
 </resources>
