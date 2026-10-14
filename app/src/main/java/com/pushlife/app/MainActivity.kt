@@ -8,6 +8,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.pushlife.app.blocking.BlockerService
@@ -15,6 +16,7 @@ import com.pushlife.app.core.Exercise
 import com.pushlife.app.data.ProgressCenter
 import com.pushlife.app.filter.DnsFilterService
 import com.pushlife.app.reminder.DailyCheck
+import com.pushlife.app.ui.IntroAnimation
 import com.pushlife.app.ui.PushLifeApp
 import com.pushlife.app.ui.onboarding.OnboardingScreen
 import com.pushlife.app.ui.theme.PushLifeTheme
@@ -34,7 +36,10 @@ class MainActivity : ComponentActivity() {
         setContent {
             PushLifeTheme {
                 val profile by AppGraph.profile.state.collectAsStateWithLifecycle()
-                if (profile.onboardingDone) {
+                var showIntro by rememberSaveable { mutableStateOf(savedInstanceState == null) }
+                if (showIntro) {
+                    IntroAnimation(onDone = { showIntro = false })
+                } else if (profile.onboardingDone) {
                     PushLifeApp(
                         trainRequests = trainRequests,
                         pendingExercise = pendingExercise,

@@ -1,14 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Seta para cima (subir na flexão) e barra amarela. Área segura: centro de 66dp. -->
+<!-- Marca do PushLife: um "P" grosso de traço arredondado e um ponto amarelo ("push."). Área segura: centro de 66dp. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
     <path
-        android:fillColor="#1A1208"
-        android:pathData="M54,27 L75,50 L63,50 L63,67 L45,67 L45,50 L33,50 Z" />
+        android:fillColor="#00000000"
+        android:pathData="M42,76 L42,32 L56,32 A13,13 0 0 1 56,58 L42,58"
+        android:strokeColor="#FFFFFFFF"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:strokeWidth="12" />
     <path
-        android:fillColor="#FFC300"
-        android:pathData="M37,72 L71,72 A4,4 0 0 1 71,80 L37,80 A4,4 0 0 1 37,72 Z" />
+        android:fillColor="#FFFFC300"
+        android:pathData="M70,76 m-7,0 a7,7 0 1 1 14,0 a7,7 0 1 1 -14,0" />
 </vector>

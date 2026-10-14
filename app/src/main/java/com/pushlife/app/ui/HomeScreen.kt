@@ -1,6 +1,7 @@
 package com.pushlife.app.ui
 
 import androidx.annotation.StringRes
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -31,6 +32,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -108,13 +110,16 @@ private fun Chip(icon: androidx.compose.ui.graphics.vector.ImageVector, text: St
 
 @Composable
 private fun Logo() {
-    Text(
-        buildAnnotatedString {
-            append("PUSH")
-            withStyle(SpanStyle(color = MaterialTheme.colorScheme.primary)) { append("LIFE") }
-        },
-        style = MaterialTheme.typography.displayMedium,
-    )
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        Image(painterResource(R.drawable.ic_logo), contentDescription = null, modifier = Modifier.size(52.dp))
+        Text(
+            buildAnnotatedString {
+                append("PUSH")
+                withStyle(SpanStyle(color = MaterialTheme.colorScheme.primary)) { append("LIFE") }
+            },
+            style = MaterialTheme.typography.displayMedium,
+        )
+    }
 }
 
 @Composable

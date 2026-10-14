@@ -1,6 +1,7 @@
 package com.pushlife.app.blocking
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.app.AppOpsManager
 import android.content.Context
 import android.content.Intent
@@ -42,6 +43,23 @@ object Permissions {
 
     fun overlayIntent(context: Context) =
         Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:${context.packageName}"))
+
+    fun hasCamera(context: Context): Boolean =
+        ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED
+
+    fun hasActivityRecognition(context: Context): Boolean =
+        Build.VERSION.SDK_INT < Build.VERSION_CODES.Q ||
+            ContextCompat.checkSelfPermission(context, Manifest.permission.ACTIVITY_RECOGNITION) == PackageManager.PERMISSION_GRANTED
+
+    /**
+     * Pede para o Android não fechar o app em segundo plano (essencial na Samsung para o bloqueio
+     * continuar funcionando). Se a janela direta não existir, abre a página do app.
+     */
+    @SuppressLint("BatteryLife")
+    fun requestBatteryExemption(context: Context) {
+        val direct = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, Uri.parse("package:${context.packageName}"))
+        runCatching { context.startActivity(direct) }.onFailure { runCatching { context.startActivity(appDetailsIntent(context)) } }
+    }
 
     /** Página do app nas configurações; na Samsung é lá que fica "Bateria > Sem restrições". */
     fun appDetailsIntent(context: Context) =

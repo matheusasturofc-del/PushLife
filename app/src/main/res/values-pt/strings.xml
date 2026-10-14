@@ -422,4 +422,13 @@
     <string name="ob_plan_protect">Ligar o bloqueio agora</string>
     <string name="ob_plan_protect_hint">Os apps bloqueados já começam a gastar seu saldo.</string>
     <string name="ob_plan_protect_later">Faltam permissões ou apps. Dá para ligar depois na aba Bloqueio.</string>
+
+    <string name="perm_camera_title">Câmera</string>
+    <string name="perm_camera_body">Para contar as repetições. A imagem não sai do celular.</string>
+    <string name="perm_activity_title">Atividade física</string>
+    <string name="perm_activity_body">Para contar os passos da caminhada.</string>
+    <string name="ob_perms_title">Libere tudo de uma vez</string>
+    <string name="ob_perms_hint">O PushLife precisa disto para bloquear apps, mostrar a tela de bloqueio, contar seus exercícios e continuar funcionando em segundo plano.</string>
+    <string name="ob_perms_count">%1$d de %2$d liberadas</string>
+    <string name="ob_perms_later">Continuar (termino depois)</string>
 </resources>

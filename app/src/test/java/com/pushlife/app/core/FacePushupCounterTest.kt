@@ -31,8 +31,8 @@ class FacePushupCounterTest {
     fun naoContaMeiaFlexaoEAvisa() {
         val c = FacePushupCounter()
         var t = c.sweep(0.30f, 0.30f, 0, steps = 5)
-        t = c.sweep(0.30f, 0.39f, t) // desceu pouco
-        c.sweep(0.39f, 0.30f, t)
+        t = c.sweep(0.30f, 0.37f, t) // desceu pouco (1,23×)
+        c.sweep(0.37f, 0.30f, t)
         assertEquals(0, c.count)
         assertTrue(c.lastPartialMs > 0)
     }
@@ -85,9 +85,32 @@ class FacePushupCounterTest {
         val c = FacePushupCounter(smoothing = 1f)
         c.update(0.30f, 0)
         assertEquals(0f, c.depth, 0.001f)
-        c.update(0.30f * 1.225f, 10)
+        c.update(0.30f * 1.175f, 10) // metade do caminho até 1,35×
         assertTrue(c.depth in 0.45f..0.55f)
         c.update(0.60f, 20)
         assertEquals(1f, c.depth, 0.001f)
+    }
+
+    @Test
+    fun aprendeAAmplitudeDeQuemDesceMenos() {
+        // Celular mais longe: o rosto só chega a 1,3× do tamanho de cima (abaixo do limite padrão de 1,35×).
+        val c = FacePushupCounter()
+        var t = c.sweep(0.30f, 0.30f, 0, steps = 5)
+        repeat(5) {
+            t = c.sweep(0.30f, 0.39f, t)
+            t = c.sweep(0.39f, 0.30f, t)
+        }
+        assertTrue("as primeiras viram calibração; as seguintes contam", c.count >= 3)
+    }
+
+    @Test
+    fun calibracaoNaoContaTremidaPequena() {
+        val c = FacePushupCounter()
+        var t = c.sweep(0.30f, 0.30f, 0, steps = 5)
+        repeat(6) {
+            t = c.sweep(0.30f, 0.33f, t) // 1,1×: balanço, não flexão
+            t = c.sweep(0.33f, 0.30f, t)
+        }
+        assertEquals(0, c.count)
     }
 }

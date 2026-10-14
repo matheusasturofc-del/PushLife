@@ -429,4 +429,13 @@
     <string name="ob_plan_protect">Turn on blocking now</string>
     <string name="ob_plan_protect_hint">Blocked apps start using your balance right away.</string>
     <string name="ob_plan_protect_later">Missing permissions or apps. You can turn it on later in the Block tab.</string>
+
+    <string name="perm_camera_title">Camera</string>
+    <string name="perm_camera_body">To count your reps. The image never leaves your phone.</string>
+    <string name="perm_activity_title">Physical activity</string>
+    <string name="perm_activity_body">To count steps on walks.</string>
+    <string name="ob_perms_title">Allow everything at once</string>
+    <string name="ob_perms_hint">PushLife needs these to block apps, show the block screen, count your exercise and keep running in the background.</string>
+    <string name="ob_perms_count">%1$d of %2$d allowed</string>
+    <string name="ob_perms_later">Continue (I\'ll finish later)</string>
 </resources>

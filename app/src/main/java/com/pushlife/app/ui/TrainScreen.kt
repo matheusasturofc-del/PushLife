@@ -57,6 +57,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import com.pushlife.app.camera.RigOverlay
+import com.pushlife.app.camera.Rig
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Shadow
+import androidx.compose.ui.graphics.Color
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
@@ -327,90 +335,126 @@ private fun ActiveStage(exercise: Exercise, onFinish: (SessionResult) -> Unit, m
         }
     }
 
+    var rig by remember { mutableStateOf<Rig?>(null) }
+    val cueLabel = if (exercise.tracking == Tracking.STEPS) stringResource(R.string.walk_status) else stringResource(cueText(exercise, session.cue))
+
     Column(
-        modifier = modifier.fillMaxSize().padding(20.dp),
+        modifier = modifier.fillMaxSize().padding(horizontal = 16.dp, vertical = 12.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        val cameraModifier = Modifier
-            .size(120.dp)
-            .clip(CircleShape)
-            .border(3.dp, if (session.tracking) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline, CircleShape)
-        when (exercise.tracking) {
-            Tracking.FACE -> {
-                val counter = remember { FacePushupCounter() }
-                FaceCamera(
-                    onFaceSize = { size ->
-                        val now = SystemClock.elapsedRealtime()
-                        session.tracking = size != null
-                        if (counter.update(size, now)) onCounted(1)
-                        session.progress = counter.depth
-                        session.cue = when {
-                            now - counter.lastPartialMs < 1_500 -> Cue.GO_LOWER
-                            counter.phase == FacePushupCounter.Phase.WAITING -> Cue.GET_READY
-                            size == null && counter.phase != FacePushupCounter.Phase.DOWN -> Cue.NOT_VISIBLE
-                            counter.phase == FacePushupCounter.Phase.UP -> Cue.GO_DOWN
-                            else -> Cue.GO_UP
-                        }
-                    },
-                    modifier = cameraModifier,
-                )
+        if (exercise.tracking == Tracking.STEPS) {
+            StepCounterEffect { steps ->
+                session.tracking = true
+                session.amount = steps // passos são creditados de uma vez ao finalizar
             }
-            Tracking.POSE -> {
-                val tracker = remember { PoseTracker.forExercise(exercise) }
-                PoseCamera(
-                    onPose = { frame ->
-                        val update = tracker.update(frame, SystemClock.elapsedRealtime())
-                        session.tracking = update.cue != Cue.NOT_VISIBLE
-                        onCounted(update.counted)
-                        session.progress = update.progress
-                        session.cue = update.cue
-                    },
-                    modifier = cameraModifier,
-                )
-            }
-            Tracking.STEPS -> {
-                StepCounterEffect { steps ->
-                    session.tracking = true
-                    session.amount = steps // passos são creditados de uma vez ao finalizar
+            Text(cueLabel, style = MaterialTheme.typography.headlineSmall, textAlign = TextAlign.Center)
+            Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        "${session.amount}",
+                        fontSize = 120.sp,
+                        fontWeight = FontWeight.Black,
+                        fontStyle = FontStyle.Italic,
+                        color = MaterialTheme.colorScheme.primary,
+                    )
+                    Text(stringResource(unitLabel(exercise)), style = MaterialTheme.typography.titleMedium)
                 }
             }
-        }
-
-        Text(
-            if (exercise.tracking == Tracking.STEPS) stringResource(R.string.walk_status) else stringResource(cueText(exercise, session.cue)),
-            style = MaterialTheme.typography.headlineSmall,
-            textAlign = TextAlign.Center,
-        )
-
-        Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        } else {
+            // Câmera grande e quadrada, com o "rig" (rosto ou esqueleto) desenhado por cima.
+            val shape = RoundedCornerShape(28.dp)
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .aspectRatio(1f)
+                    .clip(shape)
+                    .background(Color.Black)
+                    .border(3.dp, if (session.tracking) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline, shape),
+            ) {
+                when (exercise.tracking) {
+                    Tracking.FACE -> {
+                        val counter = remember { FacePushupCounter() }
+                        FaceCamera(
+                            onFace = { reading ->
+                                val now = SystemClock.elapsedRealtime()
+                                session.tracking = reading != null
+                                rig = reading?.rig
+                                if (counter.update(reading?.size, now)) onCounted(1)
+                                session.progress = counter.depth
+                                session.cue = when {
+                                    now - counter.lastPartialMs < 1_500 -> Cue.GO_LOWER
+                                    counter.phase == FacePushupCounter.Phase.WAITING -> Cue.GET_READY
+                                    reading == null && counter.phase != FacePushupCounter.Phase.DOWN -> Cue.NOT_VISIBLE
+                                    counter.phase == FacePushupCounter.Phase.UP -> Cue.GO_DOWN
+                                    else -> Cue.GO_UP
+                                }
+                            },
+                            modifier = Modifier.fillMaxSize(),
+                        )
+                    }
+                    else -> {
+                        val tracker = remember { PoseTracker.forExercise(exercise) }
+                        PoseCamera(
+                            onPose = { reading ->
+                                val update = tracker.update(reading?.frame, SystemClock.elapsedRealtime())
+                                session.tracking = update.cue != Cue.NOT_VISIBLE
+                                rig = reading?.rig
+                                onCounted(update.counted)
+                                session.progress = update.progress
+                                session.cue = update.cue
+                            },
+                            modifier = Modifier.fillMaxSize(),
+                        )
+                    }
+                }
+                RigOverlay(rig, Modifier.fillMaxSize())
                 Text(
-                    "${session.amount}",
-                    fontSize = 140.sp,
-                    fontWeight = FontWeight.Black,
-                    fontStyle = FontStyle.Italic,
-                    color = MaterialTheme.colorScheme.primary,
+                    cueLabel,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = Color.White,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .align(Alignment.TopCenter)
+                        .padding(12.dp)
+                        .background(Color.Black.copy(alpha = 0.55f), RoundedCornerShape(50))
+                        .padding(horizontal = 16.dp, vertical = 6.dp),
                 )
-                Text(stringResource(unitLabel(exercise)), style = MaterialTheme.typography.titleMedium)
+                Row(Modifier.align(Alignment.BottomStart).padding(16.dp), verticalAlignment = Alignment.Bottom) {
+                    Text(
+                        "${session.amount}",
+                        style = TextStyle(
+                            fontSize = 96.sp,
+                            fontWeight = FontWeight.Black,
+                            fontStyle = FontStyle.Italic,
+                            color = Color.White,
+                            shadow = Shadow(Color.Black.copy(alpha = 0.7f), Offset(0f, 4f), 16f),
+                        ),
+                    )
+                    Text(
+                        stringResource(unitLabel(exercise)),
+                        style = MaterialTheme.typography.titleMedium.copy(shadow = Shadow(Color.Black, Offset(0f, 2f), 8f)),
+                        color = Color.White,
+                        modifier = Modifier.padding(start = 8.dp, bottom = 20.dp),
+                    )
+                }
             }
-        }
-
-        if (exercise.tracking != Tracking.STEPS) {
             LinearProgressIndicator(
                 progress = { session.progress },
                 modifier = Modifier.fillMaxWidth().height(14.dp).clip(RoundedCornerShape(7.dp)),
             )
         }
+
         Text(phrase, style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.secondary)
         val earnedNow = if (exercise.tracking == Tracking.STEPS) exercise.valueOf(session.amount) else session.earned
         Text(stringResource(R.string.session_earned, formatDuration(earnedNow)), style = MaterialTheme.typography.titleMedium)
+        if (exercise.tracking != Tracking.STEPS) Spacer(Modifier.weight(1f))
         Button(
             onClick = {
                 if (exercise.tracking == Tracking.STEPS) session.credit(session.amount)
                 onFinish(SessionResult(exercise, session.amount, session.earned, session.hitCap))
             },
-            modifier = Modifier.fillMaxWidth().height(64.dp),
+            modifier = Modifier.fillMaxWidth().height(60.dp),
         ) { Text(stringResource(R.string.finish), style = MaterialTheme.typography.titleLarge) }
     }
 }

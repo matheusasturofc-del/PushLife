@@ -71,17 +71,21 @@ fun FrontCamera(createAnalyzer: () -> FrameAnalyzer, modifier: Modifier = Modifi
     AndroidView(factory = { previewView }, modifier = modifier)
 }
 
-/** Câmera para a flexão: informa a largura do maior rosto em relação à imagem (0..1), ou null. */
+/** O maior rosto do quadro: tamanho relativo à imagem (0..1) e o rig para desenhar. */
+data class FaceReading(val size: Float, val rig: Rig)
+
+/** Câmera para a flexão: informa o maior rosto do quadro, ou null se não houver rosto. */
 @Composable
-fun FaceCamera(onFaceSize: (Float?) -> Unit, modifier: Modifier = Modifier) {
-    val callback by rememberUpdatedState(onFaceSize)
+fun FaceCamera(onFace: (FaceReading?) -> Unit, modifier: Modifier = Modifier) {
+    val callback by rememberUpdatedState(onFace)
     FrontCamera(createAnalyzer = { FaceSizeAnalyzer { callback(it) } }, modifier = modifier)
 }
 
-private class FaceSizeAnalyzer(private val onResult: (Float?) -> Unit) : FrameAnalyzer {
+private class FaceSizeAnalyzer(private val onResult: (FaceReading?) -> Unit) : FrameAnalyzer {
     private val detector = FaceDetection.getClient(
         FaceDetectorOptions.Builder()
             .setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_FAST)
+            .setLandmarkMode(FaceDetectorOptions.LANDMARK_MODE_ALL) // olhos, nariz e boca para o rig
             .setMinFaceSize(0.1f)
             .build(),
     )
@@ -95,11 +99,26 @@ private class FaceSizeAnalyzer(private val onResult: (Float?) -> Unit) : FrameAn
             return
         }
         val rotation = image.imageInfo.rotationDegrees
-        val width = if (rotation % 180 == 0) image.width else image.height
+        val width = (if (rotation % 180 == 0) image.width else image.height).toFloat()
+        val height = (if (rotation % 180 == 0) image.height else image.width).toFloat()
         // Os listeners do ML Kit rodam na thread principal.
         detector.process(InputImage.fromMediaImage(mediaImage, rotation))
             .addOnSuccessListener { faces ->
-                if (!closed) onResult(faces.maxOfOrNull { it.boundingBox.width() }?.let { it.toFloat() / width })
+                if (closed) return@addOnSuccessListener
+                val face = faces.maxByOrNull { it.boundingBox.width() }
+                if (face == null) {
+                    onResult(null)
+                    return@addOnSuccessListener
+                }
+                val box = face.boundingBox
+                // Média de largura e altura: mais estável que só a largura quando a cabeça inclina.
+                val size = (box.width() / width + box.height() / height) / 2f
+                val rig = Rig(
+                    imageAspect = width / height,
+                    points = face.allLandmarks.map { P01(it.position.x / width, it.position.y / height) },
+                    box = Box01(box.left / width, box.top / height, box.right / width, box.bottom / height),
+                )
+                onResult(FaceReading(size, rig))
             }
             .addOnFailureListener { if (!closed) onResult(null) }
             .addOnCompleteListener { image.close() }

@@ -422,4 +422,13 @@
     <string name="ob_plan_protect">Activar el bloqueo ahora</string>
     <string name="ob_plan_protect_hint">Las apps bloqueadas empiezan a gastar tu saldo ya.</string>
     <string name="ob_plan_protect_later">Faltan permisos o apps. Puedes activarlo después en la pestaña Bloqueo.</string>
+
+    <string name="perm_camera_title">Cámara</string>
+    <string name="perm_camera_body">Para contar tus repeticiones. La imagen no sale del teléfono.</string>
+    <string name="perm_activity_title">Actividad física</string>
+    <string name="perm_activity_body">Para contar los pasos de la caminata.</string>
+    <string name="ob_perms_title">Permite todo de una vez</string>
+    <string name="ob_perms_hint">PushLife necesita esto para bloquear apps, mostrar la pantalla de bloqueo, contar tus ejercicios y seguir funcionando en segundo plano.</string>
+    <string name="ob_perms_count">%1$d de %2$d permitidas</string>
+    <string name="ob_perms_later">Continuar (termino después)</string>
 </resources>

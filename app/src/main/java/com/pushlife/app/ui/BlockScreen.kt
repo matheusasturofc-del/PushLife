@@ -200,8 +200,8 @@ fun BlockScreen(modifier: Modifier = Modifier) {
             }
         }
         item {
-            PermissionRow(R.string.perm_battery_title, R.string.perm_battery_body, permissions.battery, R.string.perm_open) {
-                context.startSafely(Permissions.appDetailsIntent(context))
+            PermissionRow(R.string.perm_battery_title, R.string.perm_battery_body, permissions.battery, R.string.perm_allow) {
+                Permissions.requestBatteryExemption(context)
             }
         }
 

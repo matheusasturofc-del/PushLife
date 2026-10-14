@@ -9,6 +9,7 @@ import androidx.compose.material.icons.rounded.Insights
 import androidx.compose.material.icons.rounded.Lock
 import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
@@ -49,7 +50,8 @@ fun PushLifeApp(trainRequests: Int = 0, pendingExercise: Exercise? = null, onExe
                         selected = t == tab,
                         onClick = { selected = t.ordinal },
                         icon = { Icon(t.icon, contentDescription = null) },
-                        label = { Text(stringResource(t.label)) },
+                        // Uma linha só, em fonte menor: com 5 abas "Progresso" quebrava em duas.
+                        label = { Text(stringResource(t.label), maxLines = 1, softWrap = false, style = MaterialTheme.typography.labelSmall) },
                     )
                 }
             }

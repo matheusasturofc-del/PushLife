@@ -127,6 +127,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -168,7 +169,7 @@ import java.time.format.FormatStyle
 /** As telas das boas-vindas, na ordem em que aparecem. */
 private enum class Step {
     WELCOME, NAME, GOALS, USAGE, TARGET, APPS, REASONS, STATE, RESULT, PROJECTION, GOOD_NEWS, TRIED,
-    REPLACE, HOW_PUSH, HOW_SCROLL, REMINDER, FREQUENCY, SETUP, USAGE_ACCESS, OVERLAY, SELECT_APPS, PLAN, FIRST_WORKOUT,
+    REPLACE, HOW_PUSH, HOW_SCROLL, REMINDER, FREQUENCY, SETUP, USAGE_ACCESS, OVERLAY, PERMISSIONS, SELECT_APPS, PLAN, FIRST_WORKOUT,
 }
 
 private const val MAX_PICKS = 3
@@ -476,6 +477,8 @@ fun OnboardingScreen(onFinished: (startExercise: Exercise?) -> Unit) {
                     openSettings = { it.startSafely(Permissions.overlayIntent(it)) },
                 )
 
+                Step.PERMISSIONS -> AllPermissionsStep(current, ::back, ::next)
+
                 Step.SELECT_APPS -> SelectAppsStep(current, ::back, ::next)
 
                 Step.PLAN -> StepLayout(
@@ -525,7 +528,7 @@ private fun Context.startSafely(intent: Intent) {
 private fun WelcomeStep(onStart: () -> Unit) {
     Column(Modifier.fillMaxSize().systemBarsPadding().padding(24.dp), verticalArrangement = Arrangement.spacedBy(20.dp)) {
         Spacer(Modifier.weight(1f))
-        GradientIcon(Icons.Rounded.FitnessCenter, 88.dp)
+        Image(painterResource(R.drawable.ic_logo), contentDescription = null, modifier = Modifier.size(96.dp))
         Text(stringResource(R.string.ob_welcome_title).uppercase(), style = MaterialTheme.typography.displayMedium.copy(fontSize = 44.sp, lineHeight = 46.sp))
         Text(
             stringResource(R.string.ob_welcome_body),
@@ -740,7 +743,7 @@ private fun PermissionStep(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(14.dp),
         ) {
-            GradientIcon(Icons.Rounded.FitnessCenter, 48.dp)
+            Image(painterResource(R.drawable.ic_logo), contentDescription = null, modifier = Modifier.size(48.dp))
             Column(Modifier.weight(1f)) {
                 Text(stringResource(R.string.app_name), style = MaterialTheme.typography.titleMedium)
                 Text(stringResource(R.string.ob_allow), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -751,6 +754,70 @@ private fun PermissionStep(
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Icon(Icons.Rounded.Check, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                 Text(stringResource(R.string.ob_granted), color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.titleMedium)
+            }
+        }
+    }
+}
+
+/** Uma linha da lista de permissões. */
+private data class PermissionItem(@StringRes val title: Int, @StringRes val body: Int, val granted: Boolean, val ask: () -> Unit)
+
+/** Todas as permissões de uma vez: bloqueio, avisos, bateria, câmera e passos. */
+@Composable
+private fun AllPermissionsStep(step: Step, onBack: () -> Unit, onNext: () -> Unit) {
+    val context = LocalContext.current
+    var refresh by remember { mutableIntStateOf(0) }
+    LifecycleResumeEffect(Unit) {
+        refresh++
+        onPauseOrDispose { }
+    }
+    val askOne = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { refresh++ }
+
+    val items = remember(refresh) {
+        buildList {
+            add(PermissionItem(R.string.perm_usage_title, R.string.perm_usage_body, Permissions.hasUsageAccess(context)) { context.startSafely(Permissions.usageAccessIntent()) })
+            add(PermissionItem(R.string.perm_overlay_title, R.string.perm_overlay_body, Permissions.canDrawOverlays(context)) { context.startSafely(Permissions.overlayIntent(context)) })
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                add(PermissionItem(R.string.perm_notif_title, R.string.perm_notif_body, Permissions.hasNotifications(context)) { askOne.launch(Manifest.permission.POST_NOTIFICATIONS) })
+            }
+            add(PermissionItem(R.string.perm_battery_title, R.string.perm_battery_body, Permissions.ignoresBatteryOptimizations(context)) { Permissions.requestBatteryExemption(context) })
+            add(PermissionItem(R.string.perm_camera_title, R.string.perm_camera_body, Permissions.hasCamera(context)) { askOne.launch(Manifest.permission.CAMERA) })
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                add(PermissionItem(R.string.perm_activity_title, R.string.perm_activity_body, Permissions.hasActivityRecognition(context)) { askOne.launch(Manifest.permission.ACTIVITY_RECOGNITION) })
+            }
+        }
+    }
+    val granted = items.count { it.granted }
+
+    StepLayout(
+        step, onBack, onNext,
+        title = stringResource(R.string.ob_perms_title),
+        hint = stringResource(R.string.ob_perms_hint),
+        buttonText = stringResource(if (granted == items.size) R.string.ob_continue else R.string.ob_perms_later),
+    ) {
+        Text(
+            stringResource(R.string.ob_perms_count, granted, items.size),
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.primary,
+        )
+        items.forEach { item ->
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .background(MaterialTheme.colorScheme.surfaceContainer, RoundedCornerShape(16.dp))
+                    .padding(14.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                Column(Modifier.weight(1f)) {
+                    Text(stringResource(item.title), style = MaterialTheme.typography.titleMedium)
+                    Text(stringResource(item.body), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                if (item.granted) {
+                    Icon(Icons.Rounded.Check, contentDescription = stringResource(R.string.perm_ok), tint = MaterialTheme.colorScheme.primary)
+                } else {
+                    Button(onClick = item.ask) { Text(stringResource(R.string.perm_allow)) }
+                }
             }
         }
     }

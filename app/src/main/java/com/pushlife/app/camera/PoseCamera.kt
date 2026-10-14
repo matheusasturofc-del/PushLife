@@ -16,14 +16,17 @@ import com.pushlife.app.core.pose.Joint
 import com.pushlife.app.core.pose.Point
 import com.pushlife.app.core.pose.PoseFrame
 
+/** Pose de um quadro e o esqueleto para desenhar. */
+data class PoseReading(val frame: PoseFrame, val rig: Rig)
+
 /** Câmera para os exercícios de corpo inteiro: entrega a pose detectada em cada quadro, ou null. */
 @Composable
-fun PoseCamera(onPose: (PoseFrame?) -> Unit, modifier: Modifier = Modifier) {
+fun PoseCamera(onPose: (PoseReading?) -> Unit, modifier: Modifier = Modifier) {
     val callback by rememberUpdatedState(onPose)
     FrontCamera(createAnalyzer = { PoseAnalyzer { callback(it) } }, modifier = modifier)
 }
 
-private class PoseAnalyzer(private val onResult: (PoseFrame?) -> Unit) : FrameAnalyzer {
+private class PoseAnalyzer(private val onResult: (PoseReading?) -> Unit) : FrameAnalyzer {
     private val detector = PoseDetection.getClient(
         PoseDetectorOptions.Builder().setDetectorMode(PoseDetectorOptions.STREAM_MODE).build(),
     )
@@ -36,8 +39,11 @@ private class PoseAnalyzer(private val onResult: (PoseFrame?) -> Unit) : FrameAn
             image.close()
             return
         }
-        detector.process(InputImage.fromMediaImage(mediaImage, image.imageInfo.rotationDegrees))
-            .addOnSuccessListener { pose -> if (!closed) onResult(pose.toFrame()) }
+        val rotation = image.imageInfo.rotationDegrees
+        val width = (if (rotation % 180 == 0) image.width else image.height).toFloat()
+        val height = (if (rotation % 180 == 0) image.height else image.width).toFloat()
+        detector.process(InputImage.fromMediaImage(mediaImage, rotation))
+            .addOnSuccessListener { pose -> if (!closed) onResult(pose.toReading(width, height)) }
             .addOnFailureListener { if (!closed) onResult(null) }
             .addOnCompleteListener { image.close() }
     }
@@ -64,11 +70,33 @@ private val JOINTS = mapOf(
     Joint.RIGHT_ANKLE to PoseLandmark.RIGHT_ANKLE,
 )
 
-/** Converte a pose do ML Kit (coordenadas da imagem já girada) para o modelo do app. */
-private fun Pose.toFrame(): PoseFrame? {
+/** Ligações do esqueleto desenhado por cima da câmera. */
+private val BONES = listOf(
+    Joint.LEFT_SHOULDER to Joint.RIGHT_SHOULDER,
+    Joint.LEFT_SHOULDER to Joint.LEFT_ELBOW, Joint.LEFT_ELBOW to Joint.LEFT_WRIST,
+    Joint.RIGHT_SHOULDER to Joint.RIGHT_ELBOW, Joint.RIGHT_ELBOW to Joint.RIGHT_WRIST,
+    Joint.LEFT_SHOULDER to Joint.LEFT_HIP, Joint.RIGHT_SHOULDER to Joint.RIGHT_HIP,
+    Joint.LEFT_HIP to Joint.RIGHT_HIP,
+    Joint.LEFT_HIP to Joint.LEFT_KNEE, Joint.LEFT_KNEE to Joint.LEFT_ANKLE,
+    Joint.RIGHT_HIP to Joint.RIGHT_KNEE, Joint.RIGHT_KNEE to Joint.RIGHT_ANKLE,
+)
+
+/** Converte a pose do ML Kit (coordenadas da imagem já girada) para o modelo do app e o rig. */
+private fun Pose.toReading(width: Float, height: Float): PoseReading? {
     if (allPoseLandmarks.isEmpty()) return null
     val points = JOINTS.mapNotNull { (joint, type) ->
         getPoseLandmark(type)?.let { lm -> joint to Point(lm.position.x, lm.position.y, lm.inFrameLikelihood) }
     }.toMap()
-    return PoseFrame(points)
+    val frame = PoseFrame(points)
+    fun norm(p: Point) = P01(p.x / width, p.y / height)
+    val rig = Rig(
+        imageAspect = width / height,
+        points = points.keys.mapNotNull { frame[it] }.map(::norm),
+        segments = BONES.mapNotNull { (a, b) ->
+            val pa = frame[a] ?: return@mapNotNull null
+            val pb = frame[b] ?: return@mapNotNull null
+            norm(pa) to norm(pb)
+        },
+    )
+    return PoseReading(frame, rig)
 }
