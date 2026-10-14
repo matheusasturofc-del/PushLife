@@ -37,9 +37,9 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -71,21 +71,26 @@ enum class HandleStatus { EMPTY, TOO_SHORT, BAD_START, CHECKING, FREE, TAKEN, OF
 /** Confere o @ no servidor meio segundo depois que a pessoa para de digitar. */
 @Composable
 fun rememberHandleStatus(handle: String): HandleStatus {
-    val status by produceState(HandleStatus.CHECKING, handle) {
-        value = when (Username.problem(handle)) {
+    // Guarda junto o @ conferido: um resultado antigo nunca vale para o @ novo.
+    var checked by remember { mutableStateOf("" to HandleStatus.EMPTY) }
+    LaunchedEffect(handle) {
+        val local = when (Username.problem(handle)) {
             Username.Problem.TOO_SHORT -> if (handle.isEmpty()) HandleStatus.EMPTY else HandleStatus.TOO_SHORT
             Username.Problem.BAD_START -> HandleStatus.BAD_START
-            null -> HandleStatus.CHECKING
+            null -> null
         }
-        if (value != HandleStatus.CHECKING) return@produceState
+        if (local != null) {
+            checked = handle to local
+            return@LaunchedEffect
+        }
         delay(450)
-        value = try {
+        checked = handle to try {
             if (Accounts.isUsernameFree(handle)) HandleStatus.FREE else HandleStatus.TAKEN
         } catch (e: Accounts.AccountException) {
             HandleStatus.OFFLINE
         }
     }
-    return status
+    return if (checked.first == handle) checked.second else HandleStatus.CHECKING
 }
 
 /** Campo do @: já limpa o que é digitado e mostra se está livre. */
