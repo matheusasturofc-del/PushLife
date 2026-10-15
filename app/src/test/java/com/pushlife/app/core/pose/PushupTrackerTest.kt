@@ -107,7 +107,7 @@ class PushupTrackerTest {
     fun contaSemPrecisarDescerAteOChao() {
         val classifier = PoseClassifier(PoseSample.parseAll(lines.asSequence()))
         val tr = PushupTracker { classifier }
-        val reps = partial(0.7f, 5)
+        val reps = partial(0.6f, 5)
         tr.feed(reps.flatMap { (up, down) -> List(8) { frame(up) } + List(8) { frame(down) } } + List(8) { frame(reps.last().first) })
         assertEquals(5, tr.count)
     }
@@ -116,7 +116,7 @@ class PushupTrackerTest {
     fun descerSoUmPouquinhoNaoContaEPedeParaDescer() {
         val classifier = PoseClassifier(PoseSample.parseAll(lines.asSequence()))
         val tr = PushupTracker { classifier }
-        val reps = partial(0.45f, 3)
+        val reps = partial(0.3f, 3)
         val ups = tr.feed(reps.flatMap { (up, down) -> List(8) { frame(up) } + List(8) { frame(down) } } + List(3) { frame(reps.last().first) })
         assertEquals(0, tr.count)
         assertTrue(ups.any { it.cue == Cue.GO_LOWER })

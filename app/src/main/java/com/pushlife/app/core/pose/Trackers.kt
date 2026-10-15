@@ -132,9 +132,9 @@ private class StickyCue(private val durationMs: Long = 1_500) {
 class PushupTracker(private val classifier: () -> PoseClassifier?) : PoseTracker {
     // O modelo preciso entrega menos quadros por segundo: a suavização tolera intervalos maiores.
     private val smoothing = EmaSmoothing(resetMs = 1_500)
-    // Medido com as fotos do Google: confiança 3,5 ≈ descer uns 55–60% do caminho (braços bem dobrados,
-    // sem encostar no chão); abaixo de 2 ≈ já subiu de volta (folga para celulares lentos).
-    private val reps = RepetitionCounter(DOWN, enter = ENTER, exit = 2f)
+    // Medido com as fotos do Google: confiança 1,8 ≈ descer uns 50–55% do caminho (cotovelo perto de 90°,
+    // longe do chão); abaixo de 1 ≈ já subiu de volta.
+    private val reps = RepetitionCounter(DOWN, enter = ENTER, exit = 1f)
     private val sticky = StickyCue()
     private var deepestSinceTop = 0f
     override val count get() = reps.count
@@ -151,8 +151,8 @@ class PushupTracker(private val classifier: () -> PoseClassifier?) : PoseTracker
         val up = result[UP] ?: 0f
         // Desceu um pouco e voltou sem chegar ao ponto: aí sim "Desça mais!".
         deepestSinceTop = maxOf(deepestSinceTop, down)
-        if (!reps.inPose && down < 0.5f) {
-            if (!counted && deepestSinceTop in 1.5f..ENTER) sticky.set(Cue.GO_LOWER, timeMs)
+        if (!reps.inPose && down < 0.3f) {
+            if (!counted && deepestSinceTop in 0.6f..ENTER) sticky.set(Cue.GO_LOWER, timeMs)
             deepestSinceTop = 0f
         }
         if (counted) deepestSinceTop = 0f
@@ -165,7 +165,7 @@ class PushupTracker(private val classifier: () -> PoseClassifier?) : PoseTracker
     }
 
     companion object {
-        const val ENTER = 3.5f
+        const val ENTER = 1.8f
         const val DOWN = "pushups_down"
         const val UP = "pushups_up"
     }
