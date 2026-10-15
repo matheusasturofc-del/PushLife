@@ -1,5 +1,6 @@
 package com.pushlife.app.core.pose
 
+import com.pushlife.app.core.pose.classify.Vec3
 import kotlin.math.abs
 import kotlin.math.acos
 import kotlin.math.atan2
@@ -29,8 +30,15 @@ data class Side(
     val ankle: Point,
 )
 
-/** Uma pose detectada num quadro da câmera. Tudo aqui é geometria pura, sem Android. */
-class PoseFrame(private val points: Map<Joint, Point>, private val minVisibility: Float = 0.5f) {
+/**
+ * Uma pose detectada num quadro da câmera. Tudo aqui é geometria pura, sem Android.
+ * [all] são os 33 marcos 3D do ML Kit, na ordem dele (usados pelo classificador de poses).
+ */
+class PoseFrame(
+    private val points: Map<Joint, Point>,
+    private val minVisibility: Float = 0.5f,
+    val all: List<Vec3> = emptyList(),
+) {
 
     operator fun get(joint: Joint): Point? = points[joint]?.takeIf { it.visibility >= minVisibility }
 

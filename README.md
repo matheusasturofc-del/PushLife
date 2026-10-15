@@ -50,6 +50,8 @@ Mudar só o `update.json` não gera APK novo.
 - Kotlin + Jetpack Compose (Material 3), Android 8.0 ou mais novo
 - IA da câmera: ML Kit, detecção de rosto (flexão com o celular no chão) e de pose (agachamento, abdominal,
   polichinelo, prancha, barra fixa, burpee); roda no aparelho e nenhuma imagem sai do celular
+- Flexão: classificador de poses do exemplo oficial do Google ML Kit (k-vizinhos com centenas de fotos
+  reais de flexão), adaptado para Kotlin. Licença Apache 2.0 em `licenses/mlkit-samples-LICENSE.txt`
 - Caminhada: sensor de passos do celular
 - Bloqueio: permissão "Acesso aos dados de uso" para saber o app aberto, um serviço em primeiro plano que
   desconta o saldo a cada segundo e "Sobrepor a outros apps" para mostrar a tela de bloqueio

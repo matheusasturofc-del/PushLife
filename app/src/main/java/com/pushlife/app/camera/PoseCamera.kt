@@ -15,6 +15,7 @@ import com.google.mlkit.vision.pose.defaults.PoseDetectorOptions
 import com.pushlife.app.core.pose.Joint
 import com.pushlife.app.core.pose.Point
 import com.pushlife.app.core.pose.PoseFrame
+import com.pushlife.app.core.pose.classify.Vec3
 
 /** Pose de um quadro e o esqueleto para desenhar. */
 data class PoseReading(val frame: PoseFrame, val rig: Rig)
@@ -87,7 +88,9 @@ private fun Pose.toReading(width: Float, height: Float): PoseReading? {
     val points = JOINTS.mapNotNull { (joint, type) ->
         getPoseLandmark(type)?.let { lm -> joint to Point(lm.position.x, lm.position.y, lm.inFrameLikelihood) }
     }.toMap()
-    val frame = PoseFrame(points)
+    // Os 33 marcos 3D, na ordem do ML Kit, para o classificador de poses.
+    val all = allPoseLandmarks.sortedBy { it.landmarkType }.map { Vec3(it.position3D.x, it.position3D.y, it.position3D.z) }
+    val frame = PoseFrame(points, all = all)
     fun norm(p: Point) = P01(p.x / width, p.y / height)
     val rig = Rig(
         imageAspect = width / height,

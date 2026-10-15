@@ -81,6 +81,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.pushlife.app.AppGraph
 import com.pushlife.app.R
 import com.pushlife.app.camera.PoseCamera
+import com.pushlife.app.camera.PoseModels
 import com.pushlife.app.camera.StepCounterEffect
 import com.pushlife.app.camera.StepSensor
 import com.pushlife.app.core.Exercise
@@ -306,6 +307,7 @@ private class Session(val exercise: Exercise) {
 
 @Composable
 private fun ActiveStage(exercise: Exercise, onFinish: (SessionResult) -> Unit, modifier: Modifier = Modifier) {
+    val context = LocalContext.current
     val session = remember(exercise) { Session(exercise) }
     val phrases = stringArrayResource(R.array.motivation)
     var phrase by remember { mutableStateOf("") }
@@ -370,7 +372,8 @@ private fun ActiveStage(exercise: Exercise, onFinish: (SessionResult) -> Unit, m
                     .background(Color.Black)
                     .border(3.dp, if (session.tracking) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline, shape),
             ) {
-                val tracker = remember(exercise) { PoseTracker.forExercise(exercise) }
+                LaunchedEffect(Unit) { PoseModels.load(context) }
+                val tracker = remember(exercise) { PoseTracker.forExercise(exercise) { PoseModels.classifier } }
                 PoseCamera(
                     onPose = { reading ->
                         val update = tracker.update(reading?.frame, SystemClock.elapsedRealtime())

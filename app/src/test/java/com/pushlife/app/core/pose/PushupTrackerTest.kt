@@ -1,97 +1,92 @@
 package com.pushlife.app.core.pose
 
+import com.pushlife.app.core.pose.classify.PoseClassifier
+import com.pushlife.app.core.pose.classify.PoseSample
+import com.pushlife.app.core.pose.classify.Vec3
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
-import kotlin.math.cos
-import kotlin.math.sqrt
+import java.io.File
 
+/** Testa a flexão com as poses de referência do Google (assets/pose/fitness_pose_samples.csv). */
 class PushupTrackerTest {
-    /**
-     * Flexão de perfil: cabeça à esquerda, pés à direita, mãos no chão (y = 400) embaixo dos ombros.
-     * [elbowAngle] é o ângulo ombro-cotovelo-punho; o corpo todo desce junto com os ombros.
-     */
-    private fun pushup(elbowAngle: Float): PoseFrame {
-        val arm = 100f
-        val d = sqrt(2 * arm * arm * (1 - cos(Math.toRadians(elbowAngle.toDouble())))).toFloat()
-        val wrist = Point(200f, 400f)
-        val shoulder = Point(200f, 400f - d)
-        val h = sqrt((arm * arm - (d / 2) * (d / 2)).coerceAtLeast(0f))
-        val elbow = Point(200f + h, 400f - d / 2) // cotovelo vai para trás, rente ao corpo
-        val y = shoulder.y
-        return PoseFrame(
-            mapOf(
-                Joint.NOSE to Point(150f, y - 20f),
-                Joint.LEFT_SHOULDER to shoulder, Joint.LEFT_ELBOW to elbow, Joint.LEFT_WRIST to wrist,
-                Joint.LEFT_HIP to Point(400f, y + 5f), Joint.LEFT_KNEE to Point(500f, y + 10f), Joint.LEFT_ANKLE to Point(600f, y + 15f),
-            ),
-        )
+    private val lines: List<String> = File("src/main/assets/pose/fitness_pose_samples.csv").readLines()
+
+    private fun landmarks(line: String): List<Vec3> {
+        val t = line.split(',')
+        return (0 until 33).map { i -> Vec3(t[2 + i * 3].toFloat(), t[3 + i * 3].toFloat(), t[4 + i * 3].toFloat()) }
     }
 
-    /** Em pé, dobrando o braço (rosca): tronco na vertical, punho abaixo do ombro. */
-    private fun standingCurl(elbowAngle: Float): PoseFrame {
-        val shoulder = Point(300f, 200f)
-        val elbow = Point(300f, 300f)
-        val r = Math.toRadians((180f - elbowAngle).toDouble())
-        val wrist = Point(300f + (100 * kotlin.math.sin(r)).toFloat(), 300f + (100 * cos(r)).toFloat())
-        return PoseFrame(
-            mapOf(
-                Joint.LEFT_SHOULDER to shoulder, Joint.LEFT_ELBOW to elbow, Joint.LEFT_WRIST to wrist,
-                Joint.LEFT_HIP to Point(300f, 400f), Joint.LEFT_KNEE to Point(300f, 500f), Joint.LEFT_ANKLE to Point(300f, 600f),
-            ),
-        )
-    }
+    private fun linesOf(cls: String) = lines.filter { it.split(',')[1] == cls }
 
-    private fun PoseTracker.feed(frames: List<PoseFrame>, stepMs: Long = 150): List<TrackerUpdate> {
+    private fun frame(lm: List<Vec3>) = PoseFrame(emptyMap(), all = lm)
+
+    private fun PoseTracker.feed(frames: List<PoseFrame>, stepMs: Long = 66): List<TrackerUpdate> {
         var t = 0L
         return frames.map { f -> update(f, t).also { t += stepMs } }
     }
 
-    private fun reps(n: Int, down: Float = 80f): List<PoseFrame> =
-        List(n) { List(3) { pushup(170f) } + List(3) { pushup(down) } }.flatten() + List(3) { pushup(170f) }
+    @Test
+    fun classificaPosesQueNaoViuAntes() {
+        // Separa 1 de cada 5 fotos para testar e usa o resto como referência.
+        val (test, train) = lines.withIndex().partition { it.index % 5 == 0 }
+        val classifier = PoseClassifier(PoseSample.parseAll(train.asSequence().map { it.value }))
+        val pushups = test.map { it.value }.filter { it.split(',')[1].startsWith("pushups") }
+        val right = pushups.count { line ->
+            val result = classifier.classify(landmarks(line))
+            result.maxByOrNull { it.value }?.key == line.split(',')[1]
+        }
+        assertTrue("acertou $right de ${pushups.size}", right >= pushups.size * 0.9)
+    }
 
     @Test
-    fun contaFlexoesDeVerdade() {
-        val tr = PushupTracker()
-        tr.feed(reps(3))
-        assertEquals(3, tr.count)
+    fun contaFlexoesSubindoEDescendo() {
+        val classifier = PoseClassifier(PoseSample.parseAll(lines.asSequence()))
+        val ups = linesOf(PushupTracker.UP).take(5).map(::landmarks)
+        val downs = linesOf(PushupTracker.DOWN).take(5).map(::landmarks)
+        val tr = PushupTracker { classifier }
+        val frames = (0 until 4).flatMap { i ->
+            List(12) { frame(ups[i]) } + List(12) { frame(downs[i]) }
+        } + List(12) { frame(ups[4]) }
+        tr.feed(frames)
+        assertEquals(4, tr.count)
     }
 
     @Test
     fun mexerSoACabecaNaoConta() {
-        val tr = PushupTracker()
-        // Braços sempre esticados; só o nariz sobe e desce.
-        val frames = List(30) { i ->
-            val base = pushup(170f)
-            val nose = base[Joint.NOSE]!!
-            PoseFrame(
-                Joint.entries.mapNotNull { j -> base[j]?.let { j to it } }.toMap() +
-                    (Joint.NOSE to Point(nose.x, nose.y + if (i % 6 < 3) 0f else 60f)),
-            )
+        val classifier = PoseClassifier(PoseSample.parseAll(lines.asSequence()))
+        val up = landmarks(linesOf(PushupTracker.UP).first())
+        val tr = PushupTracker { classifier }
+        // Braços esticados o tempo todo; só os pontos do rosto (0 a 10) sobem e descem bastante.
+        val frames = List(120) { i ->
+            val dy = if ((i / 10) % 2 == 0) 0f else 120f
+            frame(up.mapIndexed { j, p -> if (j <= 10) Vec3(p.x, p.y + dy, p.z) else p })
         }
         tr.feed(frames)
         assertEquals(0, tr.count)
     }
 
     @Test
-    fun dobrarOBracoEmPeNaoConta() {
-        val tr = PushupTracker()
-        val ups = tr.feed(List(4) { List(3) { standingCurl(170f) } + List(3) { standingCurl(60f) } }.flatten())
+    fun emPeNaoConta() {
+        val classifier = PoseClassifier(PoseSample.parseAll(lines.asSequence()))
+        val down = landmarks(linesOf(PushupTracker.DOWN).first())
+        val up = landmarks(linesOf(PushupTracker.UP).first())
+        // Tronco em pé visível nos pontos 2D, mesmo que os 3D pareçam flexão.
+        val standing = mapOf(
+            Joint.LEFT_SHOULDER to Point(300f, 200f), Joint.LEFT_ELBOW to Point(300f, 300f), Joint.LEFT_WRIST to Point(300f, 400f),
+            Joint.LEFT_HIP to Point(300f, 450f), Joint.LEFT_KNEE to Point(300f, 550f), Joint.LEFT_ANKLE to Point(300f, 650f),
+        )
+        val tr = PushupTracker { classifier }
+        val ups = tr.feed((0 until 3).flatMap { List(12) { PoseFrame(standing, all = up) } + List(12) { PoseFrame(standing, all = down) } })
         assertEquals(0, tr.count)
         assertEquals(Cue.GET_READY, ups.last().cue)
     }
 
     @Test
-    fun descerPoucoNaoContaEPedeParaDescerMais() {
-        val tr = PushupTracker()
-        val ups = tr.feed(List(3) { pushup(170f) } + List(3) { pushup(115f) } + List(3) { pushup(170f) })
-        assertEquals(0, tr.count)
-        assertEquals(Cue.GO_LOWER, ups.last().cue)
-    }
-
-    @Test
-    fun sairDaPosicaoNoMeioNaoConta() {
-        val tr = PushupTracker()
-        tr.feed(List(3) { pushup(170f) } + List(3) { pushup(80f) } + List(3) { standingCurl(170f) } + List(3) { pushup(170f) })
+    fun semPoseCarregadaEsperaSemContar() {
+        val tr = PushupTracker { null }
+        val up = tr.update(frame(landmarks(lines.first())), 0)
+        assertEquals(Cue.GET_READY, up.cue)
         assertEquals(0, tr.count)
     }
 }

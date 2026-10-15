@@ -1,6 +1,9 @@
 package com.pushlife.app.core.pose
 
 import com.pushlife.app.core.Exercise
+import com.pushlife.app.core.pose.classify.EmaSmoothing
+import com.pushlife.app.core.pose.classify.PoseClassifier
+import com.pushlife.app.core.pose.classify.RepetitionCounter
 
 /** Dica mostrada durante o treino (o texto de cada uma fica nos recursos de idioma). */
 enum class Cue {
@@ -22,8 +25,9 @@ interface PoseTracker {
     fun update(frame: PoseFrame?, timeMs: Long): TrackerUpdate
 
     companion object {
-        fun forExercise(exercise: Exercise): PoseTracker = when (exercise) {
-            Exercise.PUSHUP -> PushupTracker()
+        /** [classifier] só é usado na flexão (poses de referência carregadas do app). */
+        fun forExercise(exercise: Exercise, classifier: () -> PoseClassifier? = { null }): PoseTracker = when (exercise) {
+            Exercise.PUSHUP -> PushupTracker(classifier)
             Exercise.SQUAT -> SquatTracker()
             Exercise.SITUP -> SitupTracker()
             Exercise.PULLUP -> PullupTracker()
@@ -118,37 +122,44 @@ private class StickyCue(private val durationMs: Long = 1_500) {
 }
 
 /**
- * Flexão, de lado para a câmera: conta pelo ângulo do cotovelo (ombro-cotovelo-punho).
- * Braços esticados ≈ 160°, embaixo ≈ 80°. Só vale com o corpo deitado (prancha) e as mãos no
- * chão, abaixo dos ombros: mexer só a cabeça, ou dobrar o braço em pé, não conta.
+ * Flexão com o classificador de poses do Google ML Kit: compara cada quadro com centenas de fotos
+ * reais de flexão "em cima" e "embaixo" e conta quando a pessoa entra na pose de baixo e sai dela.
+ * Como olha o corpo inteiro, mexer só a cabeça não muda nada. De garantia, com o tronco em pé
+ * (dá para ver ombro e quadril) não conta.
  */
-class PushupTracker : PoseTracker {
-    private val counter = AngleRepCounter(contracted = 100f, extended = 150f, partial = 125f)
-    private val sticky = StickyCue()
-    override val count get() = counter.count
+class PushupTracker(private val classifier: () -> PoseClassifier?) : PoseTracker {
+    private val smoothing = EmaSmoothing()
+    private val reps = RepetitionCounter(DOWN)
+    override val count get() = reps.count
 
     override fun update(frame: PoseFrame?, timeMs: Long): TrackerUpdate {
-        val side = frame?.bestSide(SidePart.SHOULDER, SidePart.ELBOW, SidePart.WRIST, SidePart.HIP)
-            ?: return TrackerUpdate(0, counter.progress, Cue.NOT_VISIBLE)
-        val lying = Geometry.leanFromVertical(side.hip, side.shoulder) > 50f
-        val handsOnFloor = side.wrist.y > side.shoulder.y
-        if (!lying || !handsOnFloor) {
-            // Fora da posição de flexão nada conta, e a repetição pela metade é esquecida.
-            counter.reset()
+        val c = classifier() ?: return TrackerUpdate(0, 0f, Cue.GET_READY) // ainda carregando
+        if (frame == null || frame.all.isEmpty()) {
+            smoothing.smooth(emptyMap(), timeMs)
+            return TrackerUpdate(0, 0f, Cue.NOT_VISIBLE)
+        }
+        val side = frame.bestSide(SidePart.SHOULDER, SidePart.HIP)
+        if (side != null && Geometry.leanFromVertical(side.hip, side.shoulder) < 35f) {
+            reps.reset() // em pé: nada conta
+            smoothing.smooth(emptyMap(), timeMs)
             return TrackerUpdate(0, 0f, Cue.GET_READY)
         }
-        val r = counter.update(Geometry.angle(side.shoulder, side.elbow, side.wrist), timeMs)
-        if (r.partial) sticky.set(Cue.GO_LOWER, timeMs)
-        // Corpo reto: ombro-quadril-joelho perto de 180°. Avisa, mas não impede a contagem.
-        val straight = Geometry.angle(side.shoulder, side.hip, side.knee) >= 150f
-        val cue = sticky.get(timeMs) ?: when {
-            counter.phase == AngleRepCounter.Phase.WAITING -> Cue.EXTEND
-            !straight && Geometry.belowLine(side.hip, side.shoulder, side.knee) > 0 -> Cue.HIPS_UP
-            !straight -> Cue.HIPS_DOWN
-            counter.phase == AngleRepCounter.Phase.EXTENDED -> Cue.GO_DOWN
-            else -> Cue.GO_UP
+        val result = smoothing.smooth(c.classify(frame.all), timeMs)
+        val counted = reps.add(result)
+        val down = result[DOWN] ?: 0f
+        val up = result[UP] ?: 0f
+        val cue = when {
+            reps.inPose -> Cue.GO_UP
+            up >= 5f -> Cue.GO_DOWN
+            down > 0f -> Cue.GO_LOWER
+            else -> Cue.GET_READY
         }
-        return TrackerUpdate(if (r.counted) 1 else 0, counter.progress, cue)
+        return TrackerUpdate(if (counted) 1 else 0, (down / c.confidenceRange).coerceIn(0f, 1f), cue)
+    }
+
+    companion object {
+        const val DOWN = "pushups_down"
+        const val UP = "pushups_up"
     }
 }
 
