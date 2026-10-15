@@ -279,7 +279,6 @@ fun OnboardingScreen(onFinished: (startExercise: Exercise?) -> Unit) {
     val scope = rememberCoroutineScope()
     // O @ só é conferido na tela de criar conta (no fim das boas-vindas).
     val handleStatus = rememberHandleStatus(if (step == Step.ACCOUNT && account == null && !codeSent) username else "")
-    }
     var goals by rememberSaveable { mutableStateOf(emptyList<Goal>()) }
     var phoneHours by rememberSaveable { mutableFloatStateOf(5f) }
     var targetHours by rememberSaveable { mutableFloatStateOf(Projection.suggestedTarget(5f)) }
@@ -384,6 +383,7 @@ fun OnboardingScreen(onFinished: (startExercise: Exercise?) -> Unit) {
             showLogin = false
             if (step == Step.ACCOUNT) next() else if (step.ordinal < Step.GOALS.ordinal) go(Step.GOALS)
         }
+    }
 
     BackHandler(enabled = step != Step.WELCOME) { if (step == Step.ACCOUNT && codeSent) codeSent = false else back() }
 
