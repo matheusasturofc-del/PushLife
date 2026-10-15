@@ -43,6 +43,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TimePicker
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -130,7 +131,8 @@ fun ProfileScreen(modifier: Modifier = Modifier) {
                     Modifier
                         .size(80.dp)
                         .background(color, CircleShape)
-                        .clickable { save { it.copy(avatarColor = (it.avatarColor + 1) % AVATAR_COLORS.size) } },
+                        // Convidado não troca a foto (a cor do avatar).
+                        .clickable(enabled = !profile.guest) { save { it.copy(avatarColor = (it.avatarColor + 1) % AVATAR_COLORS.size) } },
                     contentAlignment = Alignment.Center,
                 ) {
                     Text(
@@ -143,12 +145,16 @@ fun ProfileScreen(modifier: Modifier = Modifier) {
                 Column(Modifier.weight(1f)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(profile.name.ifBlank { "—" }, style = MaterialTheme.typography.headlineLarge, modifier = Modifier.weight(1f, fill = false))
-                        IconButton(onClick = { editName = true }) {
-                            Icon(Icons.Rounded.Edit, contentDescription = stringResource(R.string.profile_edit_name))
+                        if (!profile.guest) {
+                            IconButton(onClick = { editName = true }) {
+                                Icon(Icons.Rounded.Edit, contentDescription = stringResource(R.string.profile_edit_name))
+                            }
                         }
                     }
                     if (profile.username.isNotEmpty()) {
                         Text("@${profile.username}", style = MaterialTheme.typography.titleMedium, color = Orange)
+                    } else if (profile.guest) {
+                        Text(stringResource(R.string.guest_badge), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                     Text(
                         stringResource(R.string.progress_level, stats.level) + " · " + stringResource(Levels.rank(stats.level).title),
@@ -231,13 +237,18 @@ fun ProfileScreen(modifier: Modifier = Modifier) {
                 Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surfaceContainer, RoundedCornerShape(16.dp)).padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
-                Text(stringResource(R.string.backup_body), style = MaterialTheme.typography.bodyMedium)
-                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    FilledTonalButton(onClick = { exportLauncher.launch("pushlife-backup-${LocalDate.now()}.json") }, modifier = Modifier.weight(1f)) {
-                        Text(stringResource(R.string.backup_export))
-                    }
-                    OutlinedButton(onClick = { importLauncher.launch(arrayOf("application/json", "text/plain", "application/octet-stream")) }, modifier = Modifier.weight(1f)) {
-                        Text(stringResource(R.string.backup_import))
+                if (profile.guest) {
+                    // Convidado não faz backup (nem em arquivo): precisa criar uma conta.
+                    Text(stringResource(R.string.guest_no_backup), style = MaterialTheme.typography.bodyMedium)
+                } else {
+                    Text(stringResource(R.string.backup_body), style = MaterialTheme.typography.bodyMedium)
+                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        FilledTonalButton(onClick = { exportLauncher.launch("pushlife-backup-${LocalDate.now()}.json") }, modifier = Modifier.weight(1f)) {
+                            Text(stringResource(R.string.backup_export))
+                        }
+                        OutlinedButton(onClick = { importLauncher.launch(arrayOf("application/json", "text/plain", "application/octet-stream")) }, modifier = Modifier.weight(1f)) {
+                            Text(stringResource(R.string.backup_import))
+                        }
                     }
                 }
             }
@@ -382,8 +393,9 @@ fun ProfileScreen(modifier: Modifier = Modifier) {
 
     if (showSignUp) {
         FullScreenDialog(onDismiss = { showSignUp = false }) {
-            SignUpScreen(profile.name, onBack = { showSignUp = false }, onDone = {
+            SignUpScreen(if (profile.guest) "" else profile.name, onBack = { showSignUp = false }, onDone = {
                 showSignUp = false
+                save { it.copy(guest = false) }
                 context.toast(R.string.account_created)
             })
         }
@@ -393,10 +405,22 @@ fun ProfileScreen(modifier: Modifier = Modifier) {
         FullScreenDialog(onDismiss = { showLogin = false }) {
             LoginScreen(onBack = { showLogin = false }, onLoggedIn = { result ->
                 showLogin = false
-                save { it.copy(username = result.username) }
+                save { it.copy(username = result.username, guest = false) }
                 if (result.backup != null) pendingRestore = result else Accounts.backup(context, force = true)
             })
         }
+    }
+
+    // Volta do login com Google/Discord/Twitch feito pelo Perfil.
+    val oauth by Accounts.oauth.collectAsStateWithLifecycle()
+    LaunchedEffect(oauth) {
+        val done = oauth as? Accounts.OAuthState.Done ?: return@LaunchedEffect
+        Accounts.consumeOAuth()
+        showLogin = false
+        showSignUp = false
+        val result = done.result
+        save { it.copy(username = result.username, guest = false, name = if (it.guest && result.name.isNotBlank()) result.name else it.name) }
+        if (result.backup != null) pendingRestore = result else Accounts.backup(context, force = true)
     }
 
     if (confirmDeleteAccount) {

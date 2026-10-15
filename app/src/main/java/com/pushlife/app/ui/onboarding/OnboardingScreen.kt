@@ -165,6 +165,7 @@ import com.pushlife.app.ui.CodeEntry
 import com.pushlife.app.ui.EmailPasswordFields
 import com.pushlife.app.ui.HandleStatus
 import com.pushlife.app.ui.LoginScreen
+import com.pushlife.app.ui.SocialLoginButtons
 import com.pushlife.app.ui.UsernameField
 import com.pushlife.app.ui.accountErrorText
 import com.pushlife.app.ui.emailPasswordValid
@@ -174,6 +175,7 @@ import com.pushlife.app.ui.reloadAfterDataChange
 import com.pushlife.app.ui.theme.Ink
 import com.pushlife.app.ui.theme.Orange
 import com.pushlife.app.ui.theme.Yellow
+import kotlin.random.Random
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -270,12 +272,14 @@ fun OnboardingScreen(onFinished: (startExercise: Exercise?) -> Unit) {
     var codeSent by rememberSaveable { mutableStateOf(false) }
     var code by rememberSaveable { mutableStateOf("") }
     var showLogin by rememberSaveable { mutableStateOf(false) }
+    var guestMode by rememberSaveable { mutableStateOf(false) }
     var accountLoading by remember { mutableStateOf(false) }
     var accountError by remember { mutableStateOf<Int?>(null) }
     val account by Accounts.current.collectAsStateWithLifecycle()
     val scope = rememberCoroutineScope()
     // O @ só é conferido na tela de criar conta (no fim das boas-vindas).
     val handleStatus = rememberHandleStatus(if (step == Step.ACCOUNT && account == null && !codeSent) username else "")
+    }
     var goals by rememberSaveable { mutableStateOf(emptyList<Goal>()) }
     var phoneHours by rememberSaveable { mutableFloatStateOf(5f) }
     var targetHours by rememberSaveable { mutableFloatStateOf(Projection.suggestedTarget(5f)) }
@@ -289,7 +293,8 @@ fun OnboardingScreen(onFinished: (startExercise: Exercise?) -> Unit) {
     var protectNow by rememberSaveable { mutableStateOf(true) }
 
     // Sem Supabase configurado, ou já com conta (entrou sem backup), a tela de criar conta é pulada.
-    fun skipped(s: Step) = s == Step.ACCOUNT && (!Accounts.available || Accounts.current.value != null)
+    fun skipped(s: Step) =
+        (s == Step.ACCOUNT && (guestMode || !Accounts.available || Accounts.current.value != null)) || (s == Step.NAME && guestMode)
     fun go(next: Step) { step = next }
     fun next() {
         var i = (step.ordinal + 1).coerceAtMost(Step.entries.lastIndex)
@@ -341,6 +346,7 @@ fun OnboardingScreen(onFinished: (startExercise: Exercise?) -> Unit) {
                 onboardingDone = true,
                 name = name.trim(),
                 username = if (Accounts.current.value != null) username else "",
+                guest = guestMode && Accounts.current.value == null,
                 goals = goals.toSet(),
                 phoneHours = phoneHours,
                 targetHours = targetHours,
@@ -360,6 +366,25 @@ fun OnboardingScreen(onFinished: (startExercise: Exercise?) -> Unit) {
         onFinished(startExercise)
     }
 
+    // Volta do login com Google/Discord/Twitch durante as boas-vindas.
+    val oauth by Accounts.oauth.collectAsStateWithLifecycle()
+    LaunchedEffect(oauth) {
+        val done = oauth as? Accounts.OAuthState.Done ?: return@LaunchedEffect
+        Accounts.consumeOAuth()
+        val result = done.result
+        val backup = result.backup
+        if (backup != null && Backup.import(context, backup)) {
+            AppGraph.profile.save(AppGraph.profile.state.value.copy(username = result.username, guest = false))
+            reloadAfterDataChange(context)
+        } else {
+            if (result.name.isNotBlank()) name = result.name
+            username = result.username
+            usernameEdited = true
+            guestMode = false
+            showLogin = false
+            if (step == Step.ACCOUNT) next() else if (step.ordinal < Step.GOALS.ordinal) go(Step.GOALS)
+        }
+
     BackHandler(enabled = step != Step.WELCOME) { if (step == Step.ACCOUNT && codeSent) codeSent = false else back() }
 
     val displayName = name.trim()
@@ -371,7 +396,16 @@ fun OnboardingScreen(onFinished: (startExercise: Exercise?) -> Unit) {
     ) {
         AnimatedContent(targetState = step, transitionSpec = { fadeIn() togetherWith fadeOut() }, label = "onboarding") { current ->
             when (current) {
-                Step.WELCOME -> WelcomeStep(onStart = ::next, onLogin = if (Accounts.available) ({ showLogin = true }) else null)
+                Step.WELCOME -> WelcomeStep(
+                    onStart = ::next,
+                    onLogin = if (Accounts.available) ({ showLogin = true }) else null,
+                    onGuest = {
+                        // Convidado: nome automático, sem conta e sem backup.
+                        guestMode = true
+                        name = "guest" + Random.nextInt(10_000, 100_000)
+                        go(Step.GOALS)
+                    },
+                )
 
                 Step.NAME -> StepLayout(
                     current, ::back, ::next,
@@ -416,6 +450,7 @@ fun OnboardingScreen(onFinished: (startExercise: Exercise?) -> Unit) {
                         // O @ não pode repetir: o campo confere no servidor enquanto a pessoa digita.
                         UsernameField(username, { username = it; usernameEdited = true }, handleStatus)
                         EmailPasswordFields(email, { email = it }, password, { password = it }, onDone = ::createAccount)
+                        SocialLoginButtons()
                     }
                     AccountError(accountError)
                 }
@@ -648,7 +683,7 @@ private fun Context.startSafely(intent: Intent) {
 // ---------- Telas ----------
 
 @Composable
-private fun WelcomeStep(onStart: () -> Unit, onLogin: (() -> Unit)?) {
+private fun WelcomeStep(onStart: () -> Unit, onLogin: (() -> Unit)?, onGuest: () -> Unit) {
     Column(Modifier.fillMaxSize().systemBarsPadding().padding(24.dp), verticalArrangement = Arrangement.spacedBy(20.dp)) {
         Spacer(Modifier.weight(1f))
         Image(painterResource(R.drawable.ic_logo), contentDescription = null, modifier = Modifier.size(96.dp))
@@ -664,6 +699,9 @@ private fun WelcomeStep(onStart: () -> Unit, onLogin: (() -> Unit)?) {
         }
         if (onLogin != null) {
             TextButton(onClick = onLogin, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.ob_have_account)) }
+        }
+        TextButton(onClick = onGuest, modifier = Modifier.fillMaxWidth()) {
+            Text(stringResource(R.string.ob_guest), color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }

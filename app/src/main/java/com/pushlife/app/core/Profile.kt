@@ -19,6 +19,8 @@ data class Profile(
     val name: String = "",
     /** O @ da conta (sem o "@"); vazio se a pessoa não tem conta. */
     val username: String = "",
+    /** Convidado: nome "guest" + números, sem backup e sem trocar nome ou foto. */
+    val guest: Boolean = false,
     val goals: Set<Goal> = emptySet(),
     val phoneHours: Float = 5f,
     val targetHours: Float = 3f,

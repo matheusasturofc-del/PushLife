@@ -25,6 +25,7 @@ class ProfileRepository(context: Context) {
             putBoolean(KEY_DONE, profile.onboardingDone)
             putString(KEY_NAME, profile.name)
             putString(KEY_USERNAME, profile.username)
+            putBoolean(KEY_GUEST, profile.guest)
             putStringSet(KEY_GOALS, profile.goals.map { it.name }.toSet())
             putFloat(KEY_PHONE_HOURS, profile.phoneHours)
             putFloat(KEY_TARGET_HOURS, profile.targetHours)
@@ -48,6 +49,7 @@ class ProfileRepository(context: Context) {
             onboardingDone = prefs.getBoolean(KEY_DONE, false),
             name = prefs.getString(KEY_NAME, "").orEmpty(),
             username = prefs.getString(KEY_USERNAME, "").orEmpty(),
+            guest = prefs.getBoolean(KEY_GUEST, false),
             goals = prefs.getStringSet(KEY_GOALS, emptySet()).orEmpty()
                 .mapNotNull { name -> Goal.entries.firstOrNull { it.name == name } }.toSet(),
             phoneHours = prefs.getFloat(KEY_PHONE_HOURS, defaults.phoneHours),
@@ -75,6 +77,7 @@ class ProfileRepository(context: Context) {
         const val KEY_DONE = "onboarding_done"
         const val KEY_NAME = "name"
         const val KEY_USERNAME = "username"
+        const val KEY_GUEST = "guest"
         const val KEY_GOALS = "goals"
         const val KEY_PHONE_HOURS = "phone_hours"
         const val KEY_TARGET_HOURS = "target_hours"

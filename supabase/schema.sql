@@ -15,6 +15,8 @@ alter table public.profiles enable row level security;
 -- Cada pessoa só vê e só muda o próprio perfil.
 drop policy if exists "dono le" on public.profiles;
 create policy "dono le" on public.profiles for select using (auth.uid() = id);
+drop policy if exists "dono cria" on public.profiles;
+create policy "dono cria" on public.profiles for insert with check (auth.uid() = id);
 drop policy if exists "dono atualiza" on public.profiles;
 create policy "dono atualiza" on public.profiles for update using (auth.uid() = id) with check (auth.uid() = id);
 
@@ -38,6 +40,10 @@ security definer
 set search_path = public
 as $$
 begin
+  -- Login com Google/Discord/Twitch não traz o @: o app cria o perfil depois que a pessoa escolhe.
+  if (new.raw_user_meta_data ->> 'username') is null then
+    return new;
+  end if;
   insert into public.profiles (id, username, name)
   values (new.id, lower(new.raw_user_meta_data ->> 'username'), coalesce(new.raw_user_meta_data ->> 'name', ''));
   return new;

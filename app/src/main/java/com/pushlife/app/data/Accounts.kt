@@ -1,6 +1,7 @@
 package com.pushlife.app.data
 
 import android.content.Context
+import androidx.core.content.edit
 import com.pushlife.app.AppGraph
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -43,6 +44,7 @@ object Accounts {
     private val io = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     private var api: Supabase? = null
+    private var appContext: Context? = null
     private var lastBackupMs = 0L
 
     /** "email" no login normal; "signup" quando a conta existe mas o e-mail nunca foi confirmado. */
@@ -57,6 +59,7 @@ object Accounts {
         val s = Supabase(context)
         if (!s.configured) return
         api = s
+        appContext = context.applicationContext
         _current.value = s.loadSession()?.let { Account(it.uid, it.email) }
     }
 
@@ -179,6 +182,89 @@ object Accounts {
         }
     }
 
+    // ---------- Google, Discord e Twitch ----------
+
+    /** Provedores de login social ligados no Supabase (o nome é o que o Supabase usa). */
+    enum class Provider(val id: String) { GOOGLE("google"), DISCORD("discord"), TWITCH("twitch") }
+
+    /** Andamento do login social, que passa pelo navegador e volta para o app. */
+    sealed interface OAuthState {
+        data object Idle : OAuthState
+        data object Working : OAuthState
+        /** Conta nova: falta escolher o @ (o nome vem do Google/Discord/Twitch, se tiver). */
+        data class NeedsUsername(val name: String) : OAuthState
+        data class Done(val result: LoginResult) : OAuthState
+        data class Failed(val error: Error) : OAuthState
+    }
+
+    const val OAUTH_REDIRECT = "pushlife://auth-callback"
+
+    private val _oauth = MutableStateFlow<OAuthState>(OAuthState.Idle)
+    val oauth: StateFlow<OAuthState> = _oauth.asStateFlow()
+
+    /**
+     * Endereço para abrir no navegador. Usa PKCE: o app guarda um segredo e só quem tem esse segredo
+     * consegue trocar o código da volta por uma sessão.
+     */
+    fun oauthUrl(provider: Provider): String {
+        val base = api().url
+        val verifier = Pkce.newVerifier()
+        oauthPrefs()?.edit { putString("verifier", verifier) }
+        val redirect = java.net.URLEncoder.encode(OAUTH_REDIRECT, "UTF-8")
+        return "$base/auth/v1/authorize?provider=${provider.id}&redirect_to=$redirect" +
+            "&code_challenge=${Pkce.challenge(verifier)}&code_challenge_method=s256"
+    }
+
+    /** Volta do navegador (pushlife://auth-callback?code=...). */
+    suspend fun completeOAuth(code: String?, error: String?) {
+        if (code == null) {
+            _oauth.value = OAuthState.Failed(if (error == null) Error.UNKNOWN else Error.WRONG_CREDENTIALS)
+            return
+        }
+        _oauth.value = OAuthState.Working
+        try {
+            val verifier = oauthPrefs()?.getString("verifier", null) ?: throw AccountException(Error.UNKNOWN)
+            val json = guard {
+                api().request("POST", "/auth/v1/token?grant_type=pkce", JSONObject().put("auth_code", code).put("code_verifier", verifier)) as? JSONObject
+            } ?: throw AccountException(Error.UNKNOWN)
+            oauthPrefs()?.edit { remove("verifier") }
+            val session = api().saveSession(json)
+            _current.value = Account(session.uid, session.email)
+            val profile = loadProfileOrNull()
+            _oauth.value = if (profile != null) {
+                OAuthState.Done(profile)
+            } else {
+                val meta = json.optJSONObject("user")?.optJSONObject("user_metadata")
+                val name = listOf("full_name", "name", "preferred_username", "nickname")
+                    .map { meta?.optString(it).orEmpty() }.firstOrNull { it.isNotBlank() }.orEmpty()
+                OAuthState.NeedsUsername(name.take(30))
+            }
+        } catch (e: AccountException) {
+            _oauth.value = OAuthState.Failed(e.error)
+        }
+    }
+
+    /** Conta nova do Google/Discord/Twitch: cria o perfil com o @ escolhido. */
+    suspend fun createProfile(handle: String, name: String) {
+        val uid = api().loadSession()?.uid ?: throw AccountException(Error.UNKNOWN)
+        guard {
+            api().request(
+                "POST", "/rest/v1/profiles",
+                JSONObject().put("id", uid).put("username", handle).put("name", name),
+                token = api().accessToken(),
+                prefer = "return=minimal",
+            )
+        }
+        _oauth.value = OAuthState.Done(LoginResult(name = name, username = handle, backup = null))
+    }
+
+    /** Quem tratou o resultado (ou desistiu) volta o estado para o início. */
+    fun consumeOAuth() {
+        _oauth.value = OAuthState.Idle
+    }
+
+    private fun oauthPrefs() = appContext?.getSharedPreferences("oauth", Context.MODE_PRIVATE)
+
     // ---------- interno ----------
 
     private fun api() = api ?: throw AccountException(Error.NOT_CONFIGURED)
@@ -191,14 +277,17 @@ object Accounts {
         _current.value = Account(session.uid, session.email)
     }
 
-    private suspend fun loadProfile(): LoginResult = guard {
+    private suspend fun loadProfile(): LoginResult = loadProfileOrNull() ?: LoginResult(name = "", username = "", backup = null)
+
+    /** O perfil da conta conectada, ou null se ainda não existe (conta nova de login social). */
+    private suspend fun loadProfileOrNull(): LoginResult? = guard {
         val s = api().loadSession() ?: throw AccountException(Error.UNKNOWN)
         val rows = api().request("GET", "/rest/v1/profiles?id=eq.${s.uid}&select=username,name,backup", token = api().accessToken()) as? JSONArray
-        val row = rows?.optJSONObject(0)
+        val row = rows?.optJSONObject(0) ?: return@guard null
         LoginResult(
-            name = row?.optString("name").orEmpty(),
-            username = row?.optString("username").orEmpty(),
-            backup = row?.takeUnless { it.isNull("backup") }?.optString("backup"),
+            name = row.optString("name"),
+            username = row.optString("username"),
+            backup = row.takeUnless { it.isNull("backup") }?.optString("backup"),
         )
     }
 

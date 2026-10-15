@@ -551,4 +551,17 @@
     <string name="blocked_earned">Você tem %1$s de tempo de tela.</string>
     <string name="blocked_open_app">Abrir %1$s</string>
     <string name="blocked_all_exercises">Ver todos os exercícios</string>
+    <!-- Login social e convidado -->
+    <string name="login_or">ou continue com</string>
+    <string name="oauth_google">Continuar com Google</string>
+    <string name="oauth_discord">Continuar com Discord</string>
+    <string name="oauth_twitch">Continuar com Twitch</string>
+    <string name="oauth_working">Entrando…</string>
+    <string name="oauth_failed">Não deu para entrar</string>
+    <string name="choose_username_title">Escolha seu @</string>
+    <string name="choose_username_body">É a primeira vez por aqui. Confira seu nome e escolha um @ só seu.</string>
+    <string name="choose_username_button">Confirmar</string>
+    <string name="ob_guest">Entrar como convidado</string>
+    <string name="guest_badge">Convidado</string>
+    <string name="guest_no_backup">Como convidado você não faz backup e não troca o nome nem a foto. Crie uma conta para salvar seu progresso.</string>
 </resources>

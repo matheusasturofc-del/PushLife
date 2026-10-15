@@ -1,6 +1,8 @@
 package com.pushlife.app.ui
 
 import android.app.Activity
+import android.net.Uri
+import android.content.Intent
 import android.content.Context
 import androidx.activity.compose.BackHandler
 import androidx.annotation.StringRes
@@ -33,6 +35,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -375,6 +378,7 @@ fun LoginScreen(onBack: () -> Unit, onLoggedIn: (Accounts.LoginResult) -> Unit) 
                     password = ""
                     error = null
                 }) { Text(stringResource(R.string.login_forgot)) }
+                SocialLoginButtons()
             }
         }
         AccountError(error)
@@ -414,6 +418,9 @@ private fun NewPasswordField(password: String, onPassword: (String) -> Unit) {
 fun SignUpScreen(initialName: String, onBack: () -> Unit, onDone: () -> Unit) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    // Sem nome (ex.: convidado criando conta), pede o nome também.
+    val askName = initialName.isBlank()
+    var name by rememberSaveable { mutableStateOf(initialName) }
     var handle by rememberSaveable { mutableStateOf(Username.suggest(initialName)) }
     var email by rememberSaveable { mutableStateOf("") }
     var password by rememberSaveable { mutableStateOf("") }
@@ -422,7 +429,7 @@ fun SignUpScreen(initialName: String, onBack: () -> Unit, onDone: () -> Unit) {
     var loading by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<Int?>(null) }
     val status = rememberHandleStatus(if (codeSent) "" else handle)
-    val formReady = status == HandleStatus.FREE && emailPasswordValid(email, password)
+    val formReady = status == HandleStatus.FREE && emailPasswordValid(email, password) && name.isNotBlank()
 
     fun attempt(action: suspend () -> Unit) {
         if (loading) return
@@ -441,7 +448,7 @@ fun SignUpScreen(initialName: String, onBack: () -> Unit, onDone: () -> Unit) {
     }
 
     fun sendCode() = attempt {
-        Accounts.requestSignUpCode(email, password, handle, initialName.trim())
+        Accounts.requestSignUpCode(email, password, handle, name.trim())
         code = ""
         codeSent = true
     }
@@ -452,7 +459,7 @@ fun SignUpScreen(initialName: String, onBack: () -> Unit, onDone: () -> Unit) {
         } else if (code.length == CODE_LENGTH) {
             attempt {
                 Accounts.verifySignUp(email, code)
-                AppGraph.profile.save(AppGraph.profile.state.value.copy(username = handle))
+                AppGraph.profile.save(AppGraph.profile.state.value.copy(username = handle, name = name.trim(), guest = false))
                 Accounts.backup(context, force = true)
                 onDone()
             }
@@ -476,9 +483,99 @@ fun SignUpScreen(initialName: String, onBack: () -> Unit, onDone: () -> Unit) {
         if (codeSent) {
             CodeEntry(email, code, { code = it }, onComplete = ::submit, onResend = { attempt { Accounts.resendSignUpCode(email) } }, onChangeEmail = { codeSent = false })
         } else {
+            if (askName) {
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = {
+                        name = it.take(30)
+                        handle = Username.suggest(name)
+                    },
+                    label = { Text(stringResource(R.string.ob_name_hint)) },
+                    singleLine = true,
+                    shape = RoundedCornerShape(50),
+                    keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words, imeAction = ImeAction.Next),
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
             UsernameField(handle, { handle = it }, status)
             EmailPasswordFields(email, { email = it }, password, { password = it }, onDone = ::submit)
+            SocialLoginButtons()
         }
+        AccountError(error)
+    }
+}
+
+/**
+ * "ou continue com" Google, Discord e Twitch. Abre o navegador; a volta chega no MainActivity
+ * (pushlife://auth-callback) e o andamento aparece por cima de tudo ([Accounts.oauth]).
+ */
+@Composable
+fun SocialLoginButtons() {
+    if (!Accounts.available) return
+    val context = LocalContext.current
+    Text(
+        stringResource(R.string.login_or),
+        style = MaterialTheme.typography.labelLarge,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+        textAlign = TextAlign.Center,
+    )
+    listOf(
+        Accounts.Provider.GOOGLE to R.string.oauth_google,
+        Accounts.Provider.DISCORD to R.string.oauth_discord,
+        Accounts.Provider.TWITCH to R.string.oauth_twitch,
+    ).forEach { (provider, label) ->
+        OutlinedButton(
+            onClick = {
+                runCatching {
+                    context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(Accounts.oauthUrl(provider))).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+                }
+            },
+            modifier = Modifier.fillMaxWidth().height(52.dp),
+        ) { Text(stringResource(label)) }
+    }
+}
+
+/** Primeira vez com Google/Discord/Twitch: escolher o nome e o @ (que não pode repetir). */
+@Composable
+fun ChooseUsernameScreen(initialName: String, onCancel: () -> Unit) {
+    val scope = rememberCoroutineScope()
+    var name by rememberSaveable { mutableStateOf(initialName) }
+    var handle by rememberSaveable { mutableStateOf(Username.suggest(initialName)) }
+    var loading by remember { mutableStateOf(false) }
+    var error by remember { mutableStateOf<Int?>(null) }
+    val status = rememberHandleStatus(handle)
+
+    AccountScaffold(
+        onBack = onCancel,
+        title = stringResource(R.string.choose_username_title),
+        body = stringResource(R.string.choose_username_body),
+        buttonText = stringResource(if (loading) R.string.account_creating else R.string.choose_username_button),
+        buttonEnabled = !loading && name.isNotBlank() && status == HandleStatus.FREE,
+        onButton = {
+            scope.launch {
+                loading = true
+                error = null
+                try {
+                    Accounts.createProfile(handle, name.trim())
+                } catch (e: Accounts.AccountException) {
+                    error = accountErrorText(e.error)
+                } finally {
+                    loading = false
+                }
+            }
+        },
+    ) {
+        OutlinedTextField(
+            value = name,
+            onValueChange = { name = it.take(30) },
+            label = { Text(stringResource(R.string.ob_name_hint)) },
+            singleLine = true,
+            shape = RoundedCornerShape(50),
+            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Words, imeAction = ImeAction.Next),
+            modifier = Modifier.fillMaxWidth(),
+        )
+        UsernameField(handle, { handle = it }, status)
         AccountError(error)
     }
 }
