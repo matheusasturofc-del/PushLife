@@ -385,6 +385,8 @@ private fun ActiveStage(exercise: Exercise, onFinish: (SessionResult) -> Unit, m
                 LaunchedEffect(Unit) { PoseModels.load(context) }
                 val tracker = remember(exercise) { PoseTracker.forExercise(exercise) { PoseModels.classifier } }
                 PoseCamera(
+                    // Exercícios no chão ou lentos usam o modelo preciso; os rápidos (polichinelo, burpee, barra), o rápido.
+                    accurate = exercise in ACCURATE_EXERCISES,
                     onPose = { reading ->
                         val update = tracker.update(reading?.frame, SystemClock.elapsedRealtime())
                         session.tracking = update.cue != Cue.NOT_VISIBLE
@@ -445,6 +447,10 @@ private fun ActiveStage(exercise: Exercise, onFinish: (SessionResult) -> Unit, m
         ) { Text(stringResource(R.string.finish), style = MaterialTheme.typography.titleLarge) }
     }
 }
+
+private val ACCURATE_EXERCISES = setOf(
+    Exercise.PUSHUP, Exercise.PLANK, Exercise.SITUP, Exercise.SQUAT, Exercise.LUNGE, Exercise.WALL_SIT,
+)
 
 /** No abdominal "Desça mais" vira "Suba mais": a mesma meia repetição, na direção certa. */
 @StringRes

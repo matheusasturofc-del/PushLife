@@ -126,11 +126,12 @@ private class StickyCue(private val durationMs: Long = 1_500) {
 /**
  * Flexão com o classificador de poses do Google ML Kit: compara cada quadro com centenas de fotos
  * reais de flexão "em cima" e "embaixo" e conta quando a pessoa entra na pose de baixo e sai dela.
- * Como olha o corpo inteiro, mexer só a cabeça não muda nada. De garantia, com o tronco em pé
- * (dá para ver ombro e quadril) não conta.
+ * Como olha o corpo inteiro, mexer só a cabeça não muda nada; as poses de referência também
+ * incluem gente em pé (agachamento), então ficar em pé não conta. Funciona de lado ou de frente.
  */
 class PushupTracker(private val classifier: () -> PoseClassifier?) : PoseTracker {
-    private val smoothing = EmaSmoothing()
+    // O modelo preciso entrega menos quadros por segundo: a suavização tolera intervalos maiores.
+    private val smoothing = EmaSmoothing(resetMs = 1_500)
     private val reps = RepetitionCounter(DOWN)
     override val count get() = reps.count
 
@@ -139,12 +140,6 @@ class PushupTracker(private val classifier: () -> PoseClassifier?) : PoseTracker
         if (frame == null || frame.all.isEmpty()) {
             smoothing.smooth(emptyMap(), timeMs)
             return TrackerUpdate(0, 0f, Cue.NOT_VISIBLE)
-        }
-        val side = frame.bestSide(SidePart.SHOULDER, SidePart.HIP)
-        if (side != null && Geometry.leanFromVertical(side.hip, side.shoulder) < 35f) {
-            reps.reset() // em pé: nada conta
-            smoothing.smooth(emptyMap(), timeMs)
-            return TrackerUpdate(0, 0f, Cue.GET_READY)
         }
         val result = smoothing.smooth(c.classify(frame.all), timeMs)
         val counted = reps.add(result)

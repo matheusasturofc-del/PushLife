@@ -26,7 +26,7 @@ android {
         targetSdk = 35
         // No GitHub cada build ganha um número maior (a Play Store exige que ele sempre suba).
         versionCode = System.getenv("GITHUB_RUN_NUMBER")?.toIntOrNull()?.plus(100) ?: 7
-        versionName = "1.8.0"
+        versionName = "1.9.0"
 
         // Só processadores de celular (ARM). Sem isso o APK carrega ~60 MB de bibliotecas x86 inúteis.
         ndk {
@@ -106,6 +106,8 @@ dependencies {
     implementation(libs.androidx.camera.view)
     implementation(libs.mlkit.face.detection)
     implementation(libs.mlkit.pose.detection)
+    // Modelo "preciso" do Google: acha melhor o corpo deitado (flexão, prancha, abdominal).
+    implementation(libs.mlkit.pose.detection.accurate)
 
     testImplementation(libs.junit)
 }

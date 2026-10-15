@@ -164,7 +164,7 @@
     <string name="value_pullup">1 dominada = 2 min</string>
     <string name="value_burpee">1 burpee = 1 min 30 s</string>
     <string name="value_walk">100 pasos = 1 min</string>
-    <string name="setup_pushup">Teléfono de pie en el suelo, a unos 2 metros, de lado a ti. Todo tu cuerpo debe aparecer.</string>
+    <string name="setup_pushup">Teléfono de pie en el suelo, a unos 2 metros, de lado a ti (de frente también funciona). Todo tu cuerpo debe aparecer.</string>
     <string name="setup_side">Apoya el teléfono de pie, a unos 2 metros, de lado a ti. Todo tu cuerpo debe aparecer.</string>
     <string name="setup_side_floor">Apoya el teléfono abajo (suelo o silla), a unos 2 metros, de lado a ti. Todo tu cuerpo debe aparecer.</string>
     <string name="setup_front">Apoya el teléfono de pie, frente a ti, a unos 2 o 3 metros. Todo tu cuerpo debe aparecer.</string>

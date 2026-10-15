@@ -171,7 +171,7 @@
     <string name="value_pullup">1 pull-up = 2 min</string>
     <string name="value_burpee">1 burpee = 1 min 30 s</string>
     <string name="value_walk">100 steps = 1 min</string>
-    <string name="setup_pushup">Phone standing on the floor about 2 m away, with your side facing it. Your whole body must be on screen.</string>
+    <string name="setup_pushup">Phone standing on the floor about 2 m away, side on to you (facing you also works). Your whole body must be on screen.</string>
     <string name="setup_side">Stand the phone up about 2 m away, with your side facing it. Your whole body must be on screen.</string>
     <string name="setup_side_floor">Prop the phone low (floor or chair) about 2 m away, with your side facing it. Your whole body must be on screen.</string>
     <string name="setup_front">Stand the phone up 2 to 3 m away, facing you. Your whole body must be on screen.</string>

@@ -67,19 +67,25 @@ class PushupTrackerTest {
     }
 
     @Test
-    fun emPeNaoConta() {
+    fun agachamentoEmPeNaoContaFlexao() {
         val classifier = PoseClassifier(PoseSample.parseAll(lines.asSequence()))
-        val down = landmarks(linesOf(PushupTracker.DOWN).first())
-        val up = landmarks(linesOf(PushupTracker.UP).first())
-        // Tronco em pé visível nos pontos 2D, mesmo que os 3D pareçam flexão.
-        val standing = mapOf(
-            Joint.LEFT_SHOULDER to Point(300f, 200f), Joint.LEFT_ELBOW to Point(300f, 300f), Joint.LEFT_WRIST to Point(300f, 400f),
-            Joint.LEFT_HIP to Point(300f, 450f), Joint.LEFT_KNEE to Point(300f, 550f), Joint.LEFT_ANKLE to Point(300f, 650f),
-        )
+        val ups = linesOf("squats_up").take(4).map(::landmarks)
+        val downs = linesOf("squats_down").take(4).map(::landmarks)
         val tr = PushupTracker { classifier }
-        val ups = tr.feed((0 until 3).flatMap { List(12) { PoseFrame(standing, all = up) } + List(12) { PoseFrame(standing, all = down) } })
+        tr.feed((0 until 4).flatMap { i -> List(12) { frame(ups[i]) } + List(12) { frame(downs[i]) } })
         assertEquals(0, tr.count)
-        assertEquals(Cue.GET_READY, ups.last().cue)
+    }
+
+    @Test
+    fun modeloLentoAindaConta() {
+        // ~3 quadros por segundo (modelo preciso num celular simples).
+        val classifier = PoseClassifier(PoseSample.parseAll(lines.asSequence()))
+        val ups = linesOf(PushupTracker.UP).take(4).map(::landmarks)
+        val downs = linesOf(PushupTracker.DOWN).take(4).map(::landmarks)
+        val tr = PushupTracker { classifier }
+        val frames = (0 until 3).flatMap { i -> List(5) { frame(ups[i]) } + List(5) { frame(downs[i]) } } + List(5) { frame(ups[3]) }
+        tr.feed(frames, stepMs = 330)
+        assertEquals(3, tr.count)
     }
 
     @Test

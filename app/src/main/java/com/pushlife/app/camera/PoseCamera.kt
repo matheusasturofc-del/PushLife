@@ -11,6 +11,7 @@ import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.pose.Pose
 import com.google.mlkit.vision.pose.PoseDetection
 import com.google.mlkit.vision.pose.PoseLandmark
+import com.google.mlkit.vision.pose.accurate.AccuratePoseDetectorOptions
 import com.google.mlkit.vision.pose.defaults.PoseDetectorOptions
 import com.pushlife.app.core.pose.Joint
 import com.pushlife.app.core.pose.Point
@@ -20,17 +21,26 @@ import com.pushlife.app.core.pose.classify.Vec3
 /** Pose de um quadro e o esqueleto para desenhar. */
 data class PoseReading(val frame: PoseFrame, val rig: Rig)
 
-/** Câmera para os exercícios de corpo inteiro: entrega a pose detectada em cada quadro, ou null. */
+/**
+ * Câmera para os exercícios de corpo inteiro: entrega a pose detectada em cada quadro, ou null.
+ * [accurate] usa o modelo "preciso" do Google: mais lento, mas acha bem melhor o corpo deitado.
+ */
 @Composable
-fun PoseCamera(onPose: (PoseReading?) -> Unit, modifier: Modifier = Modifier) {
+fun PoseCamera(onPose: (PoseReading?) -> Unit, modifier: Modifier = Modifier, accurate: Boolean = false) {
     val callback by rememberUpdatedState(onPose)
-    FrontCamera(createAnalyzer = { PoseAnalyzer { callback(it) } }, modifier = modifier)
+    FrontCamera(createAnalyzer = { PoseAnalyzer(accurate) { callback(it) } }, modifier = modifier)
 }
 
-private class PoseAnalyzer(private val onResult: (PoseReading?) -> Unit) : FrameAnalyzer {
-    private val detector = PoseDetection.getClient(
-        PoseDetectorOptions.Builder().setDetectorMode(PoseDetectorOptions.STREAM_MODE).build(),
-    )
+private class PoseAnalyzer(accurate: Boolean, private val onResult: (PoseReading?) -> Unit) : FrameAnalyzer {
+    private val detector = if (accurate) {
+        PoseDetection.getClient(
+            AccuratePoseDetectorOptions.Builder().setDetectorMode(AccuratePoseDetectorOptions.STREAM_MODE).build(),
+        )
+    } else {
+        PoseDetection.getClient(
+            PoseDetectorOptions.Builder().setDetectorMode(PoseDetectorOptions.STREAM_MODE).build(),
+        )
+    }
     @Volatile private var closed = false
 
     @OptIn(ExperimentalGetImage::class)
