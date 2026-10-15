@@ -11,7 +11,7 @@ enum class ExerciseUnit { REPS, SECONDS, STEPS }
  * Referência: 1 flexão = 1 minuto; os outros seguem o esforço relativo.
  */
 enum class Exercise(val secondsPerUnit: Double, val unit: ExerciseUnit, val tracking: Tracking) {
-    PUSHUP(60.0, ExerciseUnit.REPS, Tracking.FACE),
+    PUSHUP(60.0, ExerciseUnit.REPS, Tracking.POSE),
     SQUAT(30.0, ExerciseUnit.REPS, Tracking.POSE),
     SITUP(30.0, ExerciseUnit.REPS, Tracking.POSE),
     JUMPING_JACK(15.0, ExerciseUnit.REPS, Tracking.POSE),

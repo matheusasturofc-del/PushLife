@@ -27,9 +27,9 @@
     <string name="balance_free_today">Grátis hoje: %1$s</string>
     <string name="balance_earned">Ganho: %1$s</string>
     <string name="train_how_title">Como funciona</string>
-    <string name="train_step_1">Coloque o celular no chão, com a tela para cima, bem embaixo do seu rosto.</string>
-    <string name="train_step_2">Fique em posição de flexão, com os braços esticados.</string>
-    <string name="train_step_3">Desça até o rosto chegar perto do celular e suba. Cada flexão vale 1 minuto.</string>
+    <string name="train_step_1">Apoie o celular em pé, baixo (no chão, encostado em algo), a uns 2 metros e de lado para você.</string>
+    <string name="train_step_2">Fique em posição de flexão, de lado para a câmera, com os braços esticados e o corpo reto. O corpo inteiro precisa aparecer.</string>
+    <string name="train_step_3">Desça dobrando bem os cotovelos e suba. Só conta com o corpo em posição de flexão. Cada flexão vale 1 minuto.</string>
     <string name="train_privacy">A imagem da câmera nunca sai do seu celular.</string>
     <string name="train_start">Começar</string>
     <string name="camera_permission_button">Permitir câmera</string>
@@ -164,7 +164,7 @@
     <string name="value_pullup">1 barra = 2 min</string>
     <string name="value_burpee">1 burpee = 1 min 30 s</string>
     <string name="value_walk">100 passos = 1 min</string>
-    <string name="setup_pushup">Celular no chão, tela para cima, bem embaixo do rosto.</string>
+    <string name="setup_pushup">Celular em pé no chão, a uns 2 metros, de lado para você. O corpo inteiro precisa aparecer.</string>
     <string name="setup_side">Apoie o celular em pé, a uns 2 metros, de lado para você. O corpo inteiro precisa aparecer.</string>
     <string name="setup_side_floor">Apoie o celular baixo (no chão ou numa cadeira), a uns 2 metros, de lado para você. O corpo inteiro precisa aparecer.</string>
     <string name="setup_front">Apoie o celular em pé, de frente para você, a uns 2 ou 3 metros. O corpo inteiro precisa aparecer.</string>

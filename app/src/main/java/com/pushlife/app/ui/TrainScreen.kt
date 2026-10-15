@@ -80,13 +80,11 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.pushlife.app.AppGraph
 import com.pushlife.app.R
-import com.pushlife.app.camera.FaceCamera
 import com.pushlife.app.camera.PoseCamera
 import com.pushlife.app.camera.StepCounterEffect
 import com.pushlife.app.camera.StepSensor
 import com.pushlife.app.core.Exercise
 import com.pushlife.app.core.ExerciseUnit
-import com.pushlife.app.core.FacePushupCounter
 import com.pushlife.app.core.Tracking
 import com.pushlife.app.core.pose.Cue
 import com.pushlife.app.core.pose.PoseTracker
@@ -362,7 +360,7 @@ private fun ActiveStage(exercise: Exercise, onFinish: (SessionResult) -> Unit, m
                 }
             }
         } else {
-            // Câmera grande e quadrada, com o "rig" (rosto ou esqueleto) desenhado por cima.
+            // Câmera grande e quadrada, com o "rig" do corpo (esqueleto) desenhado por cima.
             val shape = RoundedCornerShape(28.dp)
             Box(
                 Modifier
@@ -372,42 +370,18 @@ private fun ActiveStage(exercise: Exercise, onFinish: (SessionResult) -> Unit, m
                     .background(Color.Black)
                     .border(3.dp, if (session.tracking) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline, shape),
             ) {
-                when (exercise.tracking) {
-                    Tracking.FACE -> {
-                        val counter = remember { FacePushupCounter() }
-                        FaceCamera(
-                            onFace = { reading ->
-                                val now = SystemClock.elapsedRealtime()
-                                session.tracking = reading != null
-                                rig = reading?.rig
-                                if (counter.update(reading?.size, now)) onCounted(1)
-                                session.progress = counter.depth
-                                session.cue = when {
-                                    now - counter.lastPartialMs < 1_500 -> Cue.GO_LOWER
-                                    counter.phase == FacePushupCounter.Phase.WAITING -> Cue.GET_READY
-                                    reading == null && counter.phase != FacePushupCounter.Phase.DOWN -> Cue.NOT_VISIBLE
-                                    counter.phase == FacePushupCounter.Phase.UP -> Cue.GO_DOWN
-                                    else -> Cue.GO_UP
-                                }
-                            },
-                            modifier = Modifier.fillMaxSize(),
-                        )
-                    }
-                    else -> {
-                        val tracker = remember { PoseTracker.forExercise(exercise) }
-                        PoseCamera(
-                            onPose = { reading ->
-                                val update = tracker.update(reading?.frame, SystemClock.elapsedRealtime())
-                                session.tracking = update.cue != Cue.NOT_VISIBLE
-                                rig = reading?.rig
-                                onCounted(update.counted)
-                                session.progress = update.progress
-                                session.cue = update.cue
-                            },
-                            modifier = Modifier.fillMaxSize(),
-                        )
-                    }
-                }
+                val tracker = remember(exercise) { PoseTracker.forExercise(exercise) }
+                PoseCamera(
+                    onPose = { reading ->
+                        val update = tracker.update(reading?.frame, SystemClock.elapsedRealtime())
+                        session.tracking = update.cue != Cue.NOT_VISIBLE
+                        rig = reading?.rig
+                        onCounted(update.counted)
+                        session.progress = update.progress
+                        session.cue = update.cue
+                    },
+                    modifier = Modifier.fillMaxSize(),
+                )
                 RigOverlay(rig, Modifier.fillMaxSize())
                 Text(
                     cueLabel,

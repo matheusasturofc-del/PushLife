@@ -27,9 +27,9 @@
     <string name="balance_free_today">Gratis hoy: %1$s</string>
     <string name="balance_earned">Ganado: %1$s</string>
     <string name="train_how_title">Cómo funciona</string>
-    <string name="train_step_1">Pon el teléfono en el suelo, con la pantalla hacia arriba, justo debajo de tu cara.</string>
-    <string name="train_step_2">Ponte en posición de flexión, con los brazos estirados.</string>
-    <string name="train_step_3">Baja hasta que tu cara esté cerca del teléfono y sube. Cada flexión vale 1 minuto.</string>
+    <string name="train_step_1">Apoya el teléfono de pie, abajo (en el suelo, contra algo), a unos 2 metros y de lado a ti.</string>
+    <string name="train_step_2">Ponte en posición de flexión, de lado a la cámara, con los brazos estirados y el cuerpo recto. Todo tu cuerpo debe aparecer.</string>
+    <string name="train_step_3">Baja doblando bien los codos y sube. Solo cuenta en posición de flexión. Cada flexión vale 1 minuto.</string>
     <string name="train_privacy">La imagen de la cámara nunca sale de tu teléfono.</string>
     <string name="train_start">Empezar</string>
     <string name="camera_permission_button">Permitir cámara</string>
@@ -164,7 +164,7 @@
     <string name="value_pullup">1 dominada = 2 min</string>
     <string name="value_burpee">1 burpee = 1 min 30 s</string>
     <string name="value_walk">100 pasos = 1 min</string>
-    <string name="setup_pushup">Teléfono en el suelo, pantalla hacia arriba, justo debajo de tu cara.</string>
+    <string name="setup_pushup">Teléfono de pie en el suelo, a unos 2 metros, de lado a ti. Todo tu cuerpo debe aparecer.</string>
     <string name="setup_side">Apoya el teléfono de pie, a unos 2 metros, de lado a ti. Todo tu cuerpo debe aparecer.</string>
     <string name="setup_side_floor">Apoya el teléfono abajo (suelo o silla), a unos 2 metros, de lado a ti. Todo tu cuerpo debe aparecer.</string>
     <string name="setup_front">Apoya el teléfono de pie, frente a ti, a unos 2 o 3 metros. Todo tu cuerpo debe aparecer.</string>

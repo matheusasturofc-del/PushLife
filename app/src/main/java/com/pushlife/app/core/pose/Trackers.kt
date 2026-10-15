@@ -23,6 +23,7 @@ interface PoseTracker {
 
     companion object {
         fun forExercise(exercise: Exercise): PoseTracker = when (exercise) {
+            Exercise.PUSHUP -> PushupTracker()
             Exercise.SQUAT -> SquatTracker()
             Exercise.SITUP -> SitupTracker()
             Exercise.PULLUP -> PullupTracker()
@@ -63,6 +64,13 @@ class AngleRepCounter(
 
     val progress: Float
         get() = angle?.let { ((extended - it) / (extended - contracted)).coerceIn(0f, 1f) } ?: 0f
+
+    /** Esquece a repetição em andamento (ex.: a pessoa saiu da posição). */
+    fun reset() {
+        phase = Phase.WAITING
+        angle = null
+        lowest = Float.MAX_VALUE
+    }
 
     fun update(raw: Float?, timeMs: Long): Result {
         if (raw == null) return Result(counted = false, partial = false)
@@ -107,6 +115,41 @@ private class StickyCue(private val durationMs: Long = 1_500) {
         until = now + durationMs
     }
     fun get(now: Long): Cue? = cue?.takeIf { now < until }
+}
+
+/**
+ * Flexão, de lado para a câmera: conta pelo ângulo do cotovelo (ombro-cotovelo-punho).
+ * Braços esticados ≈ 160°, embaixo ≈ 80°. Só vale com o corpo deitado (prancha) e as mãos no
+ * chão, abaixo dos ombros: mexer só a cabeça, ou dobrar o braço em pé, não conta.
+ */
+class PushupTracker : PoseTracker {
+    private val counter = AngleRepCounter(contracted = 100f, extended = 150f, partial = 125f)
+    private val sticky = StickyCue()
+    override val count get() = counter.count
+
+    override fun update(frame: PoseFrame?, timeMs: Long): TrackerUpdate {
+        val side = frame?.bestSide(SidePart.SHOULDER, SidePart.ELBOW, SidePart.WRIST, SidePart.HIP)
+            ?: return TrackerUpdate(0, counter.progress, Cue.NOT_VISIBLE)
+        val lying = Geometry.leanFromVertical(side.hip, side.shoulder) > 50f
+        val handsOnFloor = side.wrist.y > side.shoulder.y
+        if (!lying || !handsOnFloor) {
+            // Fora da posição de flexão nada conta, e a repetição pela metade é esquecida.
+            counter.reset()
+            return TrackerUpdate(0, 0f, Cue.GET_READY)
+        }
+        val r = counter.update(Geometry.angle(side.shoulder, side.elbow, side.wrist), timeMs)
+        if (r.partial) sticky.set(Cue.GO_LOWER, timeMs)
+        // Corpo reto: ombro-quadril-joelho perto de 180°. Avisa, mas não impede a contagem.
+        val straight = Geometry.angle(side.shoulder, side.hip, side.knee) >= 150f
+        val cue = sticky.get(timeMs) ?: when {
+            counter.phase == AngleRepCounter.Phase.WAITING -> Cue.EXTEND
+            !straight && Geometry.belowLine(side.hip, side.shoulder, side.knee) > 0 -> Cue.HIPS_UP
+            !straight -> Cue.HIPS_DOWN
+            counter.phase == AngleRepCounter.Phase.EXTENDED -> Cue.GO_DOWN
+            else -> Cue.GO_UP
+        }
+        return TrackerUpdate(if (r.counted) 1 else 0, counter.progress, cue)
+    }
 }
 
 class SquatTracker : PoseTracker {
