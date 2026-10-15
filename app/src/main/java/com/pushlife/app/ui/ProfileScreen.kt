@@ -80,7 +80,7 @@ import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 
-private const val PRIVACY_URL = "https://github.com/matheusasturofc-del/PushTrainer/blob/claude/great-pasteur-y7qbv5/PRIVACY.md"
+private const val PRIVACY_URL = "https://github.com/matheusasturofc-del/PushLife/blob/claude/great-pasteur-y7qbv5/PRIVACY.md"
 
 /** Cores para o avatar (todas com bom contraste com texto escuro). */
 private val AVATAR_COLORS = listOf(Orange, Yellow, Color(0xFF4CD964), Color(0xFF5AC8FA), Color(0xFFFF6B8B), Color(0xFFB98BFF))

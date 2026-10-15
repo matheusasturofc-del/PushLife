@@ -10,7 +10,7 @@ PushLife convierte el ejercicio en tiempo de pantalla. Elige las apps que te rob
 YouTube…) y solo se abren mientras tengas saldo. Para ganarlo, entrena: cada flexión vale 1 minuto.
 
 • La cámara cuenta tus repeticiones con IA en el teléfono. Ninguna imagen sale del dispositivo.
-• 8 ejercicios: flexiones, sentadillas, abdominales, saltos de tijera, plancha, dominadas, burpees y caminata.
+• 10 ejercicios: flexiones, sentadillas, zancadas, abdominales, saltos de tijera, plancha, sentadilla isométrica, dominadas, burpees y caminata.
 • Guías de cómo hacer cada ejercicio y avisos de postura mientras entrenas.
 • 1 hora gratis al día; el saldo se acumula hasta 2 horas.
 • Emergencia: 5 minutos cuando los necesites, que pagas después con ejercicio.

@@ -29,6 +29,8 @@ interface PoseTracker {
         fun forExercise(exercise: Exercise, classifier: () -> PoseClassifier? = { null }): PoseTracker = when (exercise) {
             Exercise.PUSHUP -> PushupTracker(classifier)
             Exercise.SQUAT -> SquatTracker()
+            Exercise.LUNGE -> LungeTracker()
+            Exercise.WALL_SIT -> WallSitTracker()
             Exercise.SITUP -> SitupTracker()
             Exercise.PULLUP -> PullupTracker()
             Exercise.JUMPING_JACK -> JumpingJackTracker()
@@ -180,6 +182,72 @@ class SquatTracker : PoseTracker {
             AngleRepCounter.Phase.CONTRACTED -> if (lean > 55f) Cue.CHEST_UP else Cue.GO_UP
         }
         return TrackerUpdate(if (r.counted) 1 else 0, counter.progress, cue)
+    }
+}
+
+/**
+ * Afundo, de lado: conta pelo joelho mais dobrado (o da frente desce até uns 90°).
+ * Usa as duas pernas quando aparecem; se só uma aparece, usa ela.
+ */
+class LungeTracker : PoseTracker {
+    private val counter = AngleRepCounter(contracted = 105f, extended = 155f, partial = 130f)
+    private val sticky = StickyCue()
+    override val count get() = counter.count
+
+    override fun update(frame: PoseFrame?, timeMs: Long): TrackerUpdate {
+        fun knee(hip: Joint, knee: Joint, ankle: Joint): Float? {
+            val h = frame?.get(hip) ?: return null
+            val k = frame[knee] ?: return null
+            val a = frame[ankle] ?: return null
+            return Geometry.angle(h, k, a)
+        }
+        val angle = listOfNotNull(
+            knee(Joint.LEFT_HIP, Joint.LEFT_KNEE, Joint.LEFT_ANKLE),
+            knee(Joint.RIGHT_HIP, Joint.RIGHT_KNEE, Joint.RIGHT_ANKLE),
+        ).minOrNull() ?: return TrackerUpdate(0, counter.progress, Cue.NOT_VISIBLE)
+        val r = counter.update(angle, timeMs)
+        if (r.partial) sticky.set(Cue.GO_LOWER, timeMs)
+        val side = frame?.bestSide(SidePart.SHOULDER, SidePart.HIP)
+        val leaning = side != null && Geometry.leanFromVertical(side.hip, side.shoulder) > 35f
+        val cue = sticky.get(timeMs) ?: when (counter.phase) {
+            AngleRepCounter.Phase.WAITING -> Cue.GET_READY
+            AngleRepCounter.Phase.EXTENDED -> Cue.GO_DOWN
+            AngleRepCounter.Phase.CONTRACTED -> if (leaning) Cue.CHEST_UP else Cue.GO_UP
+        }
+        return TrackerUpdate(if (r.counted) 1 else 0, counter.progress, cue)
+    }
+}
+
+/**
+ * Agachamento isométrico (cadeira na parede): conta segundos parado com o joelho entre 70° e 120°
+ * e o tronco de pé. Fora disso diz se precisa descer ou subir um pouco.
+ */
+class WallSitTracker(private val maxGapMs: Long = 1_000) : PoseTracker {
+    override var count = 0
+        private set
+
+    private var heldMs = 0L
+    private var lastMs: Long? = null
+
+    override fun update(frame: PoseFrame?, timeMs: Long): TrackerUpdate {
+        val previous = lastMs
+        lastMs = timeMs
+        val side = frame?.bestSide(SidePart.SHOULDER, SidePart.HIP, SidePart.KNEE, SidePart.ANKLE)
+            ?: return TrackerUpdate(0, 0f, Cue.NOT_VISIBLE)
+        val knee = Geometry.angle(side.hip, side.knee, side.ankle)
+        val upright = Geometry.leanFromVertical(side.hip, side.shoulder) < 45f
+        val cue = when {
+            !upright -> Cue.CHEST_UP
+            knee > 120f -> Cue.GO_LOWER
+            knee < 70f -> Cue.GO_UP
+            else -> Cue.HOLD
+        }
+        if (cue != Cue.HOLD) return TrackerUpdate(0, 0f, cue)
+        if (previous != null) heldMs += (timeMs - previous).coerceIn(0, maxGapMs)
+        val seconds = (heldMs / 1000).toInt()
+        val counted = seconds - count
+        count = seconds
+        return TrackerUpdate(counted, (heldMs % 1000) / 1000f, Cue.HOLD)
     }
 }
 

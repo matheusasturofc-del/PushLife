@@ -10,7 +10,7 @@ PushLife turns exercise into screen time. Pick the apps that steal your time (In
 and they only open while you have balance. To earn it, work out: every push-up is worth 1 minute.
 
 • The camera counts your reps with on-device AI. No image ever leaves your phone.
-• 8 exercises: push-ups, squats, sit-ups, jumping jacks, plank, pull-ups, burpees and walking.
+• 10 exercises: push-ups, squats, lunges, sit-ups, jumping jacks, plank, wall sit, pull-ups, burpees and walking.
 • How-to guides for every exercise and posture tips while you train.
 • 1 free hour a day; saved time stacks up to 2 hours.
 • Emergency unlock: 5 minutes when you need it, paid back later with exercise.

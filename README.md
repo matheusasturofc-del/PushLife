@@ -5,7 +5,7 @@ Instagram, TikTok e outros apps bloqueados. Inspirado no PushScroll, gratuito e 
 
 ## Instalar no celular (versão de teste)
 
-1. No celular, abra: https://github.com/matheusasturofc-del/PushTrainer/releases/latest/download/PushLife.apk
+1. No celular, abra: https://github.com/matheusasturofc-del/PushLife/releases/latest/download/PushLife.apk
 2. Permita instalar apps do navegador quando o Android pedir ("fontes desconhecidas").
 3. Cada versão nova instala por cima da anterior, sem apagar seus dados.
 

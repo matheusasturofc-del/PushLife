@@ -21,7 +21,7 @@ import java.net.URL
  * Sem internet e sem nada guardado, o app funciona normalmente.
  */
 object UpdateChecker {
-    private const val SOURCE_URL = "https://raw.githubusercontent.com/matheusasturofc-del/PushTrainer/HEAD/update.json"
+    private const val SOURCE_URL = "https://raw.githubusercontent.com/matheusasturofc-del/PushLife/HEAD/update.json"
     private const val CHECK_EVERY_MS = 15 * 60 * 1000L
 
     private val _required = MutableStateFlow<UpdateInfo?>(null)

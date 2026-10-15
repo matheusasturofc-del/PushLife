@@ -217,6 +217,16 @@ private fun IntroStage(exercise: Exercise, onBack: () -> Unit, onStart: () -> Un
         }
         Text(stringResource(ui.name), style = MaterialTheme.typography.displayMedium)
         Text(stringResource(ui.value), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
+        // O personagem mostrando o movimento.
+        ExerciseAnimation(
+            exercise,
+            Modifier
+                .fillMaxWidth()
+                .height(220.dp)
+                .clip(RoundedCornerShape(20.dp))
+                .background(MaterialTheme.colorScheme.surfaceContainer)
+                .padding(8.dp),
+        )
         Card(
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
             shape = RoundedCornerShape(20.dp),

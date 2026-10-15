@@ -76,9 +76,11 @@ object Calories {
     fun perUnit(exercise: Exercise): Double = when (exercise) {
         Exercise.PUSHUP -> 0.4
         Exercise.SQUAT -> 0.35
+        Exercise.LUNGE -> 0.4
         Exercise.SITUP -> 0.25
         Exercise.JUMPING_JACK -> 0.2
         Exercise.PLANK -> 0.08 // por segundo
+        Exercise.WALL_SIT -> 0.07 // por segundo
         Exercise.PULLUP -> 1.0
         Exercise.BURPEE -> 1.0
         Exercise.WALK -> 0.04 // por passo

@@ -264,7 +264,7 @@
     <string name="ach_goal_7">Cumplidor</string>
     <string name="ach_goal_7_desc">Cumple tu meta diaria en 7 días.</string>
     <string name="ach_all">Completo</string>
-    <string name="ach_all_desc">Prueba los 8 ejercicios.</string>
+    <string name="ach_all_desc">Prueba los 10 ejercicios.</string>
     <string name="ach_plank_60">Roca</string>
     <string name="ach_plank_60_desc">60 segundos de plancha en un día.</string>
     <string name="ach_steps_10k">10 mil pasos</string>
@@ -535,4 +535,20 @@
         <item>Elijo mi cuerpo, mi tiempo y mis sueños.</item>
         <item>Por eso mantengo el filtro activado.</item>
     </string-array>
+    <!-- Afundo e agachamento isométrico -->
+    <string name="ex_lunge">Zancada</string>
+    <string name="value_lunge">1 zancada = 30 s</string>
+    <string name="lunge_1">De pie, da un paso grande hacia adelante.</string>
+    <string name="lunge_2">Baja hasta que las dos rodillas queden a 90°, con el tronco recto.</string>
+    <string name="lunge_3">Vuelve empujando con la pierna de adelante. Puedes alternar las piernas.</string>
+    <string name="ex_wall_sit">Sentadilla isométrica</string>
+    <string name="value_wall_sit">1 s quieto = 3 s</string>
+    <string name="wall_sit_1">Apoya la espalda en una pared.</string>
+    <string name="wall_sit_2">Baja hasta que los muslos queden paralelos al suelo, rodillas a 90°.</string>
+    <string name="wall_sit_3">Quédate quieto en esa posición. Cada segundo cuenta.</string>
+    <string name="setup_wall_sit">Apoya el teléfono de pie, a unos 2 metros, de lado a ti y a la pared. Todo tu cuerpo debe aparecer.</string>
+    <string name="recommended_title">Recomendados para ti</string>
+    <string name="blocked_earned">Tienes %1$s de tiempo de pantalla.</string>
+    <string name="blocked_open_app">Abrir %1$s</string>
+    <string name="blocked_all_exercises">Ver todos los ejercicios</string>
 </resources>

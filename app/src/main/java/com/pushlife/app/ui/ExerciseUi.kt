@@ -10,6 +10,8 @@ import androidx.compose.material.icons.rounded.SelfImprovement
 import androidx.compose.material.icons.rounded.SportsGymnastics
 import androidx.compose.material.icons.rounded.Timer
 import androidx.compose.material.icons.rounded.Upgrade
+import androidx.compose.material.icons.rounded.EventSeat
+import androidx.compose.material.icons.rounded.Hiking
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.pushlife.app.R
 import com.pushlife.app.core.Exercise
@@ -34,6 +36,10 @@ val Exercise.ui: ExerciseUi
             R.string.ex_squat, R.string.value_squat, R.string.setup_side,
             listOf(R.string.squat_1, R.string.squat_2, R.string.squat_3), Icons.Rounded.AccessibilityNew,
         )
+        Exercise.LUNGE -> ExerciseUi(
+            R.string.ex_lunge, R.string.value_lunge, R.string.setup_side,
+            listOf(R.string.lunge_1, R.string.lunge_2, R.string.lunge_3), Icons.Rounded.Hiking,
+        )
         Exercise.SITUP -> ExerciseUi(
             R.string.ex_situp, R.string.value_situp, R.string.setup_side_floor,
             listOf(R.string.situp_1, R.string.situp_2, R.string.situp_3), Icons.Rounded.SelfImprovement,
@@ -45,6 +51,10 @@ val Exercise.ui: ExerciseUi
         Exercise.PLANK -> ExerciseUi(
             R.string.ex_plank, R.string.value_plank, R.string.setup_side_floor,
             listOf(R.string.plank_1, R.string.plank_2, R.string.plank_3), Icons.Rounded.Timer,
+        )
+        Exercise.WALL_SIT -> ExerciseUi(
+            R.string.ex_wall_sit, R.string.value_wall_sit, R.string.setup_wall_sit,
+            listOf(R.string.wall_sit_1, R.string.wall_sit_2, R.string.wall_sit_3), Icons.Rounded.EventSeat,
         )
         Exercise.PULLUP -> ExerciseUi(
             R.string.ex_pullup, R.string.value_pullup, R.string.setup_pullup,

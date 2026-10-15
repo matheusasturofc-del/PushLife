@@ -45,6 +45,7 @@ import androidx.compose.material.icons.rounded.EmojiEvents
 import androidx.compose.material.icons.rounded.LocalFireDepartment
 import androidx.compose.runtime.remember
 import com.pushlife.app.R
+import com.pushlife.app.core.Exercise
 import com.pushlife.app.core.BankState
 import java.time.LocalDate
 import androidx.compose.runtime.getValue
@@ -54,7 +55,7 @@ import com.pushlife.app.ui.theme.Orange
 import com.pushlife.app.ui.theme.Yellow
 
 @Composable
-fun HomeScreen(onStartTraining: () -> Unit, modifier: Modifier = Modifier) {
+fun HomeScreen(onStartTraining: () -> Unit, onStartExercise: (Exercise) -> Unit, modifier: Modifier = Modifier) {
     val bank by AppGraph.bank.state.collectAsStateWithLifecycle()
     val profile by AppGraph.profile.state.collectAsStateWithLifecycle()
     val progress by AppGraph.progress.state.collectAsStateWithLifecycle()
@@ -83,6 +84,7 @@ fun HomeScreen(onStartTraining: () -> Unit, modifier: Modifier = Modifier) {
             Spacer(Modifier.size(8.dp))
             Text(stringResource(R.string.start_training), style = MaterialTheme.typography.titleLarge)
         }
+        RecommendedExercises(onPick = onStartExercise)
     }
 }
 

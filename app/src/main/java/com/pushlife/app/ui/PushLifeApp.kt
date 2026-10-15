@@ -18,6 +18,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -37,6 +38,8 @@ private enum class Tab(@StringRes val label: Int, val icon: ImageVector) {
 @Composable
 fun PushLifeApp(trainRequests: Int = 0, pendingExercise: Exercise? = null, onExerciseOpened: () -> Unit = {}) {
     var selected by rememberSaveable { mutableIntStateOf(Tab.Home.ordinal) }
+    // Exercício escolhido nas recomendações da tela inicial (abre direto no treino).
+    var homePick by rememberSaveable { mutableStateOf<Exercise?>(null) }
     LaunchedEffect(trainRequests) {
         if (trainRequests > 0) selected = Tab.Train.ordinal
     }
@@ -59,11 +62,21 @@ fun PushLifeApp(trainRequests: Int = 0, pendingExercise: Exercise? = null, onExe
     ) { padding ->
         val modifier = Modifier.padding(padding)
         when (tab) {
-            Tab.Home -> HomeScreen(onStartTraining = { selected = Tab.Train.ordinal }, modifier = modifier)
+            Tab.Home -> HomeScreen(
+                onStartTraining = { selected = Tab.Train.ordinal },
+                onStartExercise = {
+                    homePick = it
+                    selected = Tab.Train.ordinal
+                },
+                modifier = modifier,
+            )
             Tab.Train -> TrainScreen(
                 onBackHome = { selected = Tab.Home.ordinal },
-                pendingExercise = pendingExercise,
-                onExerciseOpened = onExerciseOpened,
+                pendingExercise = pendingExercise ?: homePick,
+                onExerciseOpened = {
+                    homePick = null
+                    onExerciseOpened()
+                },
                 modifier = modifier,
             )
             Tab.Block -> BlockScreen(modifier)

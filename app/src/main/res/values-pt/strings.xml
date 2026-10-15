@@ -264,7 +264,7 @@
     <string name="ach_goal_7">Bate-meta</string>
     <string name="ach_goal_7_desc">Bata a meta diária em 7 dias.</string>
     <string name="ach_all">Completo</string>
-    <string name="ach_all_desc">Experimente os 8 exercícios.</string>
+    <string name="ach_all_desc">Experimente os 10 exercícios.</string>
     <string name="ach_plank_60">Rocha</string>
     <string name="ach_plank_60_desc">60 segundos de prancha num dia.</string>
     <string name="ach_steps_10k">10 mil passos</string>
@@ -535,4 +535,20 @@
         <item>Eu escolho meu corpo, meu tempo e meus sonhos.</item>
         <item>Por isso eu mantenho o filtro ligado.</item>
     </string-array>
+    <!-- Afundo e agachamento isométrico -->
+    <string name="ex_lunge">Afundo</string>
+    <string name="value_lunge">1 afundo = 30 s</string>
+    <string name="lunge_1">De pé, dê um passo grande à frente.</string>
+    <string name="lunge_2">Desça até os dois joelhos ficarem dobrados em 90°, com o tronco reto.</string>
+    <string name="lunge_3">Volte empurrando com a perna da frente. Pode alternar as pernas.</string>
+    <string name="ex_wall_sit">Agachamento isométrico</string>
+    <string name="value_wall_sit">1 s parado = 3 s</string>
+    <string name="wall_sit_1">Encoste as costas numa parede.</string>
+    <string name="wall_sit_2">Desça até as coxas ficarem paralelas ao chão, joelhos em 90°.</string>
+    <string name="wall_sit_3">Fique parado nessa posição. Cada segundo conta.</string>
+    <string name="setup_wall_sit">Apoie o celular em pé, a uns 2 metros, de lado para você e para a parede. O corpo inteiro precisa aparecer.</string>
+    <string name="recommended_title">Recomendados para você</string>
+    <string name="blocked_earned">Você tem %1$s de tempo de tela.</string>
+    <string name="blocked_open_app">Abrir %1$s</string>
+    <string name="blocked_all_exercises">Ver todos os exercícios</string>
 </resources>

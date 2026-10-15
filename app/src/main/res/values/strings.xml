@@ -271,7 +271,7 @@
     <string name="ach_goal_7">Goal getter</string>
     <string name="ach_goal_7_desc">Reach your daily goal on 7 days.</string>
     <string name="ach_all">All-rounder</string>
-    <string name="ach_all_desc">Try all 8 exercises.</string>
+    <string name="ach_all_desc">Try all 10 exercises.</string>
     <string name="ach_plank_60">Rock solid</string>
     <string name="ach_plank_60_desc">60 seconds of plank in a day.</string>
     <string name="ach_steps_10k">10K walker</string>
@@ -542,4 +542,20 @@
         <item>I choose my body, my time and my dreams.</item>
         <item>That is why I keep the filter on.</item>
     </string-array>
+    <!-- Afundo e agachamento isométrico -->
+    <string name="ex_lunge">Lunge</string>
+    <string name="value_lunge">1 lunge = 30 s</string>
+    <string name="lunge_1">Standing, take a big step forward.</string>
+    <string name="lunge_2">Go down until both knees are bent at 90°, with your back straight.</string>
+    <string name="lunge_3">Push back up with your front leg. You can alternate legs.</string>
+    <string name="ex_wall_sit">Wall sit</string>
+    <string name="value_wall_sit">1 s held = 3 s</string>
+    <string name="wall_sit_1">Lean your back against a wall.</string>
+    <string name="wall_sit_2">Slide down until your thighs are parallel to the floor, knees at 90°.</string>
+    <string name="wall_sit_3">Hold that position. Every second counts.</string>
+    <string name="setup_wall_sit">Stand the phone up about 2 m away, with your side and the wall facing it. Your whole body must be on screen.</string>
+    <string name="recommended_title">Recommended for you</string>
+    <string name="blocked_earned">You have %1$s of screen time.</string>
+    <string name="blocked_open_app">Open %1$s</string>
+    <string name="blocked_all_exercises">See all exercises</string>
 </resources>

@@ -10,7 +10,7 @@ O PushLife transforma exercício em tempo de tela. Escolha os apps que roubam se
 YouTube…) e eles só abrem enquanto você tiver saldo. Para ganhar saldo, treine: cada flexão vale 1 minuto.
 
 • A câmera conta suas repetições com IA, direto no celular. Nenhuma imagem sai do aparelho.
-• 8 exercícios: flexão, agachamento, abdominal, polichinelo, prancha, barra fixa, burpee e caminhada.
+• 10 exercícios: flexão, agachamento, afundo, abdominal, polichinelo, prancha, agachamento isométrico, barra fixa, burpee e caminhada.
 • Instruções de como fazer cada exercício e avisos de postura durante o treino.
 • 1 hora grátis por dia e saldo que acumula até 2 horas.
 • Emergência: libera 5 minutos quando você precisa, e você paga depois com exercício.

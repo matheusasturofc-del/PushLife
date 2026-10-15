@@ -5,9 +5,12 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.OnBackPressedCallback
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.background
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -28,6 +31,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -36,10 +42,13 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.pushlife.app.AppGraph
-import com.pushlife.app.MainActivity
 import com.pushlife.app.R
+import com.pushlife.app.core.Exercise
 import com.pushlife.app.core.Rules
 import com.pushlife.app.data.AppLanguage
+import com.pushlife.app.ui.RecommendedExercises
+import com.pushlife.app.ui.TrainScreen
+import com.pushlife.app.ui.formatDuration
 import com.pushlife.app.ui.theme.Ink
 import com.pushlife.app.ui.theme.Orange
 import com.pushlife.app.ui.theme.PushLifeTheme
@@ -63,14 +72,29 @@ class BlockActivity : ComponentActivity() {
         })
         setContent {
             PushLifeTheme {
-                BlockContent(
+                // Treino aqui mesmo, sem sair da tela de bloqueio nem abrir o app.
+                var training by rememberSaveable { mutableStateOf(false) }
+                var pick by rememberSaveable { mutableStateOf<Exercise?>(null) }
+                if (training) {
+                    BackHandler { training = false }
+                    TrainScreen(
+                        onBackHome = { training = false },
+                        pendingExercise = pick,
+                        onExerciseOpened = { pick = null },
+                        modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).systemBarsPadding(),
+                    )
+                } else BlockContent(
                     appLabel = appLabel,
-                    onTrain = {
-                        startActivity(
-                            Intent(this, MainActivity::class.java)
-                                .putExtra(MainActivity.EXTRA_OPEN_TRAIN, true)
-                                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP),
-                        )
+                    onPick = {
+                        pick = it
+                        training = true
+                    },
+                    onAllExercises = {
+                        pick = null
+                        training = true
+                    },
+                    onOpenApp = {
+                        packageManager.getLaunchIntentForPackage(packageName)?.let { startActivity(it) }
                         finish()
                     },
                     onEmergency = {
@@ -104,14 +128,24 @@ class BlockActivity : ComponentActivity() {
 }
 
 @Composable
-private fun BlockContent(appLabel: String, onTrain: () -> Unit, onEmergency: () -> Unit, onExit: () -> Unit) {
+private fun BlockContent(
+    appLabel: String,
+    onPick: (Exercise) -> Unit,
+    onAllExercises: () -> Unit,
+    onOpenApp: () -> Unit,
+    onEmergency: () -> Unit,
+    onExit: () -> Unit,
+) {
     val bank by AppGraph.bank.state.collectAsStateWithLifecycle()
-    val emergenciesLeft = bank.emergenciesLeft(LocalDate.now())
+    val today = LocalDate.now()
+    val emergenciesLeft = bank.emergenciesLeft(today)
+    val available = bank.available(today)
     Column(
         Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
             .systemBarsPadding()
+            .verticalScroll(rememberScrollState())
             .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterVertically),
@@ -137,8 +171,21 @@ private fun BlockContent(appLabel: String, onTrain: () -> Unit, onEmergency: () 
                 textAlign = TextAlign.Center,
             )
         }
-        Button(onClick = onTrain, modifier = Modifier.fillMaxWidth().height(64.dp)) {
-            Text(stringResource(R.string.blocked_train), style = MaterialTheme.typography.titleLarge)
+        if (available > 0) {
+            // Já treinou e ganhou tempo: volta direto para o app.
+            Text(
+                stringResource(R.string.blocked_earned, formatDuration(available)),
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.primary,
+                textAlign = TextAlign.Center,
+            )
+            Button(onClick = onOpenApp, modifier = Modifier.fillMaxWidth().height(64.dp)) {
+                Text(stringResource(R.string.blocked_open_app, appLabel), style = MaterialTheme.typography.titleLarge, textAlign = TextAlign.Center)
+            }
+        }
+        RecommendedExercises(onPick = onPick, modifier = Modifier.fillMaxWidth())
+        OutlinedButton(onClick = onAllExercises, modifier = Modifier.fillMaxWidth()) {
+            Text(stringResource(R.string.blocked_all_exercises))
         }
         if (emergenciesLeft > 0) {
             OutlinedButton(onClick = onEmergency, modifier = Modifier.fillMaxWidth()) {
