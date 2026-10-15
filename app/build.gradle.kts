@@ -26,7 +26,7 @@ android {
         targetSdk = 35
         // No GitHub cada build ganha um número maior (a Play Store exige que ele sempre suba).
         versionCode = System.getenv("GITHUB_RUN_NUMBER")?.toIntOrNull()?.plus(100) ?: 7
-        versionName = "1.9.2"
+        versionName = "1.9.3"
 
         // Só processadores de celular (ARM). Sem isso o APK carrega ~60 MB de bibliotecas x86 inúteis.
         ndk {

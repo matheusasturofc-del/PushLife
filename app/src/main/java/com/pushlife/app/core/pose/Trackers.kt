@@ -3,7 +3,6 @@ package com.pushlife.app.core.pose
 import com.pushlife.app.core.Exercise
 import com.pushlife.app.core.pose.classify.EmaSmoothing
 import com.pushlife.app.core.pose.classify.PoseClassifier
-import com.pushlife.app.core.pose.classify.RepetitionCounter
 
 /** Dica mostrada durante o treino (o texto de cada uma fica nos recursos de idioma). */
 enum class Cue {
@@ -124,48 +123,89 @@ private class StickyCue(private val durationMs: Long = 1_500) {
 }
 
 /**
- * Flexão com o classificador de poses do Google ML Kit: compara cada quadro com centenas de fotos
- * reais de flexão "em cima" e "embaixo" e conta quando a pessoa entra na pose de baixo e sai dela.
- * Como olha o corpo inteiro, mexer só a cabeça não muda nada; as poses de referência também
- * incluem gente em pé (agachamento), então ficar em pé não conta. Funciona de lado ou de frente.
+ * Flexão medida de dois jeitos ao mesmo tempo; vale o que perceber mais descida:
+ * - o classificador do Google ML Kit (compara o corpo inteiro com centenas de fotos reais de flexão);
+ * - o ângulo do cotovelo no esqueleto (funciona em qualquer ângulo de câmera).
+ * Desce até a "profundidade" [DOWN_AT] e volta até [UP_AT] = 1 flexão.
+ * Mexer só a cabeça não muda nenhum dos dois; em pé dobrando o braço não vale (o cotovelo só conta
+ * com as mãos abaixo dos ombros e o tronco fora da vertical, e o classificador separa em pé de flexão).
  */
 class PushupTracker(private val classifier: () -> PoseClassifier?) : PoseTracker {
     // O modelo preciso entrega menos quadros por segundo: a suavização tolera intervalos maiores.
     private val smoothing = EmaSmoothing(resetMs = 1_500)
-    // Medido com as fotos do Google: confiança 1,8 ≈ descer uns 50–55% do caminho (cotovelo perto de 90°,
-    // longe do chão); abaixo de 1 ≈ já subiu de volta.
-    private val reps = RepetitionCounter(DOWN, enter = ENTER, exit = 1f)
     private val sticky = StickyCue()
+    private var angleDepth: Float? = null
+    private var isDown = false
     private var deepestSinceTop = 0f
-    override val count get() = reps.count
+    private var lastRepAt = Long.MIN_VALUE / 2
+    override var count = 0
+        private set
 
     override fun update(frame: PoseFrame?, timeMs: Long): TrackerUpdate {
-        val c = classifier() ?: return TrackerUpdate(0, 0f, Cue.GET_READY) // ainda carregando
-        if (frame == null || frame.all.isEmpty()) {
+        if (frame == null) {
             smoothing.smooth(emptyMap(), timeMs)
             return TrackerUpdate(0, 0f, Cue.NOT_VISIBLE)
         }
-        val result = smoothing.smooth(c.classify(frame.all), timeMs)
-        val counted = reps.add(result)
-        val down = result[DOWN] ?: 0f
-        val up = result[UP] ?: 0f
-        // Desceu um pouco e voltou sem chegar ao ponto: aí sim "Desça mais!".
-        deepestSinceTop = maxOf(deepestSinceTop, down)
-        if (!reps.inPose && down < 0.3f) {
-            if (!counted && deepestSinceTop in 0.6f..ENTER) sticky.set(Cue.GO_LOWER, timeMs)
+        // 1) Classificador: confiança 3 (de 10) já é "embaixo" de verdade (medido com as fotos do Google).
+        val c = classifier()
+        val classes = if (c != null && frame.all.isNotEmpty()) smoothing.smooth(c.classify(frame.all), timeMs) else emptyMap()
+        val classifierDepth = ((classes[DOWN] ?: 0f) / 3f).coerceIn(0f, 1f)
+        // 2) Cotovelo: 160° (esticado) = 0, 95° = 1. Suavizado para não tremer.
+        val raw = elbowDepth(frame)
+        angleDepth = raw?.let { r -> angleDepth?.let { it + 0.5f * (r - it) } ?: r }
+        if (raw == null) angleDepth = null
+        if (classes.isEmpty() && angleDepth == null) {
+            // Corpo na câmera, mas as poses de referência ainda estão carregando: só espera.
+            return TrackerUpdate(0, 0f, if (c == null && frame.all.isNotEmpty()) Cue.GET_READY else Cue.NOT_VISIBLE)
+        }
+
+        val depth = maxOf(classifierDepth, angleDepth ?: 0f)
+        var counted = false
+        if (!isDown && depth >= DOWN_AT) {
+            isDown = true
+        } else if (isDown && depth <= UP_AT) {
+            isDown = false
+            if (timeMs - lastRepAt >= MIN_REP_MS) {
+                count++
+                lastRepAt = timeMs
+                counted = true
+            }
             deepestSinceTop = 0f
         }
-        if (counted) deepestSinceTop = 0f
-        val cue = sticky.get(timeMs) ?: when {
-            reps.inPose -> Cue.GO_UP
-            up >= 4f || down > 0f -> Cue.GO_DOWN
-            else -> Cue.GET_READY
+        // Desceu um pouco e voltou sem chegar ao ponto: aí sim "Desça mais!".
+        if (!isDown) {
+            deepestSinceTop = maxOf(deepestSinceTop, depth)
+            if (depth <= UP_AT) {
+                if (!counted && deepestSinceTop in 0.3f..DOWN_AT) sticky.set(Cue.GO_LOWER, timeMs)
+                deepestSinceTop = 0f
+            }
         }
-        return TrackerUpdate(if (counted) 1 else 0, (down / ENTER).coerceIn(0f, 1f), cue)
+        val cue = sticky.get(timeMs) ?: if (isDown) Cue.GO_UP else Cue.GO_DOWN
+        return TrackerUpdate(if (counted) 1 else 0, (depth / DOWN_AT).coerceIn(0f, 1f), cue)
+    }
+
+    /** Quanto o cotovelo dobrou (0..1), ou null se o braço não aparece ou a pessoa está em pé. */
+    private fun elbowDepth(frame: PoseFrame): Float? {
+        val side = frame.bestSide(SidePart.SHOULDER, SidePart.ELBOW, SidePart.WRIST) ?: return null
+        if (side.wrist.y <= side.shoulder.y) return null // mãos acima dos ombros: não é flexão
+        // Em pé: tronco na vertical e quadril bem abaixo do ombro (mais que o comprimento do braço).
+        val hip = frame[if (frame[Joint.LEFT_SHOULDER] == side.shoulder) Joint.LEFT_HIP else Joint.RIGHT_HIP]
+        if (hip != null) {
+            val upperArm = kotlin.math.hypot(side.elbow.x - side.shoulder.x, side.elbow.y - side.shoulder.y)
+            val standing = Geometry.leanFromVertical(hip, side.shoulder) < 35f && hip.y - side.shoulder.y > 1.1f * upperArm
+            if (standing) return null
+        }
+        val angle = Geometry.angle(side.shoulder, side.elbow, side.wrist)
+        return ((160f - angle) / 65f).coerceIn(0f, 1f)
     }
 
     companion object {
-        const val ENTER = 1.8f
+        /** Profundidade para valer como "embaixo": cotovelo a ~120° ou confiança ~1,8 no classificador. */
+        const val DOWN_AT = 0.6f
+        /** Duas flexões mais rápido que isso é tremida, não flexão. */
+        const val MIN_REP_MS = 400L
+        /** De volta em cima: cotovelo a ~145° e classificador quase sem "embaixo". */
+        const val UP_AT = 0.25f
         const val DOWN = "pushups_down"
         const val UP = "pushups_up"
     }
