@@ -48,10 +48,8 @@ Mudar só o `update.json` não gera APK novo.
 ## Tecnologia
 
 - Kotlin + Jetpack Compose (Material 3), Android 8.0 ou mais novo
-- IA da câmera: MediaPipe Pose Landmarker do Google (modelo "heavy", o mais preciso, para flexão, prancha,
-  abdominal, agachamento, afundo e agachamento isométrico; "full" para os rápidos). Ele também estima a
-  profundidade, então os ângulos do corpo são medidos em 3D. Os modelos (Apache 2.0) são baixados pelo
-  Gradle na compilação. Roda no aparelho e nenhuma imagem sai do celular
+- IA da câmera: ML Kit, detecção de rosto (flexão com o celular no chão) e de pose (agachamento, abdominal,
+  polichinelo, prancha, barra fixa, burpee); roda no aparelho e nenhuma imagem sai do celular
 - Flexão: classificador de poses do exemplo oficial do Google ML Kit (k-vizinhos com centenas de fotos
   reais de flexão), adaptado para Kotlin. Licença Apache 2.0 em `licenses/mlkit-samples-LICENSE.txt`
 - Caminhada: sensor de passos do celular

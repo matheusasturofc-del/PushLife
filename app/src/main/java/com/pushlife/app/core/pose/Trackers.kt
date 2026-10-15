@@ -3,6 +3,7 @@ package com.pushlife.app.core.pose
 import com.pushlife.app.core.Exercise
 import com.pushlife.app.core.pose.classify.EmaSmoothing
 import com.pushlife.app.core.pose.classify.PoseClassifier
+import kotlin.math.hypot
 
 /** Dica mostrada durante o treino (o texto de cada uma fica nos recursos de idioma). */
 enum class Cue {
@@ -125,8 +126,9 @@ private class StickyCue(private val durationMs: Long = 1_500) {
 /**
  * Flexão medida de dois jeitos ao mesmo tempo; vale o que perceber mais descida:
  * - o classificador do Google ML Kit (compara o corpo inteiro com centenas de fotos reais de flexão);
- * - o ângulo do cotovelo no esqueleto, em 3D quando o detector dá a profundidade (aí funciona com a
- *   câmera de frente, de lado ou na diagonal).
+ * - o ângulo do cotovelo no esqueleto (bom com a câmera de lado);
+ * - o quanto o ombro chegou perto da mão, comparado com o braço esticado lá em cima (bom com a câmera
+ *   de frente, onde o cotovelo dobra "para dentro" da tela e o ângulo quase não muda na imagem).
  * Desce até a "profundidade" [DOWN_AT] e volta até [UP_AT] = 1 flexão.
  * Mexer só a cabeça não muda nenhum dos dois; em pé dobrando o braço não vale (o cotovelo só conta
  * com as mãos abaixo dos ombros e o tronco fora da vertical, e o classificador separa em pé de flexão).
@@ -139,6 +141,8 @@ class PushupTracker(private val classifier: () -> PoseClassifier?) : PoseTracker
     private var isDown = false
     private var deepestSinceTop = 0f
     private var lastRepAt = Long.MIN_VALUE / 2
+    private var maxReach = 0f
+    private var reachAt = Long.MIN_VALUE / 2
     override var count = 0
         private set
 
@@ -151,8 +155,8 @@ class PushupTracker(private val classifier: () -> PoseClassifier?) : PoseTracker
         val c = classifier()
         val classes = if (c != null && frame.all.isNotEmpty()) smoothing.smooth(c.classify(frame.all), timeMs) else emptyMap()
         val classifierDepth = ((classes[DOWN] ?: 0f) / 3f).coerceIn(0f, 1f)
-        // 2) Cotovelo: 160° (esticado) = 0, 95° = 1. Suavizado para não tremer.
-        val raw = elbowDepth(frame)
+        // 2) Braço: cotovelo (160° esticado = 0, 95° = 1) ou ombro perto da mão. Suavizado para não tremer.
+        val raw = armDepth(frame, timeMs)
         angleDepth = raw?.let { r -> angleDepth?.let { it + 0.5f * (r - it) } ?: r }
         if (raw == null) angleDepth = null
         if (classes.isEmpty() && angleDepth == null) {
@@ -185,8 +189,8 @@ class PushupTracker(private val classifier: () -> PoseClassifier?) : PoseTracker
         return TrackerUpdate(if (counted) 1 else 0, (depth / DOWN_AT).coerceIn(0f, 1f), cue)
     }
 
-    /** Quanto o cotovelo dobrou (0..1), ou null se o braço não aparece ou a pessoa está em pé. */
-    private fun elbowDepth(frame: PoseFrame): Float? {
+    /** Quanto o braço dobrou (0..1), ou null se o braço não aparece ou a pessoa está em pé. */
+    private fun armDepth(frame: PoseFrame, timeMs: Long): Float? {
         val side = frame.bestSide(SidePart.SHOULDER, SidePart.ELBOW, SidePart.WRIST) ?: return null
         val hip = frame[if (frame[Joint.LEFT_SHOULDER] == side.shoulder) Joint.LEFT_HIP else Joint.RIGHT_HIP]
         val shoulder3d = side.shoulder.world
@@ -205,7 +209,26 @@ class PushupTracker(private val classifier: () -> PoseClassifier?) : PoseTracker
             if (standing) return null
         }
         val angle = Geometry.angle(side.shoulder, side.elbow, side.wrist)
-        return ((160f - angle) / 65f).coerceIn(0f, 1f)
+        val byAngle = ((160f - angle) / 65f).coerceIn(0f, 1f)
+        return maxOf(byAngle, reachDepth(side, timeMs))
+    }
+
+    /**
+     * Distância ombro→mão em relação à maior vista há pouco (o braço esticado em cima). Vale de qualquer
+     * lado: ao descer, o ombro chega perto da mão. 85% da distância (~cotovelo a 117°) = profundidade 0,6.
+     * A referência esquece devagar (2% por segundo) para se ajustar se a pessoa se afastar da câmera.
+     */
+    private fun reachDepth(side: Side, timeMs: Long): Float {
+        val reach = hypot(side.wrist.x - side.shoulder.x, side.wrist.y - side.shoulder.y)
+        val elapsed = timeMs - reachAt
+        maxReach = if (elapsed > REACH_RESET_MS || maxReach <= 0f) {
+            reach
+        } else {
+            maxOf(reach, maxReach * (1f - REACH_FORGET_PER_S * elapsed / 1000f))
+        }
+        reachAt = timeMs
+        if (maxReach <= 0f) return 0f
+        return ((1f - reach / maxReach) / REACH_FULL_DROP).coerceIn(0f, 1f)
     }
 
     companion object {
@@ -217,6 +240,11 @@ class PushupTracker(private val classifier: () -> PoseClassifier?) : PoseTracker
         const val UP_AT = 0.25f
         /** Tronco a menos que isso da vertical (em 3D) é gente em pé ou sentada, não flexão. */
         const val STANDING_LEAN = 45f
+        /** Ombro a 75% da distância de cima até a mão = profundidade 1 (cotovelo ~97°). */
+        const val REACH_FULL_DROP = 0.25f
+        const val REACH_FORGET_PER_S = 0.02f
+        /** Sem ver o braço por esse tempo, mede de novo o braço esticado. */
+        const val REACH_RESET_MS = 1_500L
         const val DOWN = "pushups_down"
         const val UP = "pushups_up"
     }

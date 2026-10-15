@@ -1,4 +1,3 @@
-import java.net.URI
 import java.util.Properties
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
@@ -27,7 +26,7 @@ android {
         targetSdk = 35
         // No GitHub cada build ganha um número maior (a Play Store exige que ele sempre suba).
         versionCode = System.getenv("GITHUB_RUN_NUMBER")?.toIntOrNull()?.plus(100) ?: 7
-        versionName = "1.10.0"
+        versionName = "1.10.1"
 
         // Só processadores de celular (ARM). Sem isso o APK carrega ~60 MB de bibliotecas x86 inúteis.
         ndk {
@@ -80,55 +79,6 @@ android {
         compose = true
         resValues = true
     }
-
-    // Os modelos de pose são lidos direto do APK, sem descompactar.
-    androidResources {
-        noCompress += "task"
-    }
-}
-
-/**
- * Baixa os modelos de pose do MediaPipe (Google, licença Apache 2.0) para dentro do APK.
- * Não ficam no repositório (são ~40 MB); ficam guardados no cache do Gradle depois da primeira vez.
- */
-abstract class DownloadPoseModels : DefaultTask() {
-    @get:Input
-    abstract val models: ListProperty<String>
-
-    @get:OutputDirectory
-    abstract val outputDir: DirectoryProperty
-
-    @get:Internal
-    abstract val cacheDir: DirectoryProperty
-
-    @TaskAction
-    fun download() {
-        val out = outputDir.get().dir("pose").asFile.apply { mkdirs() }
-        val cache = cacheDir.get().asFile.apply { mkdirs() }
-        for (name in models.get()) {
-            val file = "pose_landmarker_$name.task"
-            val cached = File(cache, file)
-            if (!cached.exists() || cached.length() == 0L) {
-                val url = "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_$name/float16/1/$file"
-                val part = File(cache, "$file.part")
-                URI(url).toURL().openStream().use { input -> part.outputStream().use { input.copyTo(it) } }
-                check(part.length() > 1_000_000) { "Download incompleto: $url" }
-                part.renameTo(cached)
-            }
-            cached.copyTo(File(out, file), overwrite = true)
-        }
-    }
-}
-
-androidComponents {
-    onVariants { variant ->
-        val task = tasks.register<DownloadPoseModels>("download${variant.name.replaceFirstChar { it.uppercase() }}PoseModels") {
-            // heavy: o mais preciso (flexão, prancha, abdominal...); full: mais rápido (polichinelo, burpee, barra).
-            models.set(listOf("heavy", "full"))
-            cacheDir.set(File(gradle.gradleUserHomeDir, "caches/pushlife-pose-models"))
-        }
-        variant.sources.assets?.addGeneratedSourceDirectory(task, DownloadPoseModels::outputDir)
-    }
 }
 
 kotlin {
@@ -150,11 +100,14 @@ dependencies {
     implementation(libs.androidx.material.icons.extended)
     debugImplementation(libs.androidx.ui.tooling)
 
-    // Câmera + IA de pose do Google (MediaPipe), que roda no aparelho
+    // Câmera + IA de rosto (roda no aparelho, modelo já vem dentro do app)
     implementation(libs.androidx.camera.camera2)
     implementation(libs.androidx.camera.lifecycle)
     implementation(libs.androidx.camera.view)
-    implementation(libs.mediapipe.tasks.vision)
+    implementation(libs.mlkit.face.detection)
+    implementation(libs.mlkit.pose.detection)
+    // Modelo "preciso" do Google: acha melhor o corpo deitado (flexão, prancha, abdominal).
+    implementation(libs.mlkit.pose.detection.accurate)
 
     testImplementation(libs.junit)
 }
