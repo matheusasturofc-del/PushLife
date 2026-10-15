@@ -1,3 +1,4 @@
+import java.net.URI
 import java.util.Properties
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
@@ -110,7 +111,7 @@ abstract class DownloadPoseModels : DefaultTask() {
             if (!cached.exists() || cached.length() == 0L) {
                 val url = "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_$name/float16/1/$file"
                 val part = File(cache, "$file.part")
-                java.net.URI(url).toURL().openStream().use { input -> part.outputStream().use { input.copyTo(it) } }
+                URI(url).toURL().openStream().use { input -> part.outputStream().use { input.copyTo(it) } }
                 check(part.length() > 1_000_000) { "Download incompleto: $url" }
                 part.renameTo(cached)
             }
