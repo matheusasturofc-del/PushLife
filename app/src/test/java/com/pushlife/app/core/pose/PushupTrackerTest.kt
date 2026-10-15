@@ -88,6 +88,40 @@ class PushupTrackerTest {
         assertEquals(3, tr.count)
     }
 
+/** Flexão "da mesma pessoa" descendo só [depth] do caminho entre a foto de cima e a de baixo mais parecida. */
+    private fun partial(depth: Float, count: Int): List<Pair<List<Vec3>, List<Vec3>>> {
+        val ups = linesOf(PushupTracker.UP).map(::landmarks)
+        val downs = linesOf(PushupTracker.DOWN).map(::landmarks)
+        fun dist(a: List<Vec3>, b: List<Vec3>): Float {
+            val ea = com.pushlife.app.core.pose.classify.PoseEmbedding.of(a)
+            val eb = com.pushlife.app.core.pose.classify.PoseEmbedding.of(b)
+            return ea.indices.sumOf { (ea[it] - eb[it]).sumAbs().toDouble() }.toFloat()
+        }
+        return ups.take(count).map { a ->
+            val b = downs.minByOrNull { dist(a, it) }!!
+            a to a.indices.map { i -> Vec3(a[i].x + (b[i].x - a[i].x) * depth, a[i].y + (b[i].y - a[i].y) * depth, a[i].z + (b[i].z - a[i].z) * depth) }
+        }
+    }
+
+    @Test
+    fun contaSemPrecisarDescerAteOChao() {
+        val classifier = PoseClassifier(PoseSample.parseAll(lines.asSequence()))
+        val tr = PushupTracker { classifier }
+        val reps = partial(0.7f, 5)
+        tr.feed(reps.flatMap { (up, down) -> List(8) { frame(up) } + List(8) { frame(down) } } + List(8) { frame(reps.last().first) })
+        assertEquals(5, tr.count)
+    }
+
+    @Test
+    fun descerSoUmPouquinhoNaoContaEPedeParaDescer() {
+        val classifier = PoseClassifier(PoseSample.parseAll(lines.asSequence()))
+        val tr = PushupTracker { classifier }
+        val reps = partial(0.45f, 3)
+        val ups = tr.feed(reps.flatMap { (up, down) -> List(8) { frame(up) } + List(8) { frame(down) } } + List(3) { frame(reps.last().first) })
+        assertEquals(0, tr.count)
+        assertTrue(ups.any { it.cue == Cue.GO_LOWER })
+    }
+
     @Test
     fun semPoseCarregadaEsperaSemContar() {
         val tr = PushupTracker { null }

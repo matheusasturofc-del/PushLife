@@ -132,7 +132,11 @@ private class StickyCue(private val durationMs: Long = 1_500) {
 class PushupTracker(private val classifier: () -> PoseClassifier?) : PoseTracker {
     // O modelo preciso entrega menos quadros por segundo: a suavização tolera intervalos maiores.
     private val smoothing = EmaSmoothing(resetMs = 1_500)
-    private val reps = RepetitionCounter(DOWN)
+    // Medido com as fotos do Google: confiança 3,5 ≈ descer uns 55–60% do caminho (braços bem dobrados,
+    // sem encostar no chão); abaixo de 2 ≈ já subiu de volta (folga para celulares lentos).
+    private val reps = RepetitionCounter(DOWN, enter = ENTER, exit = 2f)
+    private val sticky = StickyCue()
+    private var deepestSinceTop = 0f
     override val count get() = reps.count
 
     override fun update(frame: PoseFrame?, timeMs: Long): TrackerUpdate {
@@ -145,16 +149,23 @@ class PushupTracker(private val classifier: () -> PoseClassifier?) : PoseTracker
         val counted = reps.add(result)
         val down = result[DOWN] ?: 0f
         val up = result[UP] ?: 0f
-        val cue = when {
+        // Desceu um pouco e voltou sem chegar ao ponto: aí sim "Desça mais!".
+        deepestSinceTop = maxOf(deepestSinceTop, down)
+        if (!reps.inPose && down < 0.5f) {
+            if (!counted && deepestSinceTop in 1.5f..ENTER) sticky.set(Cue.GO_LOWER, timeMs)
+            deepestSinceTop = 0f
+        }
+        if (counted) deepestSinceTop = 0f
+        val cue = sticky.get(timeMs) ?: when {
             reps.inPose -> Cue.GO_UP
-            up >= 5f -> Cue.GO_DOWN
-            down > 0f -> Cue.GO_LOWER
+            up >= 4f || down > 0f -> Cue.GO_DOWN
             else -> Cue.GET_READY
         }
-        return TrackerUpdate(if (counted) 1 else 0, (down / c.confidenceRange).coerceIn(0f, 1f), cue)
+        return TrackerUpdate(if (counted) 1 else 0, (down / ENTER).coerceIn(0f, 1f), cue)
     }
 
     companion object {
+        const val ENTER = 3.5f
         const val DOWN = "pushups_down"
         const val UP = "pushups_up"
     }

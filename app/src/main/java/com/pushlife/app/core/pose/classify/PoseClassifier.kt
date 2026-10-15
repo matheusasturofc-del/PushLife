@@ -151,23 +151,30 @@ class PoseClassifier(
 
 /**
  * Suaviza a classificação ao longo dos últimos quadros (média móvel exponencial), para uma pose
- * tremida não contar repetição. Se passar [resetMs] sem quadro, começa de novo.
+ * tremida não contar repetição. Usa no máximo [window] quadros e só os de até [maxAgeMs] atrás,
+ * para responder rápido mesmo em celulares que processam poucos quadros por segundo.
+ * Se passar [resetMs] sem quadro, começa de novo.
  */
-class EmaSmoothing(private val window: Int = 10, private val alpha: Float = 0.2f, private val resetMs: Long = 400) {
-    private val history = ArrayDeque<Map<String, Float>>()
+class EmaSmoothing(
+    private val window: Int = 10,
+    private val alpha: Float = 0.2f,
+    private val resetMs: Long = 400,
+    private val maxAgeMs: Long = 1_000,
+) {
+    private val history = ArrayDeque<Pair<Long, Map<String, Float>>>()
     private var lastMs = Long.MIN_VALUE / 2
 
     fun smooth(result: Map<String, Float>, nowMs: Long): Map<String, Float> {
         if (nowMs - lastMs > resetMs) history.clear()
         lastMs = nowMs
-        if (history.size == window) history.removeLast()
-        history.addFirst(result)
-        val classes = history.flatMap { it.keys }.toSet()
+        history.addFirst(nowMs to result)
+        while (history.size > window || (history.size > 1 && nowMs - history.last().first > maxAgeMs)) history.removeLast()
+        val classes = history.flatMap { it.second.keys }.toSet()
         return classes.associateWith { c ->
             var factor = 1f
             var top = 0f
             var bottom = 0f
-            for (r in history) {
+            for ((_, r) in history) {
                 top += factor * (r[c] ?: 0f)
                 bottom += factor
                 factor *= 1f - alpha
