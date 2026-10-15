@@ -8,7 +8,7 @@ import kotlin.math.hypot
 import kotlin.math.max
 import kotlin.math.min
 
-/** Ponto 3D de um dos 33 marcos do ML Kit Pose (x e y em pixels, z em escala parecida). */
+/** Ponto 3D de um dos 33 marcos do BlazePose (x e y em pixels, z em escala parecida; ou metros). */
 data class Vec3(val x: Float, val y: Float, val z: Float) {
     operator fun minus(o: Vec3) = Vec3(x - o.x, y - o.y, z - o.z)
     operator fun times(k: Float) = Vec3(x * k, y * k, z * k)
@@ -16,6 +16,7 @@ data class Vec3(val x: Float, val y: Float, val z: Float) {
     fun maxAbs() = max(abs(x), max(abs(y), abs(z)))
     fun sumAbs() = abs(x) + abs(y) + abs(z)
     fun norm2d() = hypot(x, y)
+    fun norm3d() = kotlin.math.sqrt(x * x + y * y + z * z)
 }
 
 private fun avg(a: Vec3, b: Vec3) = Vec3((a.x + b.x) / 2, (a.y + b.y) / 2, (a.z + b.z) / 2)

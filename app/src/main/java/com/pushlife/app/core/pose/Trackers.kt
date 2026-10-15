@@ -125,13 +125,14 @@ private class StickyCue(private val durationMs: Long = 1_500) {
 /**
  * Flexão medida de dois jeitos ao mesmo tempo; vale o que perceber mais descida:
  * - o classificador do Google ML Kit (compara o corpo inteiro com centenas de fotos reais de flexão);
- * - o ângulo do cotovelo no esqueleto (funciona em qualquer ângulo de câmera).
+ * - o ângulo do cotovelo no esqueleto, em 3D quando o detector dá a profundidade (aí funciona com a
+ *   câmera de frente, de lado ou na diagonal).
  * Desce até a "profundidade" [DOWN_AT] e volta até [UP_AT] = 1 flexão.
  * Mexer só a cabeça não muda nenhum dos dois; em pé dobrando o braço não vale (o cotovelo só conta
  * com as mãos abaixo dos ombros e o tronco fora da vertical, e o classificador separa em pé de flexão).
  */
 class PushupTracker(private val classifier: () -> PoseClassifier?) : PoseTracker {
-    // O modelo preciso entrega menos quadros por segundo: a suavização tolera intervalos maiores.
+    // O modelo mais preciso entrega menos quadros por segundo: a suavização tolera intervalos maiores.
     private val smoothing = EmaSmoothing(resetMs = 1_500)
     private val sticky = StickyCue()
     private var angleDepth: Float? = null
@@ -187,10 +188,18 @@ class PushupTracker(private val classifier: () -> PoseClassifier?) : PoseTracker
     /** Quanto o cotovelo dobrou (0..1), ou null se o braço não aparece ou a pessoa está em pé. */
     private fun elbowDepth(frame: PoseFrame): Float? {
         val side = frame.bestSide(SidePart.SHOULDER, SidePart.ELBOW, SidePart.WRIST) ?: return null
-        if (side.wrist.y <= side.shoulder.y) return null // mãos acima dos ombros: não é flexão
-        // Em pé: tronco na vertical e quadril bem abaixo do ombro (mais que o comprimento do braço).
         val hip = frame[if (frame[Joint.LEFT_SHOULDER] == side.shoulder) Joint.LEFT_HIP else Joint.RIGHT_HIP]
-        if (hip != null) {
+        val shoulder3d = side.shoulder.world
+        val wrist3d = side.wrist.world
+        if (shoulder3d != null && wrist3d != null) {
+            // Em 3D dá para olhar o corpo de verdade, não a imagem: vale com a câmera de frente ou de lado.
+            if (wrist3d.y <= shoulder3d.y) return null // mãos acima dos ombros: não é flexão
+            val hip3d = hip?.world
+            if (hip3d != null && Geometry.leanFromVertical3d(hip3d, shoulder3d) < STANDING_LEAN) return null // tronco em pé
+        } else if (side.wrist.y <= side.shoulder.y) {
+            return null // mãos acima dos ombros: não é flexão
+        } else if (hip != null) {
+            // Em pé: tronco na vertical e quadril bem abaixo do ombro (mais que o comprimento do braço).
             val upperArm = kotlin.math.hypot(side.elbow.x - side.shoulder.x, side.elbow.y - side.shoulder.y)
             val standing = Geometry.leanFromVertical(hip, side.shoulder) < 35f && hip.y - side.shoulder.y > 1.1f * upperArm
             if (standing) return null
@@ -206,6 +215,8 @@ class PushupTracker(private val classifier: () -> PoseClassifier?) : PoseTracker
         const val MIN_REP_MS = 400L
         /** De volta em cima: cotovelo a ~145° e classificador quase sem "embaixo". */
         const val UP_AT = 0.25f
+        /** Tronco a menos que isso da vertical (em 3D) é gente em pé ou sentada, não flexão. */
+        const val STANDING_LEAN = 45f
         const val DOWN = "pushups_down"
         const val UP = "pushups_up"
     }
