@@ -66,4 +66,19 @@ class PushupFrontTest {
         tr.feed(List(4) { front(172f) } + List(40) { front(100f) })
         assertEquals(0, tr.count)
     }
+
+    @Test
+    fun celularLentoComDoisQuadrosPorSegundoAindaConta() {
+        val tr = PushupTracker { null }
+        // Um quadro em cima e um embaixo por flexão: antes a suavização "comia" a descida.
+        tr.feed(List(5) { listOf(front(172f), front(105f)) }.flatten() + front(172f), stepMs = 500)
+        assertEquals(5, tr.count)
+    }
+
+    @Test
+    fun mostraOQueEstaVendo() {
+        val tr = PushupTracker { null }
+        val u = tr.feed(List(3) { front(172f) } + front(110f)).last()
+        assert(u.debug!!.contains("ombro")) { u.debug!! }
+    }
 }

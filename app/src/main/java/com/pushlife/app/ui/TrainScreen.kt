@@ -346,6 +346,9 @@ private fun ActiveStage(exercise: Exercise, onFinish: (SessionResult) -> Unit, m
     }
 
     var rig by remember { mutableStateOf<Rig?>(null) }
+    var diagnostics by remember { mutableStateOf("") }
+    var fps by remember { mutableFloatStateOf(0f) }
+    var lastFrameAt by remember { mutableLongStateOf(0L) }
     val cueLabel = if (exercise.tracking == Tracking.STEPS) stringResource(R.string.walk_status) else stringResource(cueText(exercise, session.cue))
 
     Column(
@@ -385,10 +388,13 @@ private fun ActiveStage(exercise: Exercise, onFinish: (SessionResult) -> Unit, m
                 LaunchedEffect(Unit) { PoseModels.load(context) }
                 val tracker = remember(exercise) { PoseTracker.forExercise(exercise) { PoseModels.classifier } }
                 PoseCamera(
-                    // Exercícios no chão ou lentos usam o modelo preciso; os rápidos (polichinelo, burpee, barra), o rápido.
-                    accurate = exercise in ACCURATE_EXERCISES,
                     onPose = { reading ->
-                        val update = tracker.update(reading?.frame, SystemClock.elapsedRealtime())
+                        val now = SystemClock.elapsedRealtime()
+                        val update = tracker.update(reading?.frame, now)
+                        // Diagnóstico pequeno na tela: qual IA, quadros por segundo e o que o contador vê.
+                        if (lastFrameAt > 0) fps += 0.2f * (1000f / (now - lastFrameAt).coerceAtLeast(1) - fps)
+                        lastFrameAt = now
+                        diagnostics = listOfNotNull(reading?.engine ?: "sem corpo", "${fps.toInt()} q/s", update.debug).joinToString(" · ")
                         session.tracking = update.cue != Cue.NOT_VISIBLE
                         rig = reading?.rig
                         onCounted(update.counted)
@@ -398,6 +404,20 @@ private fun ActiveStage(exercise: Exercise, onFinish: (SessionResult) -> Unit, m
                     modifier = Modifier.fillMaxSize(),
                 )
                 RigOverlay(rig, Modifier.fillMaxSize())
+                if (diagnostics.isNotEmpty()) {
+                    Text(
+                        diagnostics,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Color.White.copy(alpha = 0.85f),
+                        textAlign = TextAlign.End,
+                        modifier = Modifier
+                            .align(Alignment.BottomEnd)
+                            .padding(8.dp)
+                            .fillMaxWidth(0.6f)
+                            .background(Color.Black.copy(alpha = 0.45f), RoundedCornerShape(8.dp))
+                            .padding(horizontal = 8.dp, vertical = 4.dp),
+                    )
+                }
                 Text(
                     cueLabel,
                     style = MaterialTheme.typography.titleMedium,
@@ -447,10 +467,6 @@ private fun ActiveStage(exercise: Exercise, onFinish: (SessionResult) -> Unit, m
         ) { Text(stringResource(R.string.finish), style = MaterialTheme.typography.titleLarge) }
     }
 }
-
-private val ACCURATE_EXERCISES = setOf(
-    Exercise.PUSHUP, Exercise.PLANK, Exercise.SITUP, Exercise.SQUAT, Exercise.LUNGE, Exercise.WALL_SIT,
-)
 
 /** No abdominal "Desça mais" vira "Suba mais": a mesma meia repetição, na direção certa. */
 @StringRes

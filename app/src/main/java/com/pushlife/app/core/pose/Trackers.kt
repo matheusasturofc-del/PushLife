@@ -17,7 +17,8 @@ enum class Cue {
  * @param counted unidades concluídas neste quadro (repetições, ou segundos na prancha)
  * @param progress 0..1 para a barra de profundidade
  */
-data class TrackerUpdate(val counted: Int, val progress: Float, val cue: Cue)
+/** [debug]: o que o contador está vendo, em texto curto, para mostrar pequeno na tela. */
+data class TrackerUpdate(val counted: Int, val progress: Float, val cue: Cue, val debug: String? = null)
 
 /** Acompanha um exercício quadro a quadro a partir da pose. */
 interface PoseTracker {
@@ -138,6 +139,9 @@ class PushupTracker(private val classifier: () -> PoseClassifier?) : PoseTracker
     private val smoothing = EmaSmoothing(resetMs = 1_500)
     private val sticky = StickyCue()
     private var angleDepth: Float? = null
+    private var angleAt = 0L
+    private var lastAngle: Float? = null
+    private var lastReach: Float? = null
     private var isDown = false
     private var deepestSinceTop = 0f
     private var lastRepAt = Long.MIN_VALUE / 2
@@ -157,8 +161,16 @@ class PushupTracker(private val classifier: () -> PoseClassifier?) : PoseTracker
         val classifierDepth = ((classes[DOWN] ?: 0f) / 3f).coerceIn(0f, 1f)
         // 2) Braço: cotovelo (160° esticado = 0, 95° = 1) ou ombro perto da mão. Suavizado para não tremer.
         val raw = armDepth(frame, timeMs)
-        angleDepth = raw?.let { r -> angleDepth?.let { it + 0.5f * (r - it) } ?: r }
-        if (raw == null) angleDepth = null
+        // Suaviza pelo tempo, não pelo número de quadros: em celular lento (poucos quadros por segundo)
+        // cada quadro pesa mais, senão a descida "some" antes de chegar ao ponto.
+        val k = 1f - kotlin.math.exp(-(timeMs - angleAt).coerceIn(0L, 2_000L) / SMOOTH_MS.toFloat())
+        angleDepth = raw?.let { r -> angleDepth?.let { it + k * (r - it) } ?: r }
+        angleAt = timeMs
+        if (raw == null) {
+            angleDepth = null
+            lastAngle = null
+            lastReach = null
+        }
         if (classes.isEmpty() && angleDepth == null) {
             // Corpo na câmera, mas as poses de referência ainda estão carregando: só espera.
             return TrackerUpdate(0, 0f, if (c == null && frame.all.isNotEmpty()) Cue.GET_READY else Cue.NOT_VISIBLE)
@@ -186,7 +198,13 @@ class PushupTracker(private val classifier: () -> PoseClassifier?) : PoseTracker
             }
         }
         val cue = sticky.get(timeMs) ?: if (isDown) Cue.GO_UP else Cue.GO_DOWN
-        return TrackerUpdate(if (counted) 1 else 0, (depth / DOWN_AT).coerceIn(0f, 1f), cue)
+        val debug = buildString {
+            lastAngle?.let { append("cotovelo ${it.toInt()}° · ") }
+            lastReach?.let { append("ombro ${(it * 100).toInt()}% · ") }
+            if (classes.isNotEmpty()) append("IA ${"%.1f".format(classes[DOWN] ?: 0f)} · ")
+            append("descida ${(depth * 100).toInt()}%")
+        }
+        return TrackerUpdate(if (counted) 1 else 0, (depth / DOWN_AT).coerceIn(0f, 1f), cue, debug)
     }
 
     /** Quanto o braço dobrou (0..1), ou null se o braço não aparece ou a pessoa está em pé. */
@@ -209,6 +227,7 @@ class PushupTracker(private val classifier: () -> PoseClassifier?) : PoseTracker
             if (standing) return null
         }
         val angle = Geometry.angle(side.shoulder, side.elbow, side.wrist)
+        lastAngle = angle
         val byAngle = ((160f - angle) / 65f).coerceIn(0f, 1f)
         return maxOf(byAngle, reachDepth(side, timeMs))
     }
@@ -228,6 +247,7 @@ class PushupTracker(private val classifier: () -> PoseClassifier?) : PoseTracker
         }
         reachAt = timeMs
         if (maxReach <= 0f) return 0f
+        lastReach = reach / maxReach
         return ((1f - reach / maxReach) / REACH_FULL_DROP).coerceIn(0f, 1f)
     }
 
@@ -245,6 +265,8 @@ class PushupTracker(private val classifier: () -> PoseClassifier?) : PoseTracker
         const val REACH_FORGET_PER_S = 0.02f
         /** Sem ver o braço por esse tempo, mede de novo o braço esticado. */
         const val REACH_RESET_MS = 1_500L
+        /** Constante de tempo da suavização do braço. */
+        const val SMOOTH_MS = 120L
         const val DOWN = "pushups_down"
         const val UP = "pushups_up"
     }
