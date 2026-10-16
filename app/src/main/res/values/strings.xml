@@ -213,6 +213,9 @@
     <string name="cue_hips_up">Raise your hips</string>
     <string name="cue_hips_down">Lower your hips</string>
     <string name="cue_hold">Hold it!</string>
+    <string name="cue_knees_up">Take your knees off the floor</string>
+    <string name="pose_engine_pick">AI: %1$s ▾</string>
+    <string name="pose_engine_auto">Auto</string>
     <string name="cue_open">Open!</string>
     <string name="cue_close">Close!</string>
     <string name="cue_floor">Down to the floor!</string>

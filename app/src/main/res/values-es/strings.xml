@@ -206,6 +206,9 @@
     <string name="cue_hips_up">Sube la cadera</string>
     <string name="cue_hips_down">Baja la cadera</string>
     <string name="cue_hold">¡Aguanta!</string>
+    <string name="cue_knees_up">Levanta las rodillas del suelo</string>
+    <string name="pose_engine_pick">IA: %1$s ▾</string>
+    <string name="pose_engine_auto">Automática</string>
     <string name="cue_open">¡Abre!</string>
     <string name="cue_close">¡Cierra!</string>
     <string name="cue_floor">¡Al suelo!</string>

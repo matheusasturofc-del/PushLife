@@ -9,7 +9,7 @@ import kotlin.math.hypot
 enum class Cue {
     NOT_VISIBLE, GET_READY,
     GO_DOWN, GO_UP, GO_LOWER,
-    CHEST_UP, HIPS_UP, HIPS_DOWN, HOLD,
+    CHEST_UP, HIPS_UP, HIPS_DOWN, HOLD, KNEES_UP,
     OPEN, CLOSE, FLOOR, STAND, PULL, EXTEND,
 }
 
@@ -125,28 +125,27 @@ private class StickyCue(private val durationMs: Long = 1_500) {
 }
 
 /**
- * Flexão medida de dois jeitos ao mesmo tempo; vale o que perceber mais descida:
- * - o classificador do Google ML Kit (compara o corpo inteiro com centenas de fotos reais de flexão);
- * - o ângulo do cotovelo no esqueleto (bom com a câmera de lado);
- * - o quanto o ombro chegou perto da mão, comparado com o braço esticado lá em cima (bom com a câmera
- *   de frente, onde o cotovelo dobra "para dentro" da tela e o ângulo quase não muda na imagem).
+ * Flexão medida pelo braço, de três jeitos; vale o que perceber mais descida:
+ * - o ângulo do cotovelo (em 3D quando o detector dá a profundidade);
+ * - o quanto o ombro chegou perto da mão, comparado com o braço esticado lá em cima;
+ * - de frente para a câmera, o quanto os ombros desceram (serve mesmo com as mãos fora da imagem).
+ * O classificador do Google (fotos reais de flexão) só entra quando o braço não aparece.
  * Desce até a "profundidade" [DOWN_AT] e volta até [UP_AT] = 1 flexão.
- * Mexer só a cabeça não muda nenhum dos dois; em pé dobrando o braço não vale (o cotovelo só conta
- * com as mãos abaixo dos ombros e o tronco fora da vertical, e o classificador separa em pé de flexão).
+ * Não vale: mexer só a cabeça, em pé dobrando o braço, nem com os joelhos no chão (pernas dobradas).
  */
 class PushupTracker(private val classifier: () -> PoseClassifier?) : PoseTracker {
-    // O modelo mais preciso entrega menos quadros por segundo: a suavização tolera intervalos maiores.
     private val smoothing = EmaSmoothing(resetMs = 1_500)
     private val sticky = StickyCue()
-    private var angleDepth: Float? = null
-    private var angleAt = 0L
+    private val reach = Reference { it * FORGET_PER_S }
+    private val shoulderTop = Reference { SHOULDER_FORGET_PER_S }
+    private var depthSmooth: Float? = null
+    private var smoothAt = 0L
     private var lastAngle: Float? = null
     private var lastReach: Float? = null
+    private var lastDrop: Float? = null
     private var isDown = false
     private var deepestSinceTop = 0f
     private var lastRepAt = Long.MIN_VALUE / 2
-    private var maxReach = 0f
-    private var reachAt = Long.MIN_VALUE / 2
     override var count = 0
         private set
 
@@ -155,28 +154,28 @@ class PushupTracker(private val classifier: () -> PoseClassifier?) : PoseTracker
             smoothing.smooth(emptyMap(), timeMs)
             return TrackerUpdate(0, 0f, Cue.NOT_VISIBLE)
         }
-        // 1) Classificador: confiança 3 (de 10) já é "embaixo" de verdade (medido com as fotos do Google).
+        lastAngle = null
+        lastReach = null
+        lastDrop = null
+        if (kneeling(frame)) {
+            // Joelhos no chão: não conta, e avisa.
+            depthSmooth = null
+            return TrackerUpdate(0, 0f, Cue.KNEES_UP, "joelho no chão")
+        }
         val c = classifier()
         val classes = if (c != null && frame.all.isNotEmpty()) smoothing.smooth(c.classify(frame.all), timeMs) else emptyMap()
-        val classifierDepth = ((classes[DOWN] ?: 0f) / 3f).coerceIn(0f, 1f)
-        // 2) Braço: cotovelo (160° esticado = 0, 95° = 1) ou ombro perto da mão. Suavizado para não tremer.
-        val raw = armDepth(frame, timeMs)
-        // Suaviza pelo tempo, não pelo número de quadros: em celular lento (poucos quadros por segundo)
-        // cada quadro pesa mais, senão a descida "some" antes de chegar ao ponto.
-        val k = 1f - kotlin.math.exp(-(timeMs - angleAt).coerceIn(0L, 2_000L) / SMOOTH_MS.toFloat())
-        angleDepth = raw?.let { r -> angleDepth?.let { it + k * (r - it) } ?: r }
-        angleAt = timeMs
-        if (raw == null) {
-            angleDepth = null
-            lastAngle = null
-            lastReach = null
+        // Braço (cotovelo, ombro→mão, ombros descendo), suavizado pelo tempo e não por quadro: em celular
+        // lento cada quadro pesa mais, senão a descida "some" antes de chegar ao ponto.
+        val arm = armDepth(frame, timeMs)?.let { raw ->
+            val k = 1f - kotlin.math.exp(-(timeMs - smoothAt).coerceIn(0L, 2_000L) / SMOOTH_MS.toFloat())
+            (depthSmooth?.let { it + k * (raw - it) } ?: raw).also { smoothAt = timeMs }
         }
-        if (classes.isEmpty() && angleDepth == null) {
+        depthSmooth = arm
+        // Sem braço visível, o classificador (já suavizado): confiança 3 de 10 = embaixo.
+        val depth = arm ?: classes.takeIf { it.isNotEmpty() }?.let { ((it[DOWN] ?: 0f) / 3f).coerceIn(0f, 1f) }
             // Corpo na câmera, mas as poses de referência ainda estão carregando: só espera.
-            return TrackerUpdate(0, 0f, if (c == null && frame.all.isNotEmpty()) Cue.GET_READY else Cue.NOT_VISIBLE)
-        }
+            ?: return TrackerUpdate(0, 0f, if (c == null && frame.all.isNotEmpty()) Cue.GET_READY else Cue.NOT_VISIBLE)
 
-        val depth = maxOf(classifierDepth, angleDepth ?: 0f)
         var counted = false
         if (!isDown && depth >= DOWN_AT) {
             isDown = true
@@ -200,16 +199,46 @@ class PushupTracker(private val classifier: () -> PoseClassifier?) : PoseTracker
         val cue = sticky.get(timeMs) ?: if (isDown) Cue.GO_UP else Cue.GO_DOWN
         val debug = buildString {
             lastAngle?.let { append("cotovelo ${it.toInt()}° · ") }
-            lastReach?.let { append("ombro ${(it * 100).toInt()}% · ") }
+            lastReach?.let { append("ombro→mão ${(it * 100).toInt()}% · ") }
+            lastDrop?.let { append("ombros desceram ${(it * 100).toInt()}% · ") }
             if (classes.isNotEmpty()) append("IA ${"%.1f".format(classes[DOWN] ?: 0f)} · ")
             append("descida ${(depth * 100).toInt()}%")
         }
         return TrackerUpdate(if (counted) 1 else 0, (depth / DOWN_AT).coerceIn(0f, 1f), cue, debug)
     }
 
+    /** De lado, com quadril, joelho e tornozelo visíveis: perna dobrada = joelho no chão. */
+    private fun kneeling(frame: PoseFrame): Boolean {
+        val sides = listOf(
+            Triple(Joint.LEFT_HIP, Joint.LEFT_KNEE, Joint.LEFT_ANKLE),
+            Triple(Joint.RIGHT_HIP, Joint.RIGHT_KNEE, Joint.RIGHT_ANKLE),
+        ).mapNotNull { (h, k, a) ->
+            val hip = frame[h] ?: return@mapNotNull null
+            val knee = frame[k] ?: return@mapNotNull null
+            val ankle = frame[a] ?: return@mapNotNull null
+            Geometry.angle(hip, knee, ankle)
+        }
+        // As duas pernas dobradas (ou a única que aparece): de joelhos. Em pé ou de prancha, perna reta.
+        return sides.isNotEmpty() && sides.all { it < KNEE_BENT } && !standingUp(frame)
+    }
+
+    /** Tronco em pé (aí a perna dobrada é gente sentada/agachada, não flexão de joelhos; o braço já não conta). */
+    private fun standingUp(frame: PoseFrame): Boolean {
+        val shoulder = frame[Joint.LEFT_SHOULDER] ?: frame[Joint.RIGHT_SHOULDER] ?: return false
+        val hip = frame[Joint.LEFT_HIP] ?: frame[Joint.RIGHT_HIP] ?: return false
+        val s3 = shoulder.world
+        val h3 = hip.world
+        return if (s3 != null && h3 != null) Geometry.leanFromVertical3d(h3, s3) < STANDING_LEAN else Geometry.leanFromVertical(hip, shoulder) < 35f
+    }
+
     /** Quanto o braço dobrou (0..1), ou null se o braço não aparece ou a pessoa está em pé. */
     private fun armDepth(frame: PoseFrame, timeMs: Long): Float? {
-        val side = frame.bestSide(SidePart.SHOULDER, SidePart.ELBOW, SidePart.WRIST) ?: return null
+        val bySide = frame.bestSide(SidePart.SHOULDER, SidePart.ELBOW, SidePart.WRIST)?.let { sideDepth(frame, it, timeMs) }
+        val byShoulders = shoulderDrop(frame, timeMs)
+        return listOfNotNull(bySide, byShoulders).maxOrNull()
+    }
+
+    private fun sideDepth(frame: PoseFrame, side: Side, timeMs: Long): Float? {
         val hip = frame[if (frame[Joint.LEFT_SHOULDER] == side.shoulder) Joint.LEFT_HIP else Joint.RIGHT_HIP]
         val shoulder3d = side.shoulder.world
         val wrist3d = side.wrist.world
@@ -220,52 +249,88 @@ class PushupTracker(private val classifier: () -> PoseClassifier?) : PoseTracker
             if (hip3d != null && Geometry.leanFromVertical3d(hip3d, shoulder3d) < STANDING_LEAN) return null // tronco em pé
         } else if (side.wrist.y <= side.shoulder.y) {
             return null // mãos acima dos ombros: não é flexão
-        } else if (hip != null) {
-            // Em pé: tronco na vertical e quadril bem abaixo do ombro (mais que o comprimento do braço).
-            val upperArm = kotlin.math.hypot(side.elbow.x - side.shoulder.x, side.elbow.y - side.shoulder.y)
-            val standing = Geometry.leanFromVertical(hip, side.shoulder) < 35f && hip.y - side.shoulder.y > 1.1f * upperArm
-            if (standing) return null
+        } else if (hip != null && standing2d(hip, side.shoulder, side.elbow)) {
+            return null
         }
         val angle = Geometry.angle(side.shoulder, side.elbow, side.wrist)
         lastAngle = angle
         val byAngle = ((160f - angle) / 65f).coerceIn(0f, 1f)
-        return maxOf(byAngle, reachDepth(side, timeMs))
+        // Ombro→mão em relação ao braço esticado lá em cima: 85% (~cotovelo a 117°) = profundidade 0,6.
+        val dist = hypot(side.wrist.x - side.shoulder.x, side.wrist.y - side.shoulder.y)
+        val top = reach.update(dist, timeMs)
+        if (top <= 0f) return byAngle
+        lastReach = dist / top
+        return maxOf(byAngle, ((1f - dist / top) / REACH_FULL_DROP).coerceIn(0f, 1f))
+    }
+
+    /** Em pé na imagem: tronco na vertical e quadril bem abaixo do ombro (mais que o comprimento do braço). */
+    private fun standing2d(hip: Point, shoulder: Point, elbow: Point): Boolean {
+        val upperArm = hypot(elbow.x - shoulder.x, elbow.y - shoulder.y)
+        return Geometry.leanFromVertical(hip, shoulder) < 35f && hip.y - shoulder.y > 1.1f * upperArm
     }
 
     /**
-     * Distância ombro→mão em relação à maior vista há pouco (o braço esticado em cima). Vale de qualquer
-     * lado: ao descer, o ombro chega perto da mão. 85% da distância (~cotovelo a 117°) = profundidade 0,6.
-     * A referência esquece devagar (2% por segundo) para se ajustar se a pessoa se afastar da câmera.
+     * De frente para a câmera: os dois ombros aparecem bem separados. Mede quanto eles desceram desde
+     * lá em cima, em relação à largura dos ombros (que não muda na flexão). Funciona mesmo com as mãos
+     * fora da imagem (celular no chão, perto das mãos).
      */
-    private fun reachDepth(side: Side, timeMs: Long): Float {
-        val reach = hypot(side.wrist.x - side.shoulder.x, side.wrist.y - side.shoulder.y)
-        val elapsed = timeMs - reachAt
-        maxReach = if (elapsed > REACH_RESET_MS || maxReach <= 0f) {
-            reach
-        } else {
-            maxOf(reach, maxReach * (1f - REACH_FORGET_PER_S * elapsed / 1000f))
+    private fun shoulderDrop(frame: PoseFrame, timeMs: Long): Float? {
+        val l = frame[Joint.LEFT_SHOULDER] ?: return null
+        val r = frame[Joint.RIGHT_SHOULDER] ?: return null
+        val elbow = frame[Joint.LEFT_ELBOW] ?: frame[Joint.RIGHT_ELBOW] ?: return null
+        val width = hypot(l.x - r.x, l.y - r.y)
+        val mid = Point((l.x + r.x) / 2, (l.y + r.y) / 2)
+        val upperArm = hypot(elbow.x - mid.x, elbow.y - mid.y) - width / 2
+        if (width < FRONTAL_WIDTH * upperArm.coerceAtLeast(1f)) return null // de lado: ombros um atrás do outro
+        if (elbow.y <= mid.y) return null // braços para cima: não é flexão
+        val hip = frame[Joint.LEFT_HIP] ?: frame[Joint.RIGHT_HIP]
+        if (hip != null && standing2d(hip, mid, elbow)) return null
+        // Topo = o ombro mais alto visto há pouco (y menor), em larguras de ombro.
+        val y = mid.y / width
+        val top = -shoulderTop.update(-y, timeMs)
+        val drop = (y - top).coerceAtLeast(0f)
+        lastDrop = drop
+        return (drop / SHOULDER_FULL_DROP).coerceIn(0f, 1f)
+    }
+
+    /**
+     * O maior valor visto há pouco ("lá em cima"). Esquece devagar ([forgetPerS] por segundo) para se
+     * ajustar se a pessoa mudar de lugar; sem ver nada por [RESET_MS], começa de novo.
+     */
+    private class Reference(private val forgetPerS: (top: Float) -> Float) {
+        private var top = 0f
+        private var at = Long.MIN_VALUE / 2
+
+        fun update(value: Float, timeMs: Long): Float {
+            val elapsed = timeMs - at
+            top = if (elapsed > RESET_MS) value else maxOf(value, top - forgetPerS(top) * elapsed / 1000f)
+            at = timeMs
+            return top
         }
-        reachAt = timeMs
-        if (maxReach <= 0f) return 0f
-        lastReach = reach / maxReach
-        return ((1f - reach / maxReach) / REACH_FULL_DROP).coerceIn(0f, 1f)
     }
 
     companion object {
-        /** Profundidade para valer como "embaixo": cotovelo a ~120° ou confiança ~1,8 no classificador. */
+        /** Profundidade para valer como "embaixo": cotovelo a ~120°, ombro a 85% da mão ou ombros 1/3 de largura abaixo. */
         const val DOWN_AT = 0.6f
         /** Duas flexões mais rápido que isso é tremida, não flexão. */
         const val MIN_REP_MS = 400L
-        /** De volta em cima: cotovelo a ~145° e classificador quase sem "embaixo". */
+        /** De volta em cima: cotovelo a ~145°. */
         const val UP_AT = 0.25f
         /** Tronco a menos que isso da vertical (em 3D) é gente em pé ou sentada, não flexão. */
         const val STANDING_LEAN = 45f
         /** Ombro a 75% da distância de cima até a mão = profundidade 1 (cotovelo ~97°). */
         const val REACH_FULL_DROP = 0.25f
-        const val REACH_FORGET_PER_S = 0.02f
-        /** Sem ver o braço por esse tempo, mede de novo o braço esticado. */
-        const val REACH_RESET_MS = 1_500L
-        /** Constante de tempo da suavização do braço. */
+        /** Ombros descendo 55% da largura deles = profundidade 1 (uns 20 cm). */
+        const val SHOULDER_FULL_DROP = 0.55f
+        /** Ombros pelo menos 0,7 braço de largura na imagem = de frente (de lado ficam quase juntos). */
+        const val FRONTAL_WIDTH = 0.7f
+        /** Joelho mais dobrado que isso = joelho no chão (de prancha a perna fica reta, ~170°). */
+        const val KNEE_BENT = 145f
+        const val FORGET_PER_S = 0.02f
+        /** Os ombros "lá em cima" esquecem 3% da largura deles por segundo. */
+        const val SHOULDER_FORGET_PER_S = 0.03f
+        const val RESET_MS = 1_500L
+        /** Constante de tempo da suavização. */
         const val SMOOTH_MS = 120L
         const val DOWN = "pushups_down"
         const val UP = "pushups_up"

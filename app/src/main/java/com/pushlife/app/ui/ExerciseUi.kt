@@ -82,6 +82,7 @@ val Cue.text: Int
         Cue.HIPS_UP -> R.string.cue_hips_up
         Cue.HIPS_DOWN -> R.string.cue_hips_down
         Cue.HOLD -> R.string.cue_hold
+        Cue.KNEES_UP -> R.string.cue_knees_up
         Cue.OPEN -> R.string.cue_open
         Cue.CLOSE -> R.string.cue_close
         Cue.FLOOR -> R.string.cue_floor

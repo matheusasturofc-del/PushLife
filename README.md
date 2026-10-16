@@ -48,11 +48,12 @@ Mudar só o `update.json` não gera APK novo.
 ## Tecnologia
 
 - Kotlin + Jetpack Compose (Material 3), Android 8.0 ou mais novo
-- IA da câmera: MediaPipe Pose Landmarker (código aberto do Google, Apache 2.0, modelo "full" no
-  processador), que também estima a profundidade, então os ângulos do corpo são medidos em 3D. Se num
-  celular o MediaPipe não achar o corpo e o ML Kit achar, o app passa a usar o ML Kit nele. O modelo é
-  baixado pelo Gradle na compilação. Roda no aparelho e nenhuma imagem sai do celular
-- Na tela do treino, uma linha pequena mostra a IA em uso, os quadros por segundo e o que o contador vê
+- IA da câmera, escolhida na própria tela do treino (toque em "IA"): MediaPipe Pose Landmarker Lite ou
+  Full (código aberto do Google, Apache 2.0; também estima a profundidade, então os ângulos são em 3D),
+  ML Kit Pose ou MoveNet Lightning/Thunder (TensorFlow, Apache 2.0). Na "Automática" usa o MediaPipe Lite
+  e, se nele o corpo não aparecer mas no ML Kit sim, passa a usar o ML Kit. Os modelos são baixados pelo
+  Gradle na compilação. Tudo roda no aparelho e nenhuma imagem sai do celular
+- Na tela do treino, uma linha pequena mostra a IA, os quadros por segundo e o que o contador vê
 - Flexão: classificador de poses do exemplo oficial do Google ML Kit (k-vizinhos com centenas de fotos
   reais de flexão), adaptado para Kotlin. Licença Apache 2.0 em `licenses/mlkit-samples-LICENSE.txt`
 - Caminhada: sensor de passos do celular

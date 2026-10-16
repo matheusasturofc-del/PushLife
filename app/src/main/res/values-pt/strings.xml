@@ -206,6 +206,9 @@
     <string name="cue_hips_up">Suba o quadril</string>
     <string name="cue_hips_down">Abaixe o quadril</string>
     <string name="cue_hold">Segura!</string>
+    <string name="cue_knees_up">Tire os joelhos do chão</string>
+    <string name="pose_engine_pick">IA: %1$s ▾</string>
+    <string name="pose_engine_auto">Automática</string>
     <string name="cue_open">Abre!</string>
     <string name="cue_close">Fecha!</string>
     <string name="cue_floor">Ao chão!</string>
