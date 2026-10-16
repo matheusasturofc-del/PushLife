@@ -1,5 +1,6 @@
 import java.net.URI
 import java.util.Properties
+import java.util.zip.GZIPInputStream
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
@@ -146,7 +147,7 @@ abstract class DownloadPoseModels : DefaultTask() {
 
     /** O primeiro .tflite dentro de um .tar.gz. */
     private fun tflite(gz: ByteArray): ByteArray? {
-        val tar = java.util.zip.GZIPInputStream(gz.inputStream()).use { it.readBytes() }
+        val tar = GZIPInputStream(gz.inputStream()).use { it.readBytes() }
         var pos = 0
         while (pos + 512 <= tar.size) {
             val name = String(tar, pos, 100).trimEnd('\u0000').trim()
