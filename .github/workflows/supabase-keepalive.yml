@@ -1,0 +1,40 @@
+# No plano grátis, o Supabase pausa o projeto depois de 1 semana sem uso (e o login para de funcionar).
+# Este robô faz uma consulta pequena ao banco a cada 3 dias para ele nunca ficar parado.
+# Se falhar, o GitHub manda um e-mail: aí o projeto pausou mesmo, e é só abrir
+# https://supabase.com/dashboard e clicar em "Restore project".
+name: Manter o Supabase acordado
+
+on:
+  schedule:
+    - cron: '17 9 */3 * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: supabase.properties
+          sparse-checkout-cone-mode: false
+
+      - name: Consultar o banco
+        run: |
+          url=$(grep '^url=' supabase.properties | cut -d= -f2-)
+          key=$(grep '^key=' supabase.properties | cut -d= -f2-)
+          for i in 1 2 3; do
+            code=$(curl -sS -o resp.txt -w '%{http_code}' -X POST "$url/rest/v1/rpc/username_available" \
+              -H "apikey: $key" -H "Authorization: Bearer $key" -H 'Content-Type: application/json' \
+              -d '{"name":"keepalive"}' || true)
+            if [ "$code" = 200 ]; then
+              echo "Supabase acordado (resposta: $(cat resp.txt))"
+              exit 0
+            fi
+            echo "Tentativa $i: HTTP $code $(cat resp.txt 2>/dev/null)"
+            sleep 20
+          done
+          echo "::error::O Supabase não respondeu. Se o projeto estiver pausado, abra https://supabase.com/dashboard e clique em Restore project."
+          exit 1

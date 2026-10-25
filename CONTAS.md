@@ -151,4 +151,6 @@ liberado.
 - **Apagar a conta de alguém pelo painel:** no Supabase, abra **Authentication** → **Users** → apague a
   pessoa. O perfil e o backup somem juntos.
 - **Projeto pausado:** no plano grátis, se ninguém usar o app por 1 semana, o Supabase pausa o projeto.
-  Para voltar, é só entrar no site e clicar em **Restore**.
+  Para evitar isso, o GitHub faz uma consulta pequena ao banco a cada 3 dias
+  (`.github/workflows/supabase-keepalive.yml`). Se mesmo assim pausar, o GitHub manda um e-mail avisando
+  que o robô falhou: é só entrar em https://supabase.com/dashboard e clicar em **Restore project**.
