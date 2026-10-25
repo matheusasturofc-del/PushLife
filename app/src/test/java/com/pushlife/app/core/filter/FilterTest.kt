@@ -100,9 +100,16 @@ class GoreFilterTest {
         val list = DomainBlocklist()
         assertTrue(list.isBlocked("theync.com"))
         assertTrue(list.isBlocked("www.kaotic.com"))
-        assertTrue(list.isBlocked("bestgore.net")) // espelho, pela palavra
+        assertTrue(list.isBlocked("bestgore.net")) // espelho
+        assertTrue(list.isBlocked("gore.fun")) // o que passou no teste do celular
+        assertTrue(list.isBlocked("www.gore.xyz"))
+        assertTrue(list.isBlocked("goresite.net"))
+        assertTrue(list.isBlocked("seegore.co.uk"))
         assertFalse(list.isBlocked("gore-tex.com"))
+        assertFalse(list.isBlocked("www.goretex.com"))
         assertFalse(list.isBlocked("gorenje.com"))
         assertFalse(list.isBlocked("gore.com"))
+        assertFalse(list.isBlocked("algore.com"))
+        assertFalse(list.isBlocked("google.com"))
     }
 }

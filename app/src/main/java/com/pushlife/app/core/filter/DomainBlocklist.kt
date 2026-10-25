@@ -4,7 +4,7 @@ package com.pushlife.app.core.filter
 // palavras-chave pegam espelhos e domínios novos
 class DomainBlocklist(
     domains: Collection<String> = ADULT_DOMAINS + GORE_DOMAINS,
-    private val keywords: List<String> = ADULT_KEYWORDS + GORE_KEYWORDS,
+    private val keywords: List<String> = ADULT_KEYWORDS,
     private val big: HashedDomains? = null,
 ) {
     private val set = domains.map(::normalize).toHashSet()
@@ -19,7 +19,15 @@ class DomainBlocklist(
             if (dot < 0) break
             candidate = candidate.substring(dot + 1)
         }
-        return keywords.any { name.contains(it) }
+        return keywords.any { name.contains(it) } || isGore(name)
+    }
+
+    // "gore" em qualquer parte do nome (gore.fun, seegore.com, goresite.net...),
+    // menos os legítimos: gore-tex, gorenje, a empresa W. L. Gore (gore.com), al gore...
+    private fun isGore(name: String): Boolean {
+        if (name == "gore.com" || name.endsWith(".gore.com")) return false
+        val labels = name.split('.').dropLast(1) // sem a terminação (.com, .fun...)
+        return labels.any { label -> "gore" in label && GORE_SAFE.none { it in label } }
     }
 
     private fun normalize(host: String) = host.trim().trimEnd('.').lowercase()
@@ -49,7 +57,7 @@ class DomainBlocklist(
             "watchpeopledie.tv", "runthegauntlet.org", "ogrish.com", "rotten.com", "heavy-r.com", "efukt.com",
         )
 
-        // só pedaços bem específicos ("gore" sozinho pegaria gore-tex, gorenje, goregaon...)
-        val GORE_KEYWORDS = listOf("bestgore", "seegore", "goregrish", "gorecenter", "watchpeopledie")
+        // palavras com "gore" que não são gore
+        val GORE_SAFE = listOf("goretex", "gore-tex", "gorenje", "goregaon", "gorey", "gorebridge", "algore", "gorean", "goreville")
     }
 }
