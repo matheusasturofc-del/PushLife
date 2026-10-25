@@ -45,14 +45,14 @@ class PushupElbowTest {
 
     @Test
     fun cotoveloA110GrausJaConta() {
-        val tr = PushupTracker { null }
+        val tr = PushupTracker()
         tr.feed(List(3) { List(4) { pushup(170f) } + List(4) { pushup(110f) } }.flatten() + List(4) { pushup(170f) })
         assertEquals(3, tr.count)
     }
 
     @Test
     fun dobrarPoucoNaoContaEPedeParaDescer() {
-        val tr = PushupTracker { null }
+        val tr = PushupTracker()
         val ups = tr.feed(List(4) { pushup(170f) } + List(4) { pushup(135f) } + List(4) { pushup(170f) })
         assertEquals(0, tr.count)
         assertEquals(Cue.GO_LOWER, ups.last().cue)
@@ -60,14 +60,14 @@ class PushupElbowTest {
 
     @Test
     fun emPeDobrandoOBracoNaoConta() {
-        val tr = PushupTracker { null }
+        val tr = PushupTracker()
         tr.feed(List(4) { List(4) { standingCurl(170f) } + List(4) { standingCurl(60f) } }.flatten())
         assertEquals(0, tr.count)
     }
 
     @Test
     fun mexerSoACabecaComBracosEsticadosNaoConta() {
-        val tr = PushupTracker { null }
+        val tr = PushupTracker()
         val frames = List(40) { i ->
             val base = pushup(170f)
             val nose = base[Joint.NOSE]!!

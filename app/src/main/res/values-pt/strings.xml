@@ -164,7 +164,7 @@
     <string name="value_pullup">1 barra = 2 min</string>
     <string name="value_burpee">1 burpee = 1 min 30 s</string>
     <string name="value_walk">100 passos = 1 min</string>
-    <string name="setup_pushup">Celular em pé no chão, a uns 2 metros, de lado para você (de frente também funciona). O corpo inteiro precisa aparecer.</string>
+    <string name="setup_pushup">Celular em pé no chão, a uns 2 metros, de lado para você (de frente não conta). O corpo inteiro, da cabeça aos pés, precisa aparecer.</string>
     <string name="setup_side">Apoie o celular em pé, a uns 2 metros, de lado para você. O corpo inteiro precisa aparecer.</string>
     <string name="setup_side_floor">Apoie o celular baixo (no chão ou numa cadeira), a uns 2 metros, de lado para você. O corpo inteiro precisa aparecer.</string>
     <string name="setup_front">Apoie o celular em pé, de frente para você, a uns 2 ou 3 metros. O corpo inteiro precisa aparecer.</string>
@@ -207,8 +207,7 @@
     <string name="cue_hips_down">Abaixe o quadril</string>
     <string name="cue_hold">Segura!</string>
     <string name="cue_knees_up">Tire os joelhos do chão</string>
-    <string name="pose_engine_pick">IA: %1$s ▾</string>
-    <string name="pose_engine_auto">Automática</string>
+    <string name="cue_turn_sideways">Fique de lado para a câmera</string>
     <string name="cue_open">Abre!</string>
     <string name="cue_close">Fecha!</string>
     <string name="cue_floor">Ao chão!</string>

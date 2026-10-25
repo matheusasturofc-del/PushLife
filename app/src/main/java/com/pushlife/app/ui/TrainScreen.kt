@@ -49,10 +49,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import com.pushlife.app.camera.PoseEngine
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
@@ -85,7 +81,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.pushlife.app.AppGraph
 import com.pushlife.app.R
 import com.pushlife.app.camera.PoseCamera
-import com.pushlife.app.camera.PoseModels
 import com.pushlife.app.camera.StepCounterEffect
 import com.pushlife.app.camera.StepSensor
 import com.pushlife.app.core.Exercise
@@ -321,7 +316,6 @@ private class Session(val exercise: Exercise) {
 
 @Composable
 private fun ActiveStage(exercise: Exercise, onFinish: (SessionResult) -> Unit, modifier: Modifier = Modifier) {
-    val context = LocalContext.current
     val session = remember(exercise) { Session(exercise) }
     val phrases = stringArrayResource(R.array.motivation)
     var phrase by remember { mutableStateOf("") }
@@ -351,9 +345,6 @@ private fun ActiveStage(exercise: Exercise, onFinish: (SessionResult) -> Unit, m
 
     var rig by remember { mutableStateOf<Rig?>(null) }
     var diagnostics by remember { mutableStateOf("") }
-    var engine by remember { mutableStateOf(PoseEngine.saved(context)) }
-    val engines = remember { PoseEngine.available(context) }
-    var engineMenu by remember { mutableStateOf(false) }
     var fps by remember { mutableFloatStateOf(0f) }
     var lastFrameAt by remember { mutableLongStateOf(0L) }
     val cueLabel = if (exercise.tracking == Tracking.STEPS) stringResource(R.string.walk_status) else stringResource(cueText(exercise, session.cue))
@@ -392,19 +383,15 @@ private fun ActiveStage(exercise: Exercise, onFinish: (SessionResult) -> Unit, m
                     .background(Color.Black)
                     .border(3.dp, if (session.tracking) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline, shape),
             ) {
-                LaunchedEffect(Unit) { PoseModels.load(context) }
-                val tracker = remember(exercise) { PoseTracker.forExercise(exercise) { PoseModels.classifier } }
-                // Trocar de IA recria a câmera com a nova.
-                key(engine) {
+                val tracker = remember(exercise) { PoseTracker.forExercise(exercise) }
                 PoseCamera(
-                    engine = engine,
                     onPose = { reading ->
                         val now = SystemClock.elapsedRealtime()
                         val update = tracker.update(reading?.frame, now)
                         // Diagnóstico pequeno na tela: qual IA, quadros por segundo e o que o contador vê.
                         if (lastFrameAt > 0) fps += 0.2f * (1000f / (now - lastFrameAt).coerceAtLeast(1) - fps)
                         lastFrameAt = now
-                        diagnostics = listOfNotNull(reading?.engine ?: "sem corpo", "${fps.toInt()} q/s", update.debug).joinToString(" · ")
+                        diagnostics = listOfNotNull(if (reading == null) "sem corpo" else null, "${fps.toInt()} q/s", update.debug).joinToString(" · ")
                         session.tracking = update.cue != Cue.NOT_VISIBLE
                         rig = reading?.rig
                         onCounted(update.counted)
@@ -413,54 +400,21 @@ private fun ActiveStage(exercise: Exercise, onFinish: (SessionResult) -> Unit, m
                     },
                     modifier = Modifier.fillMaxSize(),
                 )
-                }
                 RigOverlay(rig, Modifier.fillMaxSize())
-                // Canto de baixo: a IA em uso (toque para trocar) e o que ela está vendo.
-                Column(
-                    horizontalAlignment = Alignment.End,
-                    modifier = Modifier.align(Alignment.BottomEnd).padding(8.dp).fillMaxWidth(0.6f),
-                ) {
-                    Box {
-                        Text(
-                            stringResource(R.string.pose_engine_pick, if (engine == PoseEngine.AUTO) stringResource(R.string.pose_engine_auto) else engine.label),
-                            style = MaterialTheme.typography.labelLarge,
-                            color = Color.White,
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(50))
-                                .background(Color.Black.copy(alpha = 0.6f))
-                                .clickable { engineMenu = true }
-                                .padding(horizontal = 12.dp, vertical = 6.dp),
-                        )
-                        DropdownMenu(expanded = engineMenu, onDismissRequest = { engineMenu = false }) {
-                            engines.forEach { e ->
-                                DropdownMenuItem(
-                                    text = { Text(if (e == PoseEngine.AUTO) stringResource(R.string.pose_engine_auto) else e.label) },
-                                    onClick = {
-                                        engineMenu = false
-                                        if (e != engine) {
-                                            PoseEngine.save(context, e)
-                                            engine = e
-                                            fps = 0f
-                                            lastFrameAt = 0L
-                                            diagnostics = ""
-                                        }
-                                    },
-                                )
-                            }
-                        }
-                    }
-                    if (diagnostics.isNotEmpty()) {
-                        Text(
-                            diagnostics,
-                            style = MaterialTheme.typography.labelSmall,
-                            color = Color.White.copy(alpha = 0.85f),
-                            textAlign = TextAlign.End,
-                            modifier = Modifier
-                                .padding(top = 4.dp)
-                                .background(Color.Black.copy(alpha = 0.45f), RoundedCornerShape(8.dp))
-                                .padding(horizontal = 8.dp, vertical = 4.dp),
-                        )
-                    }
+                // Canto de baixo: quadros por segundo e o que o contador está vendo (ângulos).
+                if (diagnostics.isNotEmpty()) {
+                    Text(
+                        diagnostics,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Color.White.copy(alpha = 0.85f),
+                        textAlign = TextAlign.End,
+                        modifier = Modifier
+                            .align(Alignment.BottomEnd)
+                            .padding(8.dp)
+                            .fillMaxWidth(0.6f)
+                            .background(Color.Black.copy(alpha = 0.45f), RoundedCornerShape(8.dp))
+                            .padding(horizontal = 8.dp, vertical = 4.dp),
+                    )
                 }
                 Text(
                     cueLabel,

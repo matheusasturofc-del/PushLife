@@ -188,4 +188,65 @@ class TrackersTest {
         assertEquals(0, tr.count)
         assertEquals(Cue.HIPS_UP, ups.last().cue)
     }
+
+    // --- Cada exercício só conta com o corpo na posição certa ---
+
+    @Test
+    fun agachamentoDeitadoNaoConta() {
+        val tr = SquatTracker()
+        // Tronco a 85° (deitado) dobrando o joelho: não é agachamento.
+        val angles = sweep(170f, 170f, 3) + sweep(170f, 80f) + sweep(80f, 170f) + sweep(170f, 80f) + sweep(80f, 170f)
+        val (_, ups) = tr.run(angles.map { Poses.squat(it, lean = 85f) })
+        assertEquals(0, tr.count)
+        assertEquals(Cue.STAND, ups.last().cue)
+    }
+
+    @Test
+    fun emPeDobrandoOTroncoNaoContaAbdominal() {
+        val tr = SitupTracker()
+        // Em pé (coxa vertical), dobrando o tronco para a frente até 60° e voltando.
+        val hip = Point(300f, 400f)
+        val knee = Poses.toward(hip, 180f)
+        val ankle = Poses.toward(knee, 180f)
+        fun bend(trunk: Float): PoseFrame {
+            val shoulder = Poses.toward(hip, 180f - trunk) // trunk = ângulo ombro-quadril-joelho
+            return Poses.side(shoulder, Poses.toward(shoulder, 180f, 50f), Poses.toward(shoulder, 180f, 90f), hip, knee, ankle)
+        }
+        val angles = sweep(170f, 170f, 3) + sweep(170f, 60f) + sweep(60f, 170f) + sweep(170f, 60f) + sweep(60f, 170f)
+        val (_, ups) = tr.run(angles.map { bend(it) })
+        assertEquals(0, tr.count)
+        assertEquals(Cue.FLOOR, ups.last().cue)
+    }
+
+    @Test
+    fun roscaComAsMaosEmbaixoNaoContaBarra() {
+        val tr = PullupTracker()
+        // Em pé com o braço para baixo dobrando o cotovelo (rosca): mãos abaixo dos ombros.
+        fun curl(elbowAngle: Float): PoseFrame {
+            val shoulder = Point(300f, 300f)
+            val elbow = Poses.toward(shoulder, 180f)
+            val wrist = Poses.toward(elbow, 180f - (180f - elbowAngle))
+            val hip = Poses.toward(shoulder, 180f, 150f)
+            val knee = Poses.toward(hip, 180f)
+            return Poses.side(shoulder, elbow, wrist, hip, knee, Poses.toward(knee, 180f))
+        }
+        // Dobra até 50° (o mesmo que conta na barra), mas com as mãos abaixo dos ombros.
+        val angles = sweep(170f, 170f, 3) + sweep(170f, 50f) + sweep(50f, 170f)
+        tr.run(angles.map { curl(it) })
+        assertEquals(0, tr.count)
+    }
+
+    @Test
+    fun pranchaDeJoelhosNaoContaTempo() {
+        val tr = PlankTracker()
+        // Deitado, mas com o joelho no chão: perna dobrada a ~90°.
+        val shoulder = Point(200f, 300f)
+        val hip = Point(380f, 330f)
+        val knee = Point(480f, 400f)
+        val ankle = Point(560f, 330f)
+        val f = Poses.side(shoulder, Poses.toward(shoulder, 180f, 60f), Poses.toward(shoulder, 180f, 120f), hip, knee, ankle)
+        val (_, ups) = tr.run(List(60) { f }, stepMs = 100)
+        assertEquals(0, tr.count)
+        assertEquals(Cue.KNEES_UP, ups.last().cue)
+    }
 }

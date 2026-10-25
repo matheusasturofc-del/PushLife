@@ -1,6 +1,5 @@
 import java.net.URI
 import java.util.Properties
-import java.util.zip.GZIPInputStream
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
@@ -28,7 +27,7 @@ android {
         targetSdk = 35
         // No GitHub cada build ganha um número maior (a Play Store exige que ele sempre suba).
         versionCode = System.getenv("GITHUB_RUN_NUMBER")?.toIntOrNull()?.plus(100) ?: 7
-        versionName = "1.12.0"
+        versionName = "1.13.0"
 
         // Só processadores de celular (ARM). Sem isso o APK carrega ~60 MB de bibliotecas x86 inúteis.
         ndk {
@@ -84,22 +83,18 @@ android {
 
     // Os modelos de pose são lidos direto do APK, sem descompactar.
     androidResources {
-        noCompress += listOf("task", "tflite")
+        noCompress += "task"
     }
 }
 
 /**
- * Baixa os modelos de pose (Google, código aberto, Apache 2.0) para dentro do APK. Não ficam no
- * repositório; ficam guardados no cache do Gradle depois da primeira vez.
- * [required]: arquivo → endereço; sem ele a compilação para. [optional]: arquivo → endereços para tentar
- * em ordem; se nenhum funcionar o app só não oferece aquela IA.
+ * Baixa o modelo de pose do MediaPipe (Google, código aberto, Apache 2.0) para dentro do APK.
+ * Não fica no repositório; fica guardado no cache do Gradle depois da primeira vez.
  */
 abstract class DownloadPoseModels : DefaultTask() {
+    /** Arquivo → endereço. */
     @get:Input
-    abstract val required: MapProperty<String, String>
-
-    @get:Input
-    abstract val optional: MapProperty<String, List<String>>
+    abstract val models: MapProperty<String, String>
 
     @get:OutputDirectory
     abstract val outputDir: DirectoryProperty
@@ -111,74 +106,26 @@ abstract class DownloadPoseModels : DefaultTask() {
     fun download() {
         val out = outputDir.get().dir("pose").asFile.apply { mkdirs() }
         val cache = cacheDir.get().asFile.apply { mkdirs() }
-        for ((file, url) in required.get()) {
-            val model = fetch(cache, file, listOf(url)) ?: throw GradleException("Não deu para baixar $url")
-            model.copyTo(File(out, file), overwrite = true)
-        }
-        for ((file, urls) in optional.get()) {
-            val model = fetch(cache, file, urls)
-            if (model == null) logger.warn("Modelo opcional $file indisponível; o app não vai oferecê-lo.")
-            else model.copyTo(File(out, file), overwrite = true)
-        }
-    }
-
-    /** Baixa para o cache (uma vez). Aceita o modelo puro ou um .tar.gz com um .tflite dentro. */
-    private fun fetch(cache: File, file: String, urls: List<String>): File? {
-        val cached = File(cache, file)
-        if (cached.length() > 0L) return cached
-        for (url in urls) {
-            try {
-                val bytes = URI(url).toURL().openStream().use { it.readBytes() }
-                val model = if (bytes.size > 2 && bytes[0] == 0x1f.toByte() && bytes[1] == 0x8b.toByte()) tflite(bytes) else bytes
-                if (model == null || model.size < 1_000_000) {
-                    logger.warn("Arquivo inesperado em $url")
-                    continue
-                }
+        for ((file, url) in models.get()) {
+            val cached = File(cache, file)
+            if (cached.length() == 0L) {
                 val part = File(cache, "$file.part")
-                part.writeBytes(model)
+                URI(url).toURL().openStream().use { input -> part.outputStream().use { input.copyTo(it) } }
+                check(part.length() > 1_000_000) { "Download incompleto: $url" }
                 part.renameTo(cached)
-                return cached
-            } catch (e: Exception) {
-                logger.warn("Falhou $url: ${e.message}")
             }
+            cached.copyTo(File(out, file), overwrite = true)
         }
-        return null
-    }
-
-    /** O primeiro .tflite dentro de um .tar.gz. */
-    private fun tflite(gz: ByteArray): ByteArray? {
-        val tar = GZIPInputStream(gz.inputStream()).use { it.readBytes() }
-        var pos = 0
-        while (pos + 512 <= tar.size) {
-            val name = String(tar, pos, 100).trimEnd('\u0000').trim()
-            if (name.isEmpty()) return null
-            val size = String(tar, pos + 124, 12).trimEnd('\u0000').trim().toLong(8).toInt()
-            if (name.endsWith(".tflite")) return tar.copyOfRange(pos + 512, pos + 512 + size)
-            pos += 512 + (size + 511) / 512 * 512
-        }
-        return null
     }
 }
 
 androidComponents {
     onVariants { variant ->
         val task = tasks.register<DownloadPoseModels>("download${variant.name.replaceFirstChar { it.uppercase() }}PoseModels") {
-            val mediapipe = "https://storage.googleapis.com/mediapipe-models/pose_landmarker"
-            required.set(
-                mapOf(
-                    "pose_landmarker_lite.task" to "$mediapipe/pose_landmarker_lite/float16/1/pose_landmarker_lite.task",
-                    "pose_landmarker_full.task" to "$mediapipe/pose_landmarker_full/float16/1/pose_landmarker_full.task",
-                ),
-            )
-            // MoveNet (TensorFlow): outra IA de pose aberta do Google, bem rápida.
-            optional.set(
-                listOf("lightning", "thunder").associate { name ->
-                    "movenet_$name.tflite" to listOf(
-                        "https://tfhub.dev/google/lite-model/movenet/singlepose/$name/tflite/float16/4?lite-format=tflite",
-                        "https://www.kaggle.com/api/v1/models/google/movenet/tfLite/singlepose-$name-tflite-float16/1/download",
-                        "https://storage.googleapis.com/tfhub-lite-models/google/lite-model/movenet/singlepose/$name/tflite/float16/4.tflite",
-                    )
-                },
+            // "lite": leve e rápido no processador de celulares simples, e acha o corpo também deitado.
+            models.put(
+                "pose_landmarker_lite.task",
+                "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task",
             )
             cacheDir.set(File(gradle.gradleUserHomeDir, "caches/pushlife-pose-models"))
         }
@@ -210,10 +157,6 @@ dependencies {
     implementation(libs.androidx.camera.lifecycle)
     implementation(libs.androidx.camera.view)
     implementation(libs.mediapipe.tasks.vision)
-    // ML Kit: reserva, caso o MediaPipe não ache o corpo neste celular.
-    implementation(libs.mlkit.pose.detection)
-    // Roda o MoveNet.
-    implementation(libs.tensorflow.lite)
 
     testImplementation(libs.junit)
 }

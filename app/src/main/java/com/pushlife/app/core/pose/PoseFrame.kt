@@ -1,10 +1,16 @@
 package com.pushlife.app.core.pose
 
-import com.pushlife.app.core.pose.classify.Vec3
 import kotlin.math.abs
 import kotlin.math.acos
 import kotlin.math.atan2
 import kotlin.math.hypot
+import kotlin.math.sqrt
+
+/** Um ponto 3D (x e y em pixels com z na mesma escala, ou em metros). */
+data class Vec3(val x: Float, val y: Float, val z: Float) {
+    operator fun minus(o: Vec3) = Vec3(x - o.x, y - o.y, z - o.z)
+    fun norm3d() = sqrt(x * x + y * y + z * z)
+}
 
 /** Articulações que os exercícios usam (subconjunto dos 33 pontos do BlazePose) e o índice de cada uma. */
 enum class Joint(val index: Int) {
@@ -36,7 +42,7 @@ data class Side(
 
 /**
  * Uma pose detectada num quadro da câmera. Tudo aqui é geometria pura, sem Android.
- * [all] são os 33 marcos 3D, na ordem do BlazePose (usados pelo classificador de poses).
+ * [all] são todos os marcos 3D que o detector deu, na ordem dele.
  */
 class PoseFrame(
     private val points: Map<Joint, Point>,

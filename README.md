@@ -48,14 +48,14 @@ Mudar só o `update.json` não gera APK novo.
 ## Tecnologia
 
 - Kotlin + Jetpack Compose (Material 3), Android 8.0 ou mais novo
-- IA da câmera, escolhida na própria tela do treino (toque em "IA"): MediaPipe Pose Landmarker Lite ou
-  Full (código aberto do Google, Apache 2.0; também estima a profundidade, então os ângulos são em 3D),
-  ML Kit Pose ou MoveNet Lightning/Thunder (TensorFlow, Apache 2.0). Na "Automática" usa o MediaPipe Lite
-  e, se nele o corpo não aparecer mas no ML Kit sim, passa a usar o ML Kit. Os modelos são baixados pelo
-  Gradle na compilação. Tudo roda no aparelho e nenhuma imagem sai do celular
-- Na tela do treino, uma linha pequena mostra a IA, os quadros por segundo e o que o contador vê
-- Flexão: classificador de poses do exemplo oficial do Google ML Kit (k-vizinhos com centenas de fotos
-  reais de flexão), adaptado para Kotlin. Licença Apache 2.0 em `licenses/mlkit-samples-LICENSE.txt`
+- IA da câmera: MediaPipe Pose Landmarker Lite (código aberto do Google, Apache 2.0), só no processador.
+  Leve, acha o corpo também deitado e estima a profundidade, então os ângulos são medidos em 3D. O
+  modelo é baixado pelo Gradle na compilação. Roda no aparelho e nenhuma imagem sai do celular
+- Contagem pelas articulações que dobram em cada exercício, só com o corpo na posição certa:
+  flexão pelo cotovelo (de lado, deitado, corpo reto, pernas esticadas), agachamento e afundo pelo
+  joelho (tronco em pé), abdominal pelo quadril (não vale em pé), barra pelo cotovelo (mãos acima dos
+  ombros), prancha pelo alinhamento (joelhos esticados). Regras em `core/pose/Trackers.kt`, com testes
+- Na tela do treino, uma linha pequena mostra os quadros por segundo e os ângulos que o contador vê
 - Caminhada: sensor de passos do celular
 - Bloqueio: permissão "Acesso aos dados de uso" para saber o app aberto, um serviço em primeiro plano que
   desconta o saldo a cada segundo e "Sobrepor a outros apps" para mostrar a tela de bloqueio

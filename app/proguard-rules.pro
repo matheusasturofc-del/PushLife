@@ -7,7 +7,3 @@
 -dontwarn com.google.protobuf.**
 -dontwarn com.google.auto.value.**
 -dontwarn javax.annotation.**
-
-# TensorFlow Lite (MoveNet).
--keep class org.tensorflow.lite.** { *; }
--dontwarn org.tensorflow.lite.**

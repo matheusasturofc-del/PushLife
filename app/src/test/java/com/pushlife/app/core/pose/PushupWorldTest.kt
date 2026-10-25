@@ -1,6 +1,5 @@
 package com.pushlife.app.core.pose
 
-import com.pushlife.app.core.pose.classify.Vec3
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import kotlin.math.cos
@@ -57,14 +56,14 @@ class PushupWorldTest {
 
     @Test
     fun deFrenteContaPeloCotoveloEm3d() {
-        val tr = PushupTracker { null }
+        val tr = PushupTracker()
         tr.feed(List(4) { List(4) { frontPushup(170f) } + List(4) { frontPushup(105f) } }.flatten() + List(4) { frontPushup(170f) })
         assertEquals(4, tr.count)
     }
 
     @Test
     fun deFrenteDescerPoucoNaoConta() {
-        val tr = PushupTracker { null }
+        val tr = PushupTracker()
         val ups = tr.feed(List(4) { frontPushup(170f) } + List(4) { frontPushup(138f) } + List(4) { frontPushup(170f) })
         assertEquals(0, tr.count)
         assertEquals(Cue.GO_LOWER, ups.last().cue)
@@ -72,7 +71,7 @@ class PushupWorldTest {
 
     @Test
     fun emPeDeFrenteDobrandoOBracoNaoConta() {
-        val tr = PushupTracker { null }
+        val tr = PushupTracker()
         tr.feed(List(4) { List(4) { standingCurl(170f) } + List(4) { standingCurl(50f) } }.flatten())
         assertEquals(0, tr.count)
     }
