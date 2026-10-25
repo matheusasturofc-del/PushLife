@@ -6,14 +6,12 @@ import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.math.sqrt
 
-/**
- * Flexão com a câmera de frente (celular no chão, na frente da cabeça): na imagem plana o braço parece
- * sempre esticado, porque o cotovelo dobra "para dentro" da tela. Com os pontos 3D tem que contar.
- */
+// celular no chão de frente: no 2D o braço parece sempre esticado (cotovelo dobra pra dentro da tela)
+// então tem que contar pelos pontos 3D
 class PushupWorldTest {
     private fun p(x: Float, y: Float, w: Vec3) = Point(x, y, world = w)
 
-    /** Ombro sobre a mão; o cotovelo dobra para trás (z), o ombro desce (y). Metros, y para baixo. */
+    // ombro em cima da mão, cotovelo vai pra trás (z), ombro desce (y); metros, y pra baixo
     private fun frontPushup(elbowAngle: Float): PoseFrame {
         val arm = 0.3f
         val d = sqrt(2 * arm * arm * (1 - cos(Math.toRadians(elbowAngle.toDouble())))).toFloat()
@@ -22,7 +20,7 @@ class PushupWorldTest {
         val shoulder = Vec3(0.2f, 0.5f - d, 0f)
         val elbow = Vec3(0.2f, 0.5f - d / 2, h)
         val hip = Vec3(0.2f, shoulder.y + 0.05f, 0.5f) // tronco deitado, indo para longe da câmera
-        // Na imagem: tudo numa reta vertical, o braço "esticado" o tempo todo.
+        // na imagem fica tudo numa reta, braço "esticado" o tempo todo
         val sy = 300f - d * 100f
         return PoseFrame(
             mapOf(
@@ -34,7 +32,7 @@ class PushupWorldTest {
         )
     }
 
-    /** Em pé de frente para a câmera dobrando o braço (rosca), em 3D. */
+    // rosca em pé de frente, em 3D
     private fun standingCurl(elbowAngle: Float): PoseFrame {
         val r = Math.toRadians((180f - elbowAngle).toDouble())
         val shoulder = Vec3(0f, -0.4f, 0f)

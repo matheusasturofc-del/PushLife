@@ -11,10 +11,8 @@ import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URL
 
-/**
- * Conversa direto com o Supabase (login em /auth/v1 e banco em /rest/v1), sem biblioteca extra.
- * O endereço e a chave pública vêm de app/supabase.properties (veja CONTAS.md).
- */
+// fala direto com o Supabase (auth + rest), sem biblioteca
+// url e chave vêm de app/supabase.properties (ver CONTAS.md)
 internal class Supabase(context: Context) {
     val url: String = context.getString(R.string.supabase_url).trimEnd('/')
     private val key: String = context.getString(R.string.supabase_key)
@@ -22,7 +20,7 @@ internal class Supabase(context: Context) {
 
     val configured: Boolean get() = url.startsWith("https://") && key.isNotBlank()
 
-    /** Erro devolvido pelo Supabase: [code] é o código dele (ex.: "otp_expired"), [message] o texto. */
+    // erro do Supabase: code tipo "otp_expired" + mensagem
     class ApiError(val status: Int, val code: String, override val message: String) : Exception(message)
 
     data class Session(val uid: String, val email: String, val accessToken: String, val refreshToken: String, val expiresAt: Long)
@@ -61,7 +59,7 @@ internal class Supabase(context: Context) {
 
     fun clearSession() = prefs.edit { clear() }
 
-    /** Token válido para falar com o banco; renova sozinho quando está para vencer. */
+    // token pro banco, renova sozinho perto de vencer
     suspend fun accessToken(): String? {
         val s = loadSession() ?: return null
         if (System.currentTimeMillis() < s.expiresAt - 60_000) return s.accessToken
@@ -71,7 +69,7 @@ internal class Supabase(context: Context) {
 
     // ---------- HTTP ----------
 
-    /** Faz a chamada e devolve o JSON (objeto, lista, texto solto ou null). Lança [ApiError] ou [IOException]. */
+    // faz a chamada e devolve o JSON (ou null); lança ApiError/IOException
     suspend fun request(method: String, path: String, body: Any? = null, token: String? = null, prefer: String? = null): Any? =
         withContext(Dispatchers.IO) {
             val conn = URL(url + path).openConnection() as HttpURLConnection

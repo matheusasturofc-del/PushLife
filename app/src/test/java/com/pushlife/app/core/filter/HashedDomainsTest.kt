@@ -9,7 +9,7 @@ import java.nio.ByteBuffer
 class HashedDomainsTest {
     @Test
     fun hashIgualAoDoGradle() {
-        // Valores de referência do FNV-1a 64 (mesmo cálculo do build.gradle.kts).
+        // valores de referência do FNV-1a 64 (igual ao build.gradle.kts)
         assertEquals(-0x340d631b7bdddcdbL, HashedDomains.hash(""))
         assertEquals(-0x509c23b379fe1374L, HashedDomains.hash("a"))
     }

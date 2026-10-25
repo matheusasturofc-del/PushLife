@@ -16,10 +16,8 @@ object StepSensor {
         context.getSystemService(SensorManager::class.java).getDefaultSensor(Sensor.TYPE_STEP_COUNTER) != null
 }
 
-/**
- * Acompanha os passos desde que a tela abriu, usando o contador de passos do próprio celular
- * (ele conta mesmo com a tela desligada; o valor chega quando o app volta).
- */
+// passos desde que a tela abriu, pelo sensor do próprio celular
+// (conta até com a tela apagada; o valor chega quando o app volta)
 @Composable
 fun StepCounterEffect(onSteps: (Int) -> Unit) {
     val context = LocalContext.current

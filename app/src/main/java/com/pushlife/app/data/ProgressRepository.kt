@@ -9,14 +9,14 @@ import kotlinx.coroutines.flow.asStateFlow
 import java.time.LocalDate
 
 data class ProgressState(
-    /** Dias em que a meta diária foi batida (registrado na hora, com a meta daquele dia). */
+    // dias que bateu a meta (salvo na hora, com a meta do dia)
     val goalMetDays: Set<LocalDate> = emptySet(),
-    /** Semanas (segunda-feira) cujo desafio já foi resgatado. */
+    // semanas (segunda) com desafio já resgatado
     val claimedWeeks: Set<LocalDate> = emptySet(),
-    /** Conquistas que a pessoa já viu (as novas aparecem no fim do treino). */
+    // conquistas já vistas (as novas aparecem no fim do treino)
     val seenAchievements: Set<Achievement> = emptySet(),
     val seenLevel: Int = 1,
-    /** Última vez que a meta diária foi ajustada pela evolução automática. */
+    // último ajuste automático da meta
     val lastGoalAdjust: LocalDate? = null,
 )
 

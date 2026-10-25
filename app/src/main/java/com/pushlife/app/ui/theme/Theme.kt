@@ -12,7 +12,7 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 
-// Cores da marca: laranja e amarelo, com texto escuro por cima (visual esportivo).
+// cores da marca: laranja e amarelo, texto escuro por cima
 val Orange = Color(0xFFFF6A00)
 val Yellow = Color(0xFFFFC300)
 val Ink = Color(0xFF1A1208)
@@ -57,7 +57,7 @@ private val DarkColors = darkColorScheme(
 
 private val base = Typography()
 
-// Títulos pesados e em itálico, como em placar de academia.
+// títulos pesados e itálicos, estilo placar de academia
 private val AppTypography = base.copy(
     displayMedium = base.displayMedium.copy(fontWeight = FontWeight.Black, fontStyle = FontStyle.Italic),
     headlineLarge = base.headlineLarge.copy(fontWeight = FontWeight.Black, fontStyle = FontStyle.Italic),

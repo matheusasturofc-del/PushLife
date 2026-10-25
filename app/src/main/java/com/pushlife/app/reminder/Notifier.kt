@@ -14,7 +14,7 @@ import androidx.core.content.ContextCompat
 import com.pushlife.app.MainActivity
 import com.pushlife.app.R
 
-/** Canais e envio das notificações do app (lembretes, avisos, resumo). */
+// canais e envio das notificações
 object Notifier {
     const val CHANNEL_REMINDERS = "workout_reminders"
     const val CHANNEL_ALERTS = "alerts"
@@ -55,7 +55,7 @@ object Notifier {
         try {
             NotificationManagerCompat.from(context).notify(id, notification)
         } catch (_: SecurityException) {
-            // Permissão de notificação retirada: o aviso simplesmente não aparece.
+            // sem permissão de notificação: só não aparece
         }
     }
 }

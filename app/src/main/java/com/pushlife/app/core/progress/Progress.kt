@@ -8,9 +8,9 @@ import java.time.temporal.IsoFields
 import java.time.temporal.TemporalAdjusters
 import kotlin.math.roundToInt
 
-/** Dias seguidos com algum exercício. */
+// dias seguidos treinando
 object Streaks {
-    /** Sequência atual: termina hoje, ou ontem se hoje ainda não treinou. */
+    // termina hoje, ou ontem se hoje ainda não treinou
     fun current(activeDays: Set<LocalDate>, today: LocalDate): Int {
         var day = if (today in activeDays) today else today.minusDays(1)
         var n = 0
@@ -36,12 +36,12 @@ object Streaks {
         return best
     }
 
-    /** Sequência em risco: havia sequência até ontem e hoje ainda não treinou. */
+    // treinou até ontem e hoje ainda nada
     fun atRisk(activeDays: Set<LocalDate>, today: LocalDate): Boolean =
         today !in activeDays && today.minusDays(1) in activeDays
 }
 
-/** Níveis: subir do nível L para o L+1 custa 50 × L de XP. */
+// nível L -> L+1 custa 50 × L de XP
 object Levels {
     fun xpToReach(level: Int): Int = 25 * level * (level - 1)
 
@@ -51,14 +51,14 @@ object Levels {
         return level
     }
 
-    /** 0..1 dentro do nível atual. */
+    // progresso dentro do nível (0..1)
     fun progressInLevel(xp: Int): Float {
         val level = levelFor(xp)
         val start = xpToReach(level)
         return (xp - start).toFloat() / (xpToReach(level + 1) - start)
     }
 
-    /** Título do nível (índice para os textos de cada idioma). */
+    // índice do título pros textos de cada idioma
     fun rank(level: Int): Rank = when {
         level >= 17 -> Rank.LEGEND
         level >= 12 -> Rank.BEAST
@@ -71,7 +71,7 @@ object Levels {
     enum class Rank { ROOKIE, WARMING_UP, FIT, ATHLETE, BEAST, LEGEND }
 }
 
-/** Calorias aproximadas por unidade (média para um adulto de ~70 kg; é só uma estimativa). */
+// kcal por unidade, chute pra adulto de ~70 kg
 object Calories {
     fun perUnit(exercise: Exercise): Double = when (exercise) {
         Exercise.PUSHUP -> 0.4
@@ -89,7 +89,7 @@ object Calories {
     fun of(counts: Map<Exercise, Int>): Int = counts.entries.sumOf { perUnit(it.key) * it.value }.roundToInt()
 }
 
-/** Números usados pelas conquistas, níveis e pela tela de progresso. */
+// números pras conquistas, níveis e tela de progresso
 data class Stats(
     val totals: Map<Exercise, Int>,
     val totalMinutes: Int,
@@ -131,7 +131,7 @@ data class Stats(
     }
 }
 
-/** Conquistas: cada uma é uma condição sobre as [Stats]. */
+// conquistas, cada uma checa as Stats
 enum class Achievement(val isUnlocked: (Stats) -> Boolean) {
     FIRST_WORKOUT({ it.totalMinutes > 0 }),
     PUSHUPS_100({ (it.totals[Exercise.PUSHUP] ?: 0) >= 100 }),
@@ -154,7 +154,7 @@ enum class Achievement(val isUnlocked: (Stats) -> Boolean) {
     }
 }
 
-/** Um desafio por semana (segunda a domingo), que se repete em rodízio. */
+// desafio da semana (seg a dom), em rodízio
 enum class WeeklyChallenge(val target: Int) {
     PUSHUPS_300(300),
     ACTIVE_5_DAYS(5),
@@ -164,7 +164,7 @@ enum class WeeklyChallenge(val target: Int) {
     STEPS_50K(50_000),
     ;
 
-    /** Quanto já foi feito na semana que começa em [weekStart]. */
+    // quanto já fez na semana
     fun progress(bank: BankState, weekStart: LocalDate): Int {
         val days = (0L..6L).map { weekStart.plusDays(it) }
         fun sum(ex: Exercise) = days.sumOf { bank.countOn(it, ex) }
@@ -190,10 +190,8 @@ enum class WeeklyChallenge(val target: Int) {
     }
 }
 
-/**
- * Meta que evolui: olha a última semana. Bateu a meta em 5 dias ou mais, sobe 10%;
- * em 1 dia ou menos, desce 10%. Sempre em múltiplos de 5, entre 10 e 300.
- */
+// meta automática: bateu 5+ dias na semana sobe 10%, 1 ou menos desce 10%
+// sempre múltiplo de 5, entre 10 e 300
 object AdaptiveGoal {
     fun adjust(currentGoal: Int, lastWeekMinutes: List<Int>): Int {
         val met = lastWeekMinutes.count { it >= currentGoal }

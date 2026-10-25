@@ -42,7 +42,7 @@ import com.pushlife.app.core.UpdatePolicy
 import com.pushlife.app.data.UpdateChecker
 import com.pushlife.app.ui.theme.Orange
 
-/** Tela que trava o app até a versão nova ser instalada; o botão abre a página na Uptodown. */
+// trava o app até atualizar; botão abre a Uptodown
 @Composable
 fun UpdateRequiredScreen(info: UpdateInfo) {
     val context = LocalContext.current

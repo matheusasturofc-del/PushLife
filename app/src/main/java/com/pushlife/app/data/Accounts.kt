@@ -16,17 +16,8 @@ import org.json.JSONObject
 import java.io.IOException
 import java.time.Instant
 
-/**
- * Contas com e-mail, senha e um código de 6 dígitos mandado por e-mail (Supabase Auth).
- *
- * - Criar conta: e-mail, senha e @ → código no e-mail → conta confirmada e já conectada.
- * - Entrar: e-mail e senha → código no e-mail → conectado.
- * - Esqueci a senha: código no e-mail → senha nova → conectado.
- *
- * No banco (tabela `profiles`, uma linha por conta): @ (único), nome e o backup do app.
- * A linha nasce junto com a conta (gatilho no banco), então o @ fica reservado na hora do cadastro.
- * Veja supabase/schema.sql e CONTAS.md.
- */
+// contas: e-mail + senha + código de 6 dígitos no e-mail (Supabase Auth)
+// o @ já fica reservado no cadastro (gatilho no banco) — ver supabase/schema.sql e CONTAS.md
 object Accounts {
     enum class Error {
         NOT_CONFIGURED, NETWORK, USERNAME_TAKEN, EMAIL_IN_USE, WEAK_PASSWORD, BAD_EMAIL, WRONG_CREDENTIALS,
@@ -37,7 +28,7 @@ object Accounts {
 
     data class Account(val uid: String, val email: String)
 
-    /** O que vem da nuvem ao entrar: o backup é null se a conta ainda não tinha salvo nada. */
+    // backup vem null se a conta nunca salvou nada
     data class LoginResult(val name: String, val username: String, val backup: String?)
 
     private const val BACKUP_EVERY_MS = 5 * 60 * 1000L
@@ -47,7 +38,7 @@ object Accounts {
     private var appContext: Context? = null
     private var lastBackupMs = 0L
 
-    /** "email" no login normal; "signup" quando a conta existe mas o e-mail nunca foi confirmado. */
+    // "signup" quando a conta existe mas o e-mail nunca foi confirmado
     private var loginCodeType = "email"
 
     private val _current = MutableStateFlow<Account?>(null)
@@ -63,14 +54,14 @@ object Accounts {
         _current.value = s.loadSession()?.let { Account(it.uid, it.email) }
     }
 
-    /** true se ninguém usa esse @. */
+    // @ livre?
     suspend fun isUsernameFree(handle: String): Boolean = guard {
         api().request("POST", "/rest/v1/rpc/username_available", JSONObject().put("name", handle)).toString() == "true"
     }
 
     // ---------- criar conta ----------
 
-    /** Passo 1: cria a conta (ainda não confirmada) e o Supabase manda o código para o e-mail. */
+    // cadastro, passo 1: cria a conta e o Supabase manda o código
     suspend fun requestSignUpCode(email: String, password: String, handle: String, name: String) {
         if (!isUsernameFree(handle)) throw AccountException(Error.USERNAME_TAKEN)
         val body = JSONObject()
@@ -78,7 +69,7 @@ object Accounts {
             .put("password", password)
             .put("data", JSONObject().put("username", handle).put("name", name))
         val res = guard { api().request("POST", "/auth/v1/signup", body) as? JSONObject }
-        // E-mail que já tem conta confirmada: o Supabase finge que deu certo, mas sem "identities".
+        // e-mail já confirmado: o Supabase finge que deu certo, mas vem sem "identities"
         val identities = (res?.optJSONObject("user") ?: res)?.optJSONArray("identities")
         if (identities != null && identities.length() == 0) throw AccountException(Error.EMAIL_IN_USE)
     }
@@ -87,20 +78,20 @@ object Accounts {
         guard { api().request("POST", "/auth/v1/resend", JSONObject().put("type", "signup").put("email", email.trim())) }
     }
 
-    /** Passo 2: com o código certo a conta é confirmada e o app já entra nela. */
+    // passo 2: código certo, conta confirmada e já entra
     suspend fun verifySignUp(email: String, code: String) {
         verify("signup", email, code)
     }
 
     // ---------- entrar ----------
 
-    /** Passo 1: confere a senha e manda o código para o e-mail. */
+    // login, passo 1: confere a senha e manda o código
     suspend fun requestLoginCode(email: String, password: String) {
         val mail = email.trim()
         try {
             guard { api().request("POST", "/auth/v1/token?grant_type=password", JSONObject().put("email", mail).put("password", password)) }
         } catch (e: AccountException) {
-            // Criou a conta mas nunca digitou o código: manda o código do cadastro de novo.
+            // nunca digitou o código do cadastro: manda de novo
             if ((e.cause as? Supabase.ApiError)?.code == "email_not_confirmed") {
                 resendSignUpCode(mail)
                 loginCodeType = "signup"
@@ -112,7 +103,7 @@ object Accounts {
         loginCodeType = "email"
     }
 
-    /** Passo 2: entra e devolve o que estava salvo na conta. */
+    // passo 2: entra e puxa o backup da conta
     suspend fun verifyLogin(email: String, code: String): LoginResult {
         verify(loginCodeType, email, code)
         return loadProfile()
@@ -124,7 +115,7 @@ object Accounts {
         guard { api().request("POST", "/auth/v1/recover", JSONObject().put("email", email.trim())) }
     }
 
-    /** Código do e-mail + senha nova: troca a senha e já entra. */
+    // código + senha nova e já entra
     suspend fun resetPassword(email: String, code: String, newPassword: String): LoginResult {
         verify("recovery", email, code)
         guard {
@@ -133,13 +124,13 @@ object Accounts {
         return loadProfile()
     }
 
-    /** Apagar a conta, passo 1: manda um código para o e-mail da conta. */
+    // apagar conta, passo 1: manda o código
     suspend fun requestDeleteCode() {
         val email = api().loadSession()?.email ?: throw AccountException(Error.UNKNOWN)
         guard { api().request("POST", "/auth/v1/otp", JSONObject().put("email", email).put("create_user", false)) }
     }
 
-    /** Apagar a conta, passo 2: com o código do e-mail, apaga para sempre a conta, o @ e o backup na nuvem. */
+    // passo 2: apaga tudo de vez (conta, @ e backup)
     suspend fun deleteAccount(code: String) {
         val email = api().loadSession()?.email ?: throw AccountException(Error.UNKNOWN)
         verify("email", email, code)
@@ -160,7 +151,7 @@ object Accounts {
 
     // ---------- backup ----------
 
-    /** Envia o backup para a conta (no máximo a cada 5 min, a não ser que [force]). Falhou? Tenta na próxima. */
+    // sobe o backup no máx. a cada 5 min (menos com force); se falhar, vai na próxima
     fun backup(context: Context, force: Boolean = false) {
         val s = api ?: return
         val uid = s.loadSession()?.uid ?: return
@@ -184,14 +175,14 @@ object Accounts {
 
     // ---------- Google, Discord e Twitch ----------
 
-    /** Provedores de login social ligados no Supabase (o nome é o que o Supabase usa). */
+    // logins sociais (nome igual ao do Supabase)
     enum class Provider(val id: String) { GOOGLE("google"), DISCORD("discord"), TWITCH("twitch") }
 
-    /** Andamento do login social, que passa pelo navegador e volta para o app. */
+    // estado do login social (vai pro navegador e volta)
     sealed interface OAuthState {
         data object Idle : OAuthState
         data object Working : OAuthState
-        /** Conta nova: falta escolher o @ (o nome vem do Google/Discord/Twitch, se tiver). */
+        // conta nova: falta escolher o @ (nome vem do provedor, se tiver)
         data class NeedsUsername(val name: String) : OAuthState
         data class Done(val result: LoginResult) : OAuthState
         data class Failed(val error: Error) : OAuthState
@@ -202,10 +193,7 @@ object Accounts {
     private val _oauth = MutableStateFlow<OAuthState>(OAuthState.Idle)
     val oauth: StateFlow<OAuthState> = _oauth.asStateFlow()
 
-    /**
-     * Endereço para abrir no navegador. Usa PKCE: o app guarda um segredo e só quem tem esse segredo
-     * consegue trocar o código da volta por uma sessão.
-     */
+    // link pro navegador; PKCE: só quem tem o segredo troca o código por sessão
     fun oauthUrl(provider: Provider): String {
         val base = api().url
         val verifier = Pkce.newVerifier()
@@ -215,7 +203,7 @@ object Accounts {
             "&code_challenge=${Pkce.challenge(verifier)}&code_challenge_method=s256"
     }
 
-    /** Volta do navegador (pushlife://auth-callback?code=...). */
+    // volta do navegador (pushlife://auth-callback?code=...)
     suspend fun completeOAuth(code: String?, error: String?) {
         if (code == null) {
             _oauth.value = OAuthState.Failed(if (error == null) Error.UNKNOWN else Error.WRONG_CREDENTIALS)
@@ -244,7 +232,7 @@ object Accounts {
         }
     }
 
-    /** Conta nova do Google/Discord/Twitch: cria o perfil com o @ escolhido. */
+    // conta social nova: cria o perfil com o @ escolhido
     suspend fun createProfile(handle: String, name: String) {
         val uid = api().loadSession()?.uid ?: throw AccountException(Error.UNKNOWN)
         guard {
@@ -258,7 +246,7 @@ object Accounts {
         _oauth.value = OAuthState.Done(LoginResult(name = name, username = handle, backup = null))
     }
 
-    /** Quem tratou o resultado (ou desistiu) volta o estado para o início. */
+    // reseta o estado depois de tratar (ou desistir)
     fun consumeOAuth() {
         _oauth.value = OAuthState.Idle
     }
@@ -279,7 +267,7 @@ object Accounts {
 
     private suspend fun loadProfile(): LoginResult = loadProfileOrNull() ?: LoginResult(name = "", username = "", backup = null)
 
-    /** O perfil da conta conectada, ou null se ainda não existe (conta nova de login social). */
+    // perfil da conta, null se ainda não tem (login social novo)
     private suspend fun loadProfileOrNull(): LoginResult? = guard {
         val s = api().loadSession() ?: throw AccountException(Error.UNKNOWN)
         val rows = api().request("GET", "/rest/v1/profiles?id=eq.${s.uid}&select=username,name,backup", token = api().accessToken()) as? JSONArray
@@ -291,7 +279,7 @@ object Accounts {
         )
     }
 
-    /** Traduz os erros do Supabase para os nossos. */
+    // erros do Supabase -> os nossos
     private suspend fun <T> guard(block: suspend () -> T): T = try {
         block()
     } catch (e: AccountException) {
@@ -316,7 +304,7 @@ object Accounts {
             e.code == "user_already_exists" || e.code == "email_exists" -> Error.EMAIL_IN_USE
             e.code.startsWith("over_") || e.status == 429 || "security purposes" in msg -> Error.WAIT
             "sending" in msg && "email" in msg -> Error.EMAIL_FAILED
-            // O gatilho que cria o perfil falha quando o @ foi pego no meio do caminho.
+            // gatilho do perfil falha se pegaram o @ no meio do caminho
             "database error saving new user" in msg || e.code == "23505" -> Error.USERNAME_TAKEN
             e.code == "email_not_confirmed" -> Error.WRONG_CREDENTIALS
             else -> Error.UNKNOWN

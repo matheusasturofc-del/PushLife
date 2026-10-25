@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import java.time.LocalDate
 
-/** Guarda o saldo de tempo e o histórico de exercícios no próprio celular. */
+// saldo de tempo e histórico, tudo salvo no celular
 class BankRepository(context: Context) {
     private val prefs = context.getSharedPreferences("bank", Context.MODE_PRIVATE)
     private val _state = MutableStateFlow(load())
@@ -36,7 +36,7 @@ class BankRepository(context: Context) {
         save(TimeBank.spend(_state.value, seconds, today))
     }
 
-    /** Usa uma emergência; retorna false se as de hoje já acabaram. */
+    // gasta uma emergência; false se acabaram as de hoje
     @Synchronized
     fun emergency(today: LocalDate = LocalDate.now(), nowMs: Long = System.currentTimeMillis()): Boolean {
         val next = TimeBank.emergency(_state.value, today, nowMs) ?: return false
@@ -45,7 +45,7 @@ class BankRepository(context: Context) {
     }
 
     private fun load(): BankState {
-        // Versões antigas guardavam só flexões ("reps_by_day") e a dívida em flexões ("debt_reps").
+        // versão antiga só guardava flexões (reps_by_day / debt_reps)
         val legacyReps = decodeDayInts(prefs.getString(KEY_LEGACY_REPS, "").orEmpty())
         val counts = prefs.getString(KEY_COUNTS, null)?.let(::decodeCounts)
             ?: legacyReps.mapValues { mapOf(Exercise.PUSHUP to it.value) }

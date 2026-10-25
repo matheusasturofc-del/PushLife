@@ -55,7 +55,7 @@ import com.pushlife.app.ui.theme.PushLifeTheme
 import com.pushlife.app.ui.theme.Yellow
 import java.time.LocalDate
 
-/** Tela que cobre um app bloqueado quando o saldo acaba. */
+// tela por cima do app bloqueado quando o saldo zera
 class BlockActivity : ComponentActivity() {
     override fun attachBaseContext(newBase: Context) {
         super.attachBaseContext(AppLanguage.wrap(newBase))
@@ -66,13 +66,13 @@ class BlockActivity : ComponentActivity() {
         enableEdgeToEdge()
         val packageName = intent.getStringExtra(EXTRA_PACKAGE).orEmpty()
         val appLabel = InstalledApps.label(this, packageName)
-        // Voltar = ir para a tela inicial, nunca de volta ao app bloqueado.
+        // voltar = tela inicial, nunca o app bloqueado
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() = goHome()
         })
         setContent {
             PushLifeTheme {
-                // Treino aqui mesmo, sem sair da tela de bloqueio nem abrir o app.
+                // treina aqui mesmo, sem sair do bloqueio
                 var training by rememberSaveable { mutableStateOf(false) }
                 var pick by rememberSaveable { mutableStateOf<Exercise?>(null) }
                 if (training) {
@@ -172,7 +172,7 @@ private fun BlockContent(
             )
         }
         if (available > 0) {
-            // Já treinou e ganhou tempo: volta direto para o app.
+            // treinou e ganhou tempo: volta pro app
             Text(
                 stringResource(R.string.blocked_earned, formatDuration(available)),
                 style = MaterialTheme.typography.titleMedium,

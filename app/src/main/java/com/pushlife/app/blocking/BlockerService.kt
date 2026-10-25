@@ -24,10 +24,8 @@ import com.pushlife.app.reminder.Notifier
 import com.pushlife.app.ui.formatDuration
 import java.time.LocalDate
 
-/**
- * Serviço em primeiro plano (com notificação fixa) que, a cada segundo, vê qual app está aberto,
- * desconta o tempo dos apps bloqueados e abre a tela de bloqueio quando o saldo acaba.
- */
+// primeiro plano: a cada segundo vê o app aberto, desconta o tempo
+// e abre o bloqueio quando o saldo acaba
 class BlockerService : Service() {
     private val handler = Handler(Looper.getMainLooper())
     private val engine = BlockerEngine()
@@ -95,7 +93,7 @@ class BlockerService : Service() {
         warnIfLow(foreground != null && foreground in settings.blockedPackages, bank.available(LocalDate.now()) - engine.pendingSeconds)
     }
 
-    /** Avisa uma vez quando o saldo fica abaixo de 5 min usando um app bloqueado. */
+    // avisa uma vez quando falta menos de 5 min
     private fun warnIfLow(inBlockedApp: Boolean, remaining: Long) {
         if (remaining > LOW_SECONDS) {
             warnedLow = false
@@ -136,7 +134,7 @@ class BlockerService : Service() {
         private const val FLUSH_EVERY_SECONDS = 15
         private const val LOW_SECONDS = 5 * 60L
 
-        /** Liga o serviço se a proteção estiver ativa e as permissões liberadas. */
+        // liga se a proteção tá ativa e com permissões
         fun syncWithSettings(context: Context) {
             val settings = AppGraph.blocking.state.value
             val intent = Intent(context, BlockerService::class.java)

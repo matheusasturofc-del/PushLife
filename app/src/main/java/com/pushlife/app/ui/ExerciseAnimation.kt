@@ -21,10 +21,8 @@ import com.pushlife.app.core.Exercise
 import com.pushlife.app.ui.theme.Orange
 import com.pushlife.app.ui.theme.Yellow
 
-/**
- * O personagem do PushLife (bonequinho laranja) mostrando o movimento de cada exercício, em loop.
- * As poses são desenhadas num quadro de 200×200 com o chão em y = 180.
- */
+// bonequinho laranja fazendo o exercício em loop
+// quadro 200×200, chão em y = 180
 @Composable
 fun ExerciseAnimation(exercise: Exercise, modifier: Modifier = Modifier) {
     val anim = remember(exercise) { animationFor(exercise) }
@@ -50,7 +48,7 @@ fun ExerciseAnimation(exercise: Exercise, modifier: Modifier = Modifier) {
         fun DrawScope.bone(a: Offset, b: Offset, color: Color, width: Float) =
             drawLine(color, o(a), o(b), strokeWidth = width * s, cap = StrokeCap.Round)
 
-        // Cenário: chão, e parede ou barra quando o exercício usa.
+        // chão + parede ou barra se o exercício usar
         bone(Offset(10f, 182f), Offset(190f, 182f), ground, 3f)
         when (anim.prop) {
             Prop.WALL -> bone(Offset(48f, 20f), Offset(48f, 182f), ground, 6f)
@@ -59,21 +57,21 @@ fun ExerciseAnimation(exercise: Exercise, modifier: Modifier = Modifier) {
         }
 
         with(figure) {
-            // Membros de trás mais escuros, para dar profundidade.
+            // membros de trás mais escuros (profundidade)
             bone(neck, elbowB, back, 11f); bone(elbowB, handB, back, 10f)
             bone(hip, kneeB, back, 12f); bone(kneeB, footB, back, 11f)
             // Tronco, pescoço e cabeça.
             bone(neck, hip, Orange, 17f)
             bone(neck, head, Orange, 8f)
             drawCircle(Orange, radius = 14f * s, center = o(head))
-            // Olhos: de perfil um só, de frente dois.
+            // olho: de perfil um, de frente dois
             if (anim.facing == 0f) {
                 drawCircle(Color.White, radius = 2.6f * s, center = o(head + Offset(-5f, -2f)))
                 drawCircle(Color.White, radius = 2.6f * s, center = o(head + Offset(5f, -2f)))
             } else {
                 drawCircle(Color.White, radius = 2.8f * s, center = o(head + Offset(6f * anim.facing, -2f)))
             }
-            // O pontinho amarelo da marca, no peito.
+            // pontinho amarelo da marca no peito
             drawCircle(Yellow, radius = 3.5f * s, center = o(lerp(neck, hip, 0.25f)))
             // Membros da frente.
             bone(hip, kneeF, Orange, 12f); bone(kneeF, footF, Orange, 11f)
@@ -86,7 +84,7 @@ private enum class Prop { NONE, WALL, BAR }
 
 private class Anim(val frames: List<Figure>, val segmentMs: Int, val facing: Float = 1f, val prop: Prop = Prop.NONE)
 
-/** Uma pose do bonequinho: F = membros da frente, B = de trás. */
+// pose: F = frente, B = trás
 private data class Figure(
     val head: Offset, val neck: Offset, val hip: Offset,
     val elbowF: Offset, val handF: Offset, val elbowB: Offset, val handB: Offset,
@@ -101,7 +99,7 @@ private data class Figure(
 
 private fun p(x: Number, y: Number) = Offset(x.toFloat(), y.toFloat())
 
-/** Atalho: quando os membros de trás ficam atrás dos da frente (vista de perfil). */
+// atalho pra vista de perfil (trás atrás da frente)
 private fun fig(
     head: Offset, neck: Offset, hip: Offset, elbow: Offset, hand: Offset, knee: Offset, foot: Offset,
     elbowB: Offset = elbow, handB: Offset = hand, kneeB: Offset = knee, footB: Offset = foot,
