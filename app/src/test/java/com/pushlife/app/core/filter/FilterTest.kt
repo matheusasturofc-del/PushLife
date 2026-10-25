@@ -93,3 +93,16 @@ class PacketsTest {
         assertNull(Packets.parseUdp(ByteArray(10), 10))
     }
 }
+
+class GoreFilterTest {
+    @Test
+    fun bloqueiaGoreSemPegarSitesNormais() {
+        val list = DomainBlocklist()
+        assertTrue(list.isBlocked("theync.com"))
+        assertTrue(list.isBlocked("www.kaotic.com"))
+        assertTrue(list.isBlocked("bestgore.net")) // espelho, pela palavra
+        assertFalse(list.isBlocked("gore-tex.com"))
+        assertFalse(list.isBlocked("gorenje.com"))
+        assertFalse(list.isBlocked("gore.com"))
+    }
+}

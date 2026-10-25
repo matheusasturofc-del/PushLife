@@ -298,7 +298,7 @@
 
     <!-- Filtro de sites (fase 6) e perfil (fase 7) -->
     <string name="filter_title">Adult sites</string>
-    <string name="filter_on">On: porn and hentai sites are blocked in every browser and app.</string>
+    <string name="filter_on">On: adult sites are blocked in every browser and app.</string>
     <string name="filter_paused">Turning on… If it stays like this, open the app again.</string>
     <string name="filter_off">Off. Uses a local VPN that only filters site addresses (DNS). The rest of your internet does not go through it.</string>
     <string name="filter_tips">For extra protection: Settings > Connections > More connection settings > VPN > PushLife > Always-on VPN. If you use Private DNS, keep it on Automatic.</string>
@@ -528,14 +528,14 @@
     <string name="challenge_no_paste">No pasting. Type the text.</string>
     <string name="challenge_mistake">Something is different from the text. Check the last word.</string>
     <string-array name="filter_challenge_lines">
-        <item>Pornography steals my time and my energy.</item>
-        <item>It is addictive and always asks for more.</item>
-        <item>It changes the way I see people.</item>
-        <item>It hurts my real relationships.</item>
-        <item>It takes my focus away from study and work.</item>
-        <item>It leaves me tired and unmotivated.</item>
-        <item>It brings down my self esteem.</item>
-        <item>It makes me hide things from the people I love.</item>
+        <item>Adult sites steal my time and my energy.</item>
+        <item>They are addictive and always ask for more.</item>
+        <item>They change the way I see people.</item>
+        <item>They hurt my real relationships.</item>
+        <item>They take my focus away from study and work.</item>
+        <item>They leave me tired and unmotivated.</item>
+        <item>They bring down my self esteem.</item>
+        <item>They make me hide things from the people I love.</item>
         <item>Every relapse leaves guilt and emptiness.</item>
         <item>I am stronger than this urge.</item>
         <item>The urge passes if I do not give in.</item>

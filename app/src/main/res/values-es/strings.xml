@@ -291,7 +291,7 @@
 
     <!-- Filtro de sites (fase 6) e perfil (fase 7) -->
     <string name="filter_title">Sitios para adultos</string>
-    <string name="filter_on">Activado: los sitios porno y de hentai quedan bloqueados en cualquier navegador y app.</string>
+    <string name="filter_on">Activado: los sitios para adultos quedan bloqueados en cualquier navegador y app.</string>
     <string name="filter_paused">Activando… Si se queda así, abre la app de nuevo.</string>
     <string name="filter_off">Desactivado. Usa una VPN local que solo filtra las direcciones de los sitios (DNS). El resto de tu internet no pasa por ella.</string>
     <string name="filter_tips">Para más protección: Ajustes > Conexiones > Más ajustes de conexión > VPN > PushLife > VPN siempre activa. Si usas DNS privado, déjalo en Automático.</string>
@@ -521,14 +521,14 @@
     <string name="challenge_no_paste">No vale pegar. Escribe el texto.</string>
     <string name="challenge_mistake">Hay algo distinto al texto. Revisa la última palabra.</string>
     <string-array name="filter_challenge_lines">
-        <item>La pornografía roba mi tiempo y mi energía.</item>
-        <item>Es adictiva y siempre pide más.</item>
-        <item>Cambia la forma en que veo a las personas.</item>
-        <item>Daña mis relaciones de verdad.</item>
-        <item>Me quita el foco de los estudios y del trabajo.</item>
-        <item>Me deja cansado y sin ganas.</item>
-        <item>Baja mi autoestima.</item>
-        <item>Me hace esconder cosas de quien amo.</item>
+        <item>Los sitios para adultos roban mi tiempo y mi energía.</item>
+        <item>Son adictivos y siempre piden más.</item>
+        <item>Cambian la forma en que veo a las personas.</item>
+        <item>Dañan mis relaciones de verdad.</item>
+        <item>Me quitan el foco de los estudios y del trabajo.</item>
+        <item>Me dejan cansado y sin ganas.</item>
+        <item>Bajan mi autoestima.</item>
+        <item>Me hacen esconder cosas de quien amo.</item>
         <item>Cada recaída deja culpa y vacío.</item>
         <item>Soy más fuerte que este impulso.</item>
         <item>Las ganas pasan si no cedo.</item>

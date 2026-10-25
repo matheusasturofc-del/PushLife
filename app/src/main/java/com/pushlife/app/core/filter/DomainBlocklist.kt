@@ -3,8 +3,8 @@ package com.pushlife.app.core.filter
 // sites adultos bloqueados; o domínio já pega os subdomínios
 // palavras-chave pegam espelhos e domínios novos
 class DomainBlocklist(
-    domains: Collection<String> = ADULT_DOMAINS,
-    private val keywords: List<String> = ADULT_KEYWORDS,
+    domains: Collection<String> = ADULT_DOMAINS + GORE_DOMAINS,
+    private val keywords: List<String> = ADULT_KEYWORDS + GORE_KEYWORDS,
     private val big: HashedDomains? = null,
 ) {
     private val set = domains.map(::normalize).toHashSet()
@@ -41,5 +41,15 @@ class DomainBlocklist(
             "imagefap.com", "rule34.xxx", "nhentai.net", "e-hentai.org", "exhentai.org", "hanime.tv",
             "hentaihaven.xxx", "hentai2read.com", "hitomi.la", "tsumino.com", "luscious.net", "f95zone.to",
         )
+
+        // gore / violência explícita: lista nossa (não achei uma pública com licença livre)
+        val GORE_DOMAINS = listOf(
+            "bestgore.com", "bestgore.fun", "bestgore.org", "theync.com", "kaotic.com", "documentingreality.com",
+            "crazyshit.com", "goregrish.com", "seegore.com", "gorecenter.com", "goresee.com", "deathaddict.com",
+            "watchpeopledie.tv", "runthegauntlet.org", "ogrish.com", "rotten.com", "heavy-r.com", "efukt.com",
+        )
+
+        // só pedaços bem específicos ("gore" sozinho pegaria gore-tex, gorenje, goregaon...)
+        val GORE_KEYWORDS = listOf("bestgore", "seegore", "goregrish", "gorecenter", "watchpeopledie")
     }
 }
