@@ -4,7 +4,7 @@ import com.pushlife.app.core.Exercise
 import kotlin.math.exp
 import kotlin.math.hypot
 
-/** Dica mostrada durante o treino (o texto de cada uma fica nos recursos de idioma). */
+// dicas do treino (os textos ficam no strings.xml)
 enum class Cue {
     NOT_VISIBLE, GET_READY,
     GO_DOWN, GO_UP, GO_LOWER,
@@ -12,14 +12,11 @@ enum class Cue {
     OPEN, CLOSE, FLOOR, STAND, PULL, EXTEND,
 }
 
-/**
- * @param counted unidades concluídas neste quadro (repetições, ou segundos na prancha)
- * @param progress 0..1 para a barra de profundidade
- * @param debug o que o contador está vendo, em texto curto, para mostrar pequeno na tela
- */
+// counted = reps (ou segundos na prancha) nesse quadro, progress = barra 0..1
+// debug = o que o contador tá vendo, aparece pequenininho na tela
 data class TrackerUpdate(val counted: Int, val progress: Float, val cue: Cue, val debug: String? = null)
 
-/** Acompanha um exercício quadro a quadro a partir da pose. */
+// cada exercício tem o seu, recebe a pose quadro a quadro
 interface PoseTracker {
     val count: Int
     fun update(frame: PoseFrame?, timeMs: Long): TrackerUpdate
@@ -40,12 +37,8 @@ interface PoseTracker {
     }
 }
 
-/**
- * Conta repetições por um ângulo que diminui no fundo do movimento (joelho no agachamento,
- * quadril no abdominal, cotovelo na barra). Histerese: precisa passar de [contracted] e
- * voltar a [extended]. Se voltar sem chegar ao fundo, mas passando de [partial], é meia
- * repetição: não conta e gera o aviso "Desça mais!".
- */
+// conta reps por um ângulo que fecha embaixo (joelho, quadril, cotovelo)
+// passou de partial mas não chegou em contracted = meia rep, não conta e avisa "Desça mais!"
 class AngleRepCounter(
     private val contracted: Float,
     private val extended: Float,
@@ -71,7 +64,7 @@ class AngleRepCounter(
     val progress: Float
         get() = angle?.let { ((extended - it) / (extended - contracted)).coerceIn(0f, 1f) } ?: 0f
 
-    /** Esquece a repetição em andamento (ex.: a pessoa saiu da posição). */
+    // esquece a rep em andamento (ex.: saiu da posição)
     fun reset() {
         phase = Phase.WAITING
         angle = null
@@ -113,20 +106,17 @@ class AngleRepCounter(
     }
 }
 
-/** Constante de tempo da suavização dos ângulos. */
+// suavização dos ângulos
 const val SMOOTH_MS = 70L
 
-/**
- * Quanto um quadro novo pesa na média, pelo tempo desde o anterior (não pelo número de quadros):
- * em celular lento, com poucos quadros por segundo, cada um pesa mais e o movimento não "some".
- */
+// peso do quadro novo vai pelo tempo, não pela qtd de quadros (celular lento não "perde" o movimento)
 fun smoothFactor(elapsedMs: Long, smoothMs: Long = SMOOTH_MS): Float =
     if (smoothMs <= 0) 1f else 1f - exp(-elapsedMs.coerceIn(0L, 2_000L) / smoothMs.toFloat())
 
-/** O lado do corpo (esquerdo/direito) que [side] usa: as articulações daquele lado. */
+// esse side é o lado esquerdo?
 private fun PoseFrame.isLeft(side: Side) = this[Joint.LEFT_SHOULDER] == side.shoulder || this[Joint.LEFT_HIP] == side.hip
 
-/** Mantém um aviso na tela por um tempo (ex.: "Desça mais!" por 1,5 s). */
+// segura o aviso na tela um tempinho (1,5 s)
 private class StickyCue(private val durationMs: Long = 1_500) {
     private var cue: Cue? = null
     private var until = 0L
@@ -137,15 +127,8 @@ private class StickyCue(private val durationMs: Long = 1_500) {
     fun get(now: Long): Cue? = cue?.takeIf { now < until }
 }
 
-/**
- * Flexão, com o celular de lado: conta pelo **cotovelo** (em 3D quando o detector dá a profundidade),
- * e só com o corpo em posição de flexão:
- * - de lado para a câmera (de frente o cotovelo dobra "para dentro" da tela e não dá para medir);
- * - corpo deitado (tronco longe da vertical) e as mãos abaixo dos ombros;
- * - pernas esticadas (joelho no chão não vale) e corpo reto (quadril nem caído nem empinado).
- * Desce até a "profundidade" [DOWN_AT] (cotovelo ~120°) e volta até [UP_AT] (~145°) = 1 flexão.
- * Como reforço, mede também quanto o ombro chegou perto da mão em relação ao braço esticado.
- */
+// flexão de lado: conta pelo cotovelo (~120° embaixo, ~145° em cima = 1)
+// só vale de lado, deitado, perna esticada e corpo reto; ombro→mão entra de reforço
 class PushupTracker : PoseTracker {
     private val sticky = StickyCue()
     private val reach = Reference()
@@ -170,13 +153,13 @@ class PushupTracker : PoseTracker {
         val feet = ankle ?: knee
         if (hip == null || feet == null) return problem(Cue.NOT_VISIBLE, "quadril/pernas não aparecem")
 
-        // De frente: os dois ombros aparecem bem separados na imagem (de lado ficam um atrás do outro).
+        // de frente os ombros ficam bem separados (de lado, um atrás do outro)
         val other = frame[if (left) Joint.RIGHT_SHOULDER else Joint.LEFT_SHOULDER]
         val upperArm = hypot(side.elbow.x - side.shoulder.x, side.elbow.y - side.shoulder.y)
         if (other != null && hypot(other.x - side.shoulder.x, other.y - side.shoulder.y) > FRONTAL_WIDTH * upperArm) {
             return problem(Cue.TURN_SIDEWAYS, "de frente")
         }
-        // Posição: mãos abaixo dos ombros e corpo deitado (senão é gente em pé, sentada...).
+        // mãos embaixo dos ombros e corpo deitado, senão é gente em pé/sentada
         if (below(side.shoulder, side.wrist) <= 0f || lean(hip, side.shoulder) < STANDING_LEAN) {
             return problem(Cue.GET_READY, "fora da posição")
         }
@@ -196,7 +179,7 @@ class PushupTracker : PoseTracker {
         // Cotovelo: 160° (esticado) = 0, 95° = 1.
         val elbow = Geometry.angle(side.shoulder, side.elbow, side.wrist)
         val byElbow = ((160f - elbow) / 65f).coerceIn(0f, 1f)
-        // Ombro→mão em relação ao braço esticado lá em cima: 85% (~cotovelo a 117°) = 0,6.
+        // reforço: ombro→mão vs braço esticado (85% ≈ cotovelo 117° = 0,6)
         val dist = hypot(side.wrist.x - side.shoulder.x, side.wrist.y - side.shoulder.y)
         val top = reach.update(dist, timeMs)
         val reachRatio = if (top > 0f) dist / top else 1f
@@ -231,10 +214,8 @@ class PushupTracker : PoseTracker {
         return TrackerUpdate(if (counted) 1 else 0, (depth / DOWN_AT).coerceIn(0f, 1f), cue, debug)
     }
 
-    /**
-     * Fora da posição (ou sem enxergar o corpo): não conta e avisa o que corrigir. Se durar mais que
-     * [GRACE_MS], esquece a descida em andamento; um quadro ruim solto (a IA perdeu um ponto) não apaga.
-     */
+    // fora da posição: não conta e avisa o que corrigir
+    // só esquece a descida depois de GRACE_MS, 1 quadro ruim solto não apaga
     private fun problem(cue: Cue, debug: String?, timeMs: Long): TrackerUpdate {
         val since = badSince ?: timeMs.also { badSince = it }
         if (timeMs - since >= GRACE_MS) {
@@ -245,24 +226,21 @@ class PushupTracker : PoseTracker {
         return TrackerUpdate(0, 0f, cue, debug)
     }
 
-    /** Quanto [p] está abaixo de [ref] (positivo = abaixo). Em 3D quando dá. */
+    // positivo = p abaixo de ref (3D quando dá)
     private fun below(ref: Point, p: Point): Float {
         val a = ref.world
         val b = p.world
         return if (a != null && b != null) b.y - a.y else p.y - ref.y
     }
 
-    /** Inclinação do tronco em relação à vertical (0 = em pé, 90 = deitado). Em 3D quando dá. */
+    // tronco: 0 = em pé, 90 = deitado (3D quando dá)
     private fun lean(hip: Point, shoulder: Point): Float {
         val h = hip.world
         val s = shoulder.world
         return if (h != null && s != null) Geometry.leanFromVertical3d(h, s) else Geometry.leanFromVertical(hip, shoulder)
     }
 
-    /**
-     * O maior valor visto há pouco (o braço esticado lá em cima). Esquece devagar (2% por segundo) para
-     * se ajustar se a pessoa mudar de lugar; sem ver nada por [RESET_MS], começa de novo.
-     */
+    // lembra o braço esticado lá em cima; esquece 2%/s e zera se sumir por RESET_MS
     private class Reference {
         private var top = 0f
         private var at = Long.MIN_VALUE / 2
@@ -276,25 +254,25 @@ class PushupTracker : PoseTracker {
     }
 
     companion object {
-        /** Profundidade para valer como "embaixo": cotovelo a ~120°. */
+        // embaixo: cotovelo ~120°
         const val DOWN_AT = 0.6f
-        /** De volta em cima: cotovelo a ~145°. */
+        // em cima de novo: cotovelo ~145°
         const val UP_AT = 0.25f
-        /** Duas flexões mais rápido que isso é tremida, não flexão. */
+        // mais rápido que isso é tremida
         const val MIN_REP_MS = 400L
-        /** Tronco a menos que isso da vertical é gente em pé ou sentada, não flexão. */
+        // tronco menos inclinado que isso = em pé ou sentado
         const val STANDING_LEAN = 45f
-        /** Joelho mais dobrado que isso = joelho no chão (na flexão a perna fica reta, ~170°). */
+        // joelho mais dobrado que isso = joelho no chão (perna reta ~170°)
         const val KNEE_BENT = 145f
-        /** Ombro-quadril-pés mais dobrado que isso = quadril caído ou empinado demais. */
+        // abaixo disso o quadril tá caído ou empinado
         const val BODY_LINE = 140f
-        /** Ombros separados mais que isso (em braços) = de frente para a câmera. */
+        // ombros mais separados que isso (medido em braços) = de frente
         const val FRONTAL_WIDTH = 0.7f
-        /** Ombro a 75% da distância de cima até a mão = profundidade 1 (cotovelo ~97°). */
+        // ombro a 75% da distância até a mão = fundo (cotovelo ~97°)
         const val REACH_FULL_DROP = 0.25f
         const val FORGET_PER_S = 0.02f
         const val RESET_MS = 1_500L
-        /** Fora da posição por mais que isso: a flexão em andamento não vale mais. */
+        // tempo fora da posição até perder a flexão em andamento
         const val GRACE_MS = 400L
     }
 }
@@ -308,7 +286,7 @@ class SquatTracker : PoseTracker {
         val side = frame?.bestSide(SidePart.SHOULDER, SidePart.HIP, SidePart.KNEE, SidePart.ANKLE)
             ?: return TrackerUpdate(0, counter.progress, Cue.NOT_VISIBLE)
         val lean = Geometry.leanFromVertical(side.hip, side.shoulder)
-        // Deitado ou de quatro não é agachamento (o joelho dobra, mas o tronco está deitado).
+        // deitado ou de quatro não é agachamento
         if (lean > 70f) {
             counter.reset()
             return TrackerUpdate(0, 0f, Cue.STAND, "tronco ${lean.toInt()}°")
@@ -325,10 +303,7 @@ class SquatTracker : PoseTracker {
     }
 }
 
-/**
- * Afundo, de lado: conta pelo joelho mais dobrado (o da frente desce até uns 90°).
- * Usa as duas pernas quando aparecem; se só uma aparece, usa ela.
- */
+// afundo de lado: pega o joelho mais dobrado (o da frente vai até ~90°)
 class LungeTracker : PoseTracker {
     private val counter = AngleRepCounter(contracted = 105f, extended = 155f, partial = 130f)
     private val sticky = StickyCue()
@@ -364,10 +339,7 @@ class LungeTracker : PoseTracker {
     }
 }
 
-/**
- * Agachamento isométrico (cadeira na parede): conta segundos parado com o joelho entre 70° e 120°
- * e o tronco de pé. Fora disso diz se precisa descer ou subir um pouco.
- */
+// cadeirinha na parede: conta segundos com joelho entre 70° e 120° e tronco em pé
 class WallSitTracker(private val maxGapMs: Long = 1_000) : PoseTracker {
     override var count = 0
         private set
@@ -397,7 +369,7 @@ class WallSitTracker(private val maxGapMs: Long = 1_000) : PoseTracker {
     }
 }
 
-/** Abdominal: ângulo ombro-quadril-joelho. Deitado ≈ 120°+, sentado ≈ 70°. */
+// abdominal: ombro-quadril-joelho, deitado ~120°+, sentado ~70°
 class SitupTracker : PoseTracker {
     private val counter = AngleRepCounter(contracted = 75f, extended = 115f, partial = 95f)
     private val sticky = StickyCue()
@@ -406,7 +378,7 @@ class SitupTracker : PoseTracker {
     override fun update(frame: PoseFrame?, timeMs: Long): TrackerUpdate {
         val side = frame?.bestSide(SidePart.SHOULDER, SidePart.HIP, SidePart.KNEE)
             ?: return TrackerUpdate(0, counter.progress, Cue.NOT_VISIBLE)
-        // Em pé a coxa fica na vertical: dobrar o tronco para a frente não é abdominal.
+        // em pé a coxa fica vertical, dobrar o tronco não é abdominal
         val thigh = Geometry.leanFromVertical(side.hip, side.knee)
         if (thigh < 30f) {
             counter.reset()
@@ -424,7 +396,7 @@ class SitupTracker : PoseTracker {
     }
 }
 
-/** Barra fixa: ângulo do cotovelo. Braços esticados ≈ 160°, queixo na barra ≈ 60°. */
+// barra: cotovelo, esticado ~160°, queixo na barra ~60°
 class PullupTracker : PoseTracker {
     private val counter = AngleRepCounter(contracted = 70f, extended = 150f, partial = 110f)
     private val sticky = StickyCue()
@@ -433,7 +405,7 @@ class PullupTracker : PoseTracker {
     override fun update(frame: PoseFrame?, timeMs: Long): TrackerUpdate {
         val side = frame?.bestSide(SidePart.SHOULDER, SidePart.ELBOW, SidePart.WRIST)
             ?: return TrackerUpdate(0, counter.progress, Cue.NOT_VISIBLE)
-        // Pendurado: mãos acima dos ombros. Dobrar o braço com as mãos embaixo é rosca, não barra.
+        // mãos têm que estar acima dos ombros, senão é rosca e não barra
         if (side.wrist.y >= side.shoulder.y) {
             counter.reset()
             return TrackerUpdate(0, 0f, Cue.GET_READY, "mãos abaixo dos ombros")
@@ -450,10 +422,7 @@ class PullupTracker : PoseTracker {
     }
 }
 
-/**
- * Conta ciclos entre duas posições (A = descanso, B = ativa): A → B → A = 1 repetição.
- * Cada posição precisa aparecer em [stableFrames] quadros seguidos, para ignorar tremidas.
- */
+// A (descanso) → B (ativa) → A = 1 rep; precisa de uns quadros seguidos em cada pra ignorar tremida
 class StateCycleCounter(private val stableFrames: Int = 2, private val minRepMs: Long = 400) {
     enum class State { A, B }
 
@@ -467,7 +436,7 @@ class StateCycleCounter(private val stableFrames: Int = 2, private val minRepMs:
     private var visitedB = false
     private var lastRepAt = Long.MIN_VALUE / 2
 
-    /** @return true quando completou uma repetição. */
+    // true quando fechou uma rep
     fun update(observed: State?, timeMs: Long): Boolean {
         if (observed == null) return false
         streak = if (observed == candidate) streak + 1 else 1
@@ -490,7 +459,7 @@ class StateCycleCounter(private val stableFrames: Int = 2, private val minRepMs:
     }
 }
 
-/** Polichinelo, de frente: aberto = mãos acima dos ombros e pés afastados. */
+// polichinelo de frente: aberto = mãos acima dos ombros e pés afastados
 class JumpingJackTracker : PoseTracker {
     private val counter = StateCycleCounter()
     override val count get() = counter.count
@@ -525,7 +494,7 @@ class JumpingJackTracker : PoseTracker {
     }
 }
 
-/** Burpee, de lado: em pé (tronco vertical) → no chão (tronco deitado) → em pé = 1. */
+// burpee de lado: em pé → chão → em pé = 1
 class BurpeeTracker : PoseTracker {
     private val counter = StateCycleCounter()
     override val count get() = counter.count
@@ -549,10 +518,7 @@ class BurpeeTracker : PoseTracker {
     }
 }
 
-/**
- * Prancha: conta segundos com o corpo deitado e reto (ombro-quadril-tornozelo ≥ 155°).
- * Fora do alinhamento, diz se o quadril está caído ou alto demais.
- */
+// prancha: conta segundos com o corpo reto (≥ 155°), senão avisa do quadril
 class PlankTracker(private val maxGapMs: Long = 1_000) : PoseTracker {
     override var count = 0
         private set

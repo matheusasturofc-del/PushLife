@@ -6,7 +6,7 @@ import org.junit.Test
 
 class FacePushupCounterTest {
 
-    /** Simula o rosto indo de [from] até [to] em [steps] quadros (~30 fps). */
+    // simula o rosto indo de from até to (~30 fps)
     private fun FacePushupCounter.sweep(from: Float, to: Float, start: Long, steps: Int = 10): Long {
         var t = start
         for (i in 0..steps) {
@@ -93,7 +93,7 @@ class FacePushupCounterTest {
 
     @Test
     fun aprendeAAmplitudeDeQuemDesceMenos() {
-        // Celular mais longe: o rosto só chega a 1,3× do tamanho de cima (abaixo do limite padrão de 1,35×).
+        // celular mais longe: rosto só chega a 1,3× (o padrão é 1,35×)
         val c = FacePushupCounter()
         var t = c.sweep(0.30f, 0.30f, 0, steps = 5)
         repeat(5) {

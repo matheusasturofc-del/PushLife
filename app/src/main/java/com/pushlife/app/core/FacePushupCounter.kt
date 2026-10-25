@@ -1,19 +1,7 @@
 package com.pushlife.app.core
 
-/**
- * Conta flexões com o celular no chão, embaixo do rosto, usando só o tamanho do rosto na
- * câmera frontal: quanto mais perto (descendo), maior o rosto.
- *
- * Tudo é relativo ao tamanho do rosto "lá em cima" (braços esticados), que o contador aprende
- * sozinho; por isso funciona com qualquer altura de pessoa ou posição do celular.
- *
- * - Desceu: o rosto ficou [downRatio] vezes maior que lá em cima. Se o rosto some bem perto
- *   da câmera (fica grande demais para ser detectado), também conta como "desceu".
- * - Subiu: voltou perto do tamanho lá de cima. Aí conta 1 repetição.
- * - Calibração: o contador guarda até onde a pessoa costuma descer. Se for menos que
- *   [downRatio] (celular longe, braços longos…), o limite baixa para 60% dessa amplitude,
- *   nunca abaixo de [minRangeRatio]. Assim, depois de 1 ou 2 tentativas, ele passa a contar.
- */
+// flexão com o celular no chão: rosto maior = desceu (relativo ao "lá em cima", que ele aprende)
+// rosto sumir de perto também vale; quem desce pouco, o limite se ajusta em 1-2 tentativas
 class FacePushupCounter(
     private val downRatio: Float = 1.35f,
     private val lostWhileCloseRatio: Float = 1.2f,
@@ -29,11 +17,11 @@ class FacePushupCounter(
     var phase = Phase.WAITING
         private set
 
-    /** 0 = em cima, 1 = desceu o suficiente. Serve para a barra de profundidade. */
+    // 0 = em cima, 1 = embaixo (pra barra)
     var depth = 0f
         private set
 
-    /** Quando foi a última meia flexão (desceu um pouco e voltou), para o aviso "Desça mais!". */
+    // última meia flexão, pro "Desça mais!"
     var lastPartialMs = Long.MIN_VALUE / 2
         private set
 
@@ -42,7 +30,7 @@ class FacePushupCounter(
     private var lastRepAt = Long.MIN_VALUE / 2
     private var peak = 0f
 
-    /** Até onde a pessoa costuma descer (tamanho do rosto no fundo), aprendido a cada ciclo. */
+    // até onde a pessoa costuma descer, aprende a cada ciclo
     private var bottom: Float? = null
 
     private val downThreshold: Float
@@ -52,14 +40,11 @@ class FacePushupCounter(
             return minOf(fixed, maxOf(top * minRangeRatio, top + 0.6f * (learned - top)))
         }
 
-    /** Voltou "lá para cima": a 35% do caminho até o limite de descida. */
+    // "voltou pra cima" = 35% do caminho até o limite
     private val upThreshold: Float
         get() = top + 0.35f * (downThreshold - top)
 
-    /**
-     * @param faceSize tamanho do rosto em relação à imagem (0..1), ou null se nenhum rosto foi visto.
-     * @return true quando uma repetição acabou de ser contada.
-     */
+    // faceSize 0..1 (null = sem rosto); true quando contou uma rep
     fun update(faceSize: Float?, timeMs: Long): Boolean {
         if (faceSize == null || faceSize <= 0f) {
             val last = size

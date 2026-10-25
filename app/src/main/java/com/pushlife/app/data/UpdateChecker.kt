@@ -14,12 +14,8 @@ import org.json.JSONObject
 import java.net.HttpURLConnection
 import java.net.URL
 
-/**
- * Atualização obrigatória: lê o `update.json` do GitHub e, se a versão instalada for menor que
- * `minVersionCode`, [required] passa a ter a informação e o app mostra só a tela de atualizar.
- * A última resposta fica guardada, então desligar a internet não destrava o app.
- * Sem internet e sem nada guardado, o app funciona normalmente.
- */
+// atualização obrigatória: versão abaixo do minVersionCode do update.json = só tela de atualizar
+// guarda a última resposta (tirar a internet não destrava); sem nada guardado, segue normal
 object UpdateChecker {
     private const val SOURCE_URL = "https://raw.githubusercontent.com/matheusasturofc-del/PushLife/HEAD/update.json"
     private const val CHECK_EVERY_MS = 15 * 60 * 1000L
@@ -33,13 +29,13 @@ object UpdateChecker {
         PackageInfoCompat.getLongVersionCode(context.packageManager.getPackageInfo(context.packageName, 0))
     }.getOrDefault(Long.MAX_VALUE)
 
-    /** Aplica a última resposta guardada (rápido, sem internet). */
+    // usa a última resposta guardada (sem internet)
     fun loadCached(context: Context) {
         val json = prefs(context).getString(KEY_JSON, null) ?: return
         runCatching { parse(json) }.onSuccess { apply(context, it) }
     }
 
-    /** Busca o arquivo de novo (no máximo a cada 15 min, a não ser que [force]). */
+    // baixa de novo, no máximo a cada 15 min (a não ser com force)
     suspend fun refresh(context: Context, force: Boolean = false) {
         val now = System.currentTimeMillis()
         if (!force && now - lastCheckMs < CHECK_EVERY_MS) return
@@ -55,7 +51,7 @@ object UpdateChecker {
     }
 
     private fun download(): String {
-        // O "t" muda a cada minuto para não pegar uma cópia antiga guardada no caminho.
+        // "t" muda a cada minuto pra fugir de cache velho
         val conn = URL("$SOURCE_URL?t=${System.currentTimeMillis() / 60_000}").openConnection() as HttpURLConnection
         return try {
             conn.connectTimeout = 8_000

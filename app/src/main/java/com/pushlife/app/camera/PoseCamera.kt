@@ -23,15 +23,11 @@ import com.pushlife.app.core.pose.Point
 import com.pushlife.app.core.pose.PoseFrame
 import com.pushlife.app.core.pose.Vec3
 
-/** Pose de um quadro e o esqueleto para desenhar. */
+// pose + esqueleto pra desenhar
 data class PoseReading(val frame: PoseFrame, val rig: Rig)
 
-/**
- * Câmera para os exercícios de corpo inteiro: entrega a pose de cada quadro (null = ninguém).
- *
- * Usa o MediaPipe Pose Landmarker Lite (código aberto do Google, Apache 2.0) só no processador:
- * leve, acha o corpo também deitado e estima a profundidade (os ângulos saem em 3D).
- */
+// câmera da frente + pose de cada quadro (null = ninguém)
+// MediaPipe Pose Lite (Google, Apache 2.0) no processador: leve, acha deitado e dá profundidade
 @Composable
 fun PoseCamera(onPose: (PoseReading?) -> Unit, modifier: Modifier = Modifier) {
     val callback by rememberUpdatedState(onPose)
@@ -39,7 +35,7 @@ fun PoseCamera(onPose: (PoseReading?) -> Unit, modifier: Modifier = Modifier) {
     FrontCamera(createAnalyzer = { PoseAnalyzer(context) { callback(it) } }, modifier = modifier, rgba = true)
 }
 
-/** Roda na thread da câmera, um quadro por vez (a câmera descarta os que chegam no meio). */
+// roda na thread da câmera, um quadro por vez
 private class PoseAnalyzer(private val context: Context, private val onResult: (PoseReading?) -> Unit) : FrameAnalyzer {
     private val main = ContextCompat.getMainExecutor(context)
     private var landmarker: PoseLandmarker? = null
@@ -62,7 +58,7 @@ private class PoseAnalyzer(private val context: Context, private val onResult: (
             image.close()
         }
         if (frame == null) return
-        // Gira o quadro para ficar em pé, como aparece na tela (sem espelhar).
+        // deixa o quadro em pé (sem espelhar)
         val upright = if (rotation == 0) {
             frame
         } else {
@@ -81,7 +77,7 @@ private class PoseAnalyzer(private val context: Context, private val onResult: (
         main.execute { if (!closed) onResult(reading) }
     }
 
-    /** Cria o detector nesta thread, na primeira imagem (abrir o modelo leva um instante). */
+    // cria o detector só no primeiro quadro (demora um pouco pra abrir)
     private fun create(): PoseLandmarker = PoseLandmarker.createFromOptions(
         context,
         PoseLandmarker.PoseLandmarkerOptions.builder()
@@ -106,7 +102,7 @@ private class PoseAnalyzer(private val context: Context, private val onResult: (
     }
 }
 
-/** Ligações do esqueleto desenhado por cima da câmera. */
+// ossos do esqueleto desenhado
 private val BONES = listOf(
     Joint.LEFT_SHOULDER to Joint.RIGHT_SHOULDER,
     Joint.LEFT_SHOULDER to Joint.LEFT_ELBOW, Joint.LEFT_ELBOW to Joint.LEFT_WRIST,
@@ -119,7 +115,7 @@ private val BONES = listOf(
 
 private const val LANDMARKS = 33
 
-/** Resultado do MediaPipe (0..1 da imagem em pé) → modelo do app, com os pontos 3D (metros). */
+// MediaPipe → modelo do app (com os pontos 3D em metros)
 private fun PoseLandmarkerResult.toReading(width: Float, height: Float): PoseReading? {
     val landmarks = landmarks().firstOrNull()?.takeIf { it.size >= LANDMARKS } ?: return null
     val world = worldLandmarks().firstOrNull()?.takeIf { it.size >= LANDMARKS }

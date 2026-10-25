@@ -10,16 +10,14 @@ import androidx.compose.ui.graphics.drawscope.DrawScope
 import com.pushlife.app.ui.theme.Orange
 import com.pushlife.app.ui.theme.Yellow
 
-/** Um ponto em coordenadas 0..1 da imagem da câmera (já em pé, sem espelhar). */
+// ponto 0..1 na imagem (em pé, sem espelhar)
 data class P01(val x: Float, val y: Float)
 
-/** Retângulo em coordenadas 0..1 da imagem. */
+// caixa 0..1 na imagem
 data class Box01(val left: Float, val top: Float, val right: Float, val bottom: Float)
 
-/**
- * O "rig" desenhado por cima da câmera: pontos, ligações (esqueleto) e a caixa do rosto.
- * [imageAspect] é largura ÷ altura da imagem analisada, para alinhar com a pré-visualização.
- */
+// o que desenha por cima da câmera: pontos, esqueleto e caixa do rosto
+// imageAspect = largura ÷ altura, pra alinhar com o preview
 data class Rig(
     val imageAspect: Float,
     val points: List<P01> = emptyList(),
@@ -27,10 +25,7 @@ data class Rig(
     val box: Box01? = null,
 )
 
-/**
- * Desenha o [rig] alinhado com uma pré-visualização em modo "preencher e centralizar"
- * (a mesma do PreviewView), espelhada como a câmera frontal aparece para a pessoa.
- */
+// desenha alinhado com o preview (preencher/centralizar) e espelhado igual a câmera da frente
 @Composable
 fun RigOverlay(rig: Rig?, modifier: Modifier = Modifier, lineColor: Color = Orange, pointColor: Color = Yellow) {
     Canvas(modifier) {
@@ -56,7 +51,7 @@ fun RigOverlay(rig: Rig?, modifier: Modifier = Modifier, lineColor: Color = Oran
     }
 }
 
-/** Cantos de mira em volta de uma caixa (como um visor de câmera). */
+// cantinhos de mira em volta da caixa
 private fun DrawScope.drawCorners(a: Offset, b: Offset, color: Color, stroke: Float) {
     val left = minOf(a.x, b.x)
     val right = maxOf(a.x, b.x)

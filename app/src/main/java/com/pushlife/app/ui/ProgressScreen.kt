@@ -231,7 +231,7 @@ private fun ChallengeCard(challenge: WeeklyChallenge, done: Int, claimed: Boolea
     }
 }
 
-/** Barras de minutos ganhos por dia, com a linha tracejada da meta. */
+// gráfico de minutos por dia + linha da meta
 @Composable
 private fun MinutesChart(bank: BankState, today: LocalDate, days: Int, goal: Int) {
     val values = (days - 1 downTo 0).map { bank.effortMinutesOn(today.minusDays(it.toLong())) }

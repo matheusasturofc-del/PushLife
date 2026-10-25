@@ -14,7 +14,7 @@ class NewExercisesTest {
         return Point(from.x + (len * sin(r)).toFloat(), from.y - (len * cos(r)).toFloat())
     }
 
-    /** Pessoa de perfil com o joelho em [kneeAngle] e o tronco inclinado [lean] graus. */
+    // pessoa de lado com o joelho e o tronco no ângulo que pedir
     private fun legs(kneeAngle: Float, lean: Float = 5f, otherKnee: Float? = null): PoseFrame {
         val ankle = Point(300f, 600f)
         val knee = Point(300f, 500f)

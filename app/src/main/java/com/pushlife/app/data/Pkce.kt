@@ -4,7 +4,7 @@ import java.security.MessageDigest
 import java.security.SecureRandom
 import java.util.Base64
 
-/** PKCE (RFC 7636): segredo aleatório guardado no app e o resumo dele que vai no endereço de login. */
+// PKCE do login: o segredo fica no app, só o hash dele vai na URL
 object Pkce {
     private val random = SecureRandom()
 

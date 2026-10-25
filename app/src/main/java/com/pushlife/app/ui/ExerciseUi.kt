@@ -17,7 +17,7 @@ import com.pushlife.app.R
 import com.pushlife.app.core.Exercise
 import com.pushlife.app.core.pose.Cue
 
-/** Textos e ícone de cada exercício na interface. */
+// textos e ícone de cada exercício
 data class ExerciseUi(
     @StringRes val name: Int,
     @StringRes val value: Int,

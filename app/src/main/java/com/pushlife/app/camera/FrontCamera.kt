@@ -15,13 +15,11 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import java.util.concurrent.Executors
 
-/** Um analisador de quadros que também libera seus recursos (o detector de poses). */
+// analisador que também fecha o detector no fim
 interface FrameAnalyzer : ImageAnalysis.Analyzer, AutoCloseable
 
-/**
- * Câmera frontal com pré-visualização e um analisador de quadros. A imagem é processada só no
- * aparelho e nunca é salva. [rgba] entrega os quadros já em RGBA (o que o MediaPipe usa).
- */
+// câmera da frente + preview; a imagem fica só no aparelho, nunca é salva
+// rgba = quadros em RGBA, que é o que o MediaPipe quer
 @Composable
 fun FrontCamera(createAnalyzer: () -> FrameAnalyzer, modifier: Modifier = Modifier, rgba: Boolean = false) {
     val context = LocalContext.current
@@ -56,7 +54,7 @@ fun FrontCamera(createAnalyzer: () -> FrameAnalyzer, modifier: Modifier = Modifi
         onDispose {
             disposed = true
             provider?.unbindAll()
-            // Fecha o detector na mesma thread que o usa, depois do quadro que estiver em andamento.
+            // fecha o detector na thread dele, depois do quadro atual
             executor.execute { analyzer.close() }
             executor.shutdown()
         }
