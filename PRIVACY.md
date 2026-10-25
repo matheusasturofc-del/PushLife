@@ -14,7 +14,7 @@ Não vendemos nem compartilhamos dados pessoais, e o app não tem anúncios.
 | Atividade física (passos) | Contar passos na caminhada | Não |
 | Acesso aos dados de uso | Saber qual app está aberto para descontar o saldo e mostrar a média de uso de cada app | Não |
 | Sobrepor a outros apps | Mostrar a tela de bloqueio sobre um app bloqueado | Não |
-| VPN local (filtro de sites adultos, opcional) | Bloquear sites adultos pelo endereço (DNS) | Só as consultas de endereço dos sites, que vão para o serviço "Cloudflare for Families" (1.1.1.3) para serem filtradas. O resto da sua internet não passa pela VPN |
+| VPN local (filtro de sites adultos, opcional) | Bloquear sites adultos pelo endereço (DNS) | Só as consultas de endereço dos sites. Elas são conferidas no próprio celular, contra uma lista de sites adultos que vem dentro do app, e as liberadas seguem para o DNS normal da sua internet (Wi-Fi ou operadora). Nada vai para o PushLife nem para outra empresa. O resto da sua internet não passa pela VPN |
 | Notificações | Lembretes, avisos de tempo e resumo da semana | Não |
 
 ## Sua conta
@@ -55,7 +55,8 @@ and there are no ads. To delete your account and cloud data, use Profile → Acc
 to your email) or email the contact below. The camera is used only for on-device rep counting (MediaPipe); no image or video is stored or
 sent. Usage access and "display over other apps" are used only to know which app is open and to show the
 block screen. The optional adult-site filter is a local VPN that only filters site addresses (DNS): those
-lookups are sent to Cloudflare for Families (1.1.1.3); the rest of your traffic does not go through it.
+lookups are checked on the phone against a list built into the app, and allowed ones go to your normal
+internet DNS (Wi-Fi or carrier); nothing is sent to PushLife or any other company, and the rest of your traffic does not go through it.
 Your balance, history and settings stay on the device and, with an account, in your cloud backup.
 Contact: matheusasturofc@gmail.com
 
@@ -68,5 +69,5 @@ no hay anuncios. Para borrar tu cuenta y los datos en la nube, usa Perfil → Cu
 en tu correo) o escribe al contacto de abajo. La cámara solo se usa para contar repeticiones en el dispositivo (MediaPipe);
 ninguna imagen ni video se guarda o envía. El acceso a datos de uso y "mostrar sobre otras apps" solo sirven
 para saber qué app está abierta y mostrar la pantalla de bloqueo. El filtro opcional de sitios para adultos es
-una VPN local que solo filtra las direcciones de los sitios (DNS): esas consultas van a Cloudflare for Families
-(1.1.1.3); el resto de tu tráfico no pasa por ella. Tus datos quedan en el teléfono y, con cuenta, en tu copia en la nube. Contacto: matheusasturofc@gmail.com
+una VPN local que solo filtra las direcciones de los sitios (DNS): esas consultas se revisan en el teléfono con una lista incluida en la app
+y las permitidas van al DNS normal de tu internet (Wi-Fi u operadora); nada se envía a PushLife ni a otra empresa, y el resto de tu tráfico no pasa por ella. Tus datos quedan en el teléfono y, con cuenta, en tu copia en la nube. Contacto: matheusasturofc@gmail.com

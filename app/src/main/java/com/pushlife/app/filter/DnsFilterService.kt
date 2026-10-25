@@ -2,11 +2,14 @@ package com.pushlife.app.filter
 
 import android.content.Context
 import android.content.Intent
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import android.net.VpnService
 import android.os.ParcelFileDescriptor
 import com.pushlife.app.AppGraph
 import com.pushlife.app.core.filter.Dns
 import com.pushlife.app.core.filter.DomainBlocklist
+import com.pushlife.app.core.filter.HashedDomains
 import com.pushlife.app.core.filter.Packets
 import com.pushlife.app.data.AppLanguage
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -21,13 +24,14 @@ import java.net.InetAddress
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
-/**
- * Filtro de sites adultos por DNS, numa VPN local que só recebe as consultas de DNS
- * (o resto da internet não passa por ela). Domínios da lista recebem "não existe";
- * os outros vão para o DNS família da Cloudflare, que também bloqueia conteúdo adulto.
- */
+// Filtro de sites adultos: uma VPN local que só recebe as consultas de DNS (o resto da internet
+// não passa por ela). Site da lista recebe "não existe"; os outros seguem para o DNS normal da
+// internet da pessoa (Wi-Fi ou operadora). Nenhum serviço de fora no meio.
 class DnsFilterService : VpnService() {
-    private val blocklist = DomainBlocklist()
+    // Começa com a lista curta; a grande (quase 1 milhão de sites) carrega em segundo plano.
+    @Volatile private var blocklist = DomainBlocklist()
+    private var dnsServers: List<InetAddress> = emptyList()
+    private var dnsServersAt = 0L
     private var tun: ParcelFileDescriptor? = null
     private var reader: Thread? = null
     private var workers: ExecutorService? = null
@@ -64,6 +68,7 @@ class DnsFilterService : VpnService() {
             .addRoute(FAKE_DNS, 32) // só o tráfego para o "DNS falso" entra na VPN
             .establish() ?: return
         tun = fd
+        Thread({ loadBigList() }, "pushlife-blocklist").start()
         workers = Executors.newFixedThreadPool(4)
         reader = Thread({ readLoop(fd) }, "pushlife-dns").also { it.start() }
         _running.value = true
@@ -109,14 +114,19 @@ class DnsFilterService : VpnService() {
         false
     }
 
-    /** Repassa a consulta ao DNS família da Cloudflare, por fora da VPN. */
+    private fun loadBigList() {
+        val big = runCatching { HashedDomains.read(assets.open("filter/adult_domains.bin").use { it.readBytes() }) }.getOrNull()
+        if (big != null) blocklist = DomainBlocklist(big = big)
+    }
+
+    // Repassa a consulta ao DNS da internet da pessoa, por fora da VPN.
     private fun forward(query: ByteArray): ByteArray? {
-        for (server in UPSTREAM) {
+        for (server in systemDns()) {
             try {
                 DatagramSocket().use { socket ->
                     protect(socket)
                     socket.soTimeout = 4_000
-                    socket.send(DatagramPacket(query, query.size, InetAddress.getByName(server), 53))
+                    socket.send(DatagramPacket(query, query.size, server, 53))
                     val buffer = ByteArray(4_096)
                     val response = DatagramPacket(buffer, buffer.size)
                     socket.receive(response)
@@ -127,6 +137,24 @@ class DnsFilterService : VpnService() {
             }
         }
         return null
+    }
+
+    // Os servidores de DNS do Wi-Fi ou dos dados móveis (sem a nossa VPN), relidos a cada 10 s.
+    @Suppress("DEPRECATION") // allNetworks: o substituto exige ficar ouvindo mudanças de rede
+    private fun systemDns(): List<InetAddress> = synchronized(this) {
+        val now = System.currentTimeMillis()
+        if (dnsServers.isEmpty() || now - dnsServersAt > 10_000) {
+            val cm = getSystemService(ConnectivityManager::class.java)
+            val found = cm.allNetworks.flatMap { network ->
+                val caps = cm.getNetworkCapabilities(network)
+                val usable = caps != null && !caps.hasTransport(NetworkCapabilities.TRANSPORT_VPN) &&
+                    caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+                if (usable) cm.getLinkProperties(network)?.dnsServers.orEmpty() else emptyList()
+            }.distinct()
+            if (found.isNotEmpty()) dnsServers = found
+            dnsServersAt = now
+        }
+        dnsServers
     }
 
     private fun shutdown() {
@@ -144,7 +172,6 @@ class DnsFilterService : VpnService() {
         private const val ACTION_STOP = "com.pushlife.app.filter.STOP"
         private const val VPN_ADDRESS = "10.111.0.2"
         private const val FAKE_DNS = "10.111.0.1"
-        private val UPSTREAM = listOf("1.1.1.3", "1.0.0.3") // Cloudflare for Families: bloqueia malware e conteúdo adulto
 
         private val _running = MutableStateFlow(false)
         val running: StateFlow<Boolean> = _running.asStateFlow()

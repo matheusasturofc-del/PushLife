@@ -1,4 +1,5 @@
 import java.net.URI
+import java.nio.ByteBuffer
 import java.util.Properties
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
@@ -83,7 +84,7 @@ android {
 
     // Os modelos de pose são lidos direto do APK, sem descompactar.
     androidResources {
-        noCompress += "task"
+        noCompress += listOf("task", "bin")
     }
 }
 
@@ -119,6 +120,58 @@ abstract class DownloadPoseModels : DefaultTask() {
     }
 }
 
+// Lista grande de sites adultos (Block List Project, domínio público), montada a cada compilação.
+// Cada domínio vira um número de 8 bytes (FNV-1a 64, o mesmo de core/filter/HashedDomains.kt), ordenado.
+abstract class BuildAdultBlocklist : DefaultTask() {
+    @get:Input
+    abstract val url: Property<String>
+
+    @get:OutputDirectory
+    abstract val outputDir: DirectoryProperty
+
+    @get:Internal
+    abstract val cacheDir: DirectoryProperty
+
+    @TaskAction
+    fun build() {
+        val cache = cacheDir.get().asFile.apply { mkdirs() }
+        val source = File(cache, "adult_domains.txt")
+        // Baixa de novo uma vez por dia, para a lista ficar sempre atualizada.
+        if (source.length() == 0L || System.currentTimeMillis() - source.lastModified() > 24 * 3600 * 1000L) {
+            try {
+                val part = File(cache, "adult_domains.part")
+                URI(url.get()).toURL().openStream().use { input -> part.outputStream().use { input.copyTo(it) } }
+                check(part.length() > 1_000_000) { "lista incompleta" }
+                part.renameTo(source)
+            } catch (e: Exception) {
+                if (source.length() == 0L) throw GradleException("Não deu para baixar a lista de sites: ${e.message}")
+                logger.warn("Usando a lista de sites guardada (o download falhou: ${e.message})")
+            }
+        }
+        val hashes = source.readLines().asSequence()
+            .map { it.trim().trimEnd('.').lowercase() }
+            .filter { it.isNotEmpty() && !it.startsWith("#") && ' ' !in it && '.' in it }
+            .map { domain ->
+                var h = -0x340d631b7bdddcdbL
+                for (b in domain.toByteArray(Charsets.UTF_8)) {
+                    h = h xor (b.toLong() and 0xff)
+                    h *= 0x100000001b3L
+                }
+                h
+            }
+            .toSortedSet()
+        val out = outputDir.get().dir("filter").asFile.apply { mkdirs() }
+        File(out, "adult_domains.bin").outputStream().buffered().use { stream ->
+            val buffer = ByteBuffer.allocate(8)
+            for (h in hashes) {
+                buffer.clear()
+                stream.write(buffer.putLong(h).array())
+            }
+        }
+        logger.lifecycle("Lista de sites adultos: ${hashes.size} domínios")
+    }
+}
+
 androidComponents {
     onVariants { variant ->
         val task = tasks.register<DownloadPoseModels>("download${variant.name.replaceFirstChar { it.uppercase() }}PoseModels") {
@@ -130,6 +183,11 @@ androidComponents {
             cacheDir.set(File(gradle.gradleUserHomeDir, "caches/pushlife-pose-models"))
         }
         variant.sources.assets?.addGeneratedSourceDirectory(task, DownloadPoseModels::outputDir)
+        val blocklist = tasks.register<BuildAdultBlocklist>("build${variant.name.replaceFirstChar { it.uppercase() }}AdultBlocklist") {
+            url.set("https://raw.githubusercontent.com/blocklistproject/Lists/master/alt-version/porn-nl.txt")
+            cacheDir.set(File(gradle.gradleUserHomeDir, "caches/pushlife-blocklist"))
+        }
+        variant.sources.assets?.addGeneratedSourceDirectory(blocklist, BuildAdultBlocklist::outputDir)
     }
 }
 

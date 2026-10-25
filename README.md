@@ -59,7 +59,9 @@ Mudar só o `update.json` não gera APK novo.
 - Caminhada: sensor de passos do celular
 - Bloqueio: permissão "Acesso aos dados de uso" para saber o app aberto, um serviço em primeiro plano que
   desconta o saldo a cada segundo e "Sobrepor a outros apps" para mostrar a tela de bloqueio
-- Filtro de sites adultos: VPN local que só recebe as consultas de DNS; lista própria + Cloudflare for Families
+- Filtro de sites adultos: VPN local que só recebe as consultas de DNS. Confere no celular contra ~950 mil
+  sites (lista do Block List Project, domínio público, montada pelo Gradle a cada compilação e guardada como
+  números de 8 bytes) e manda os liberados para o DNS normal da internet da pessoa. Sem serviço de fora
 - O GitHub Actions compila, testa e publica o APK a cada mudança (`.github/workflows/android.yml`)
 
 ## Abrir no Android Studio (opcional)
