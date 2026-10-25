@@ -28,7 +28,7 @@ import com.pushlife.app.R
 import com.pushlife.app.core.Exercise
 import com.pushlife.app.core.Recommendations
 
-/** Os 2 exercícios mais praticados (ou flexão e abdominal, no começo), lado a lado; tocar abre o treino. */
+// 2 exercícios mais feitos lado a lado; toque abre o treino
 @Composable
 fun RecommendedExercises(onPick: (Exercise) -> Unit, modifier: Modifier = Modifier) {
     val bank by AppGraph.bank.state.collectAsStateWithLifecycle()

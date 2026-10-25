@@ -47,10 +47,10 @@ import com.pushlife.app.ui.theme.PushLifeTheme
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
-    /** Cada pedido para abrir a aba de treino (fim das boas-vindas ou tela de bloqueio) soma 1. */
+    // cada pedido pra abrir o treino soma 1 (fim das boas-vindas ou tela de bloqueio)
     private var trainRequests by mutableIntStateOf(0)
 
-    /** Exercício para abrir direto (fim das boas-vindas); null depois de usado. */
+    // exercício pra abrir direto no fim das boas-vindas; null depois de usar
     private var pendingExercise by mutableStateOf<Exercise?>(null)
 
     override fun attachBaseContext(newBase: Context) {
@@ -72,7 +72,7 @@ class MainActivity : ComponentActivity() {
                 if (showIntro) {
                     IntroAnimation(onDone = { showIntro = false })
                 } else if (update != null) {
-                    // Versão velha demais: nada do app abre até atualizar.
+                    // versão velha demais: trava tudo até atualizar
                     UpdateRequiredScreen(update!!)
                 } else if (profile.onboardingDone) {
                     PushLifeApp(
@@ -103,7 +103,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
-        // Religa o bloqueio se o Android tiver fechado o serviço.
+        // religa o bloqueio se o Android matou o serviço
         BlockerService.syncWithSettings(this)
         DnsFilterService.syncWithSettings(this)
         ProgressCenter.adjustGoalIfDue()
@@ -112,7 +112,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onStop() {
         super.onStop()
-        // Com conta, o progresso vai para a nuvem quando o app sai da tela.
+        // com conta, sobe o progresso pra nuvem ao sair do app
         Accounts.backup(this)
     }
 
@@ -120,7 +120,7 @@ class MainActivity : ComponentActivity() {
         if (intent?.getBooleanExtra(EXTRA_OPEN_TRAIN, false) == true) trainRequests++
         val uri = intent?.data
         if (uri != null && uri.scheme == "pushlife" && uri.host == "auth-callback") {
-            // O erro pode vir depois do "?" ou do "#", conforme o provedor.
+            // o erro pode vir depois do "?" ou do "#", depende do provedor
             val fragment = uri.fragment.orEmpty().split('&').mapNotNull { it.split('=', limit = 2).takeIf { p -> p.size == 2 } }
                 .associate { (k, v) -> k to Uri.decode(v) }
             val error = uri.getQueryParameter("error_description") ?: uri.getQueryParameter("error")
@@ -134,7 +134,7 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-/** Andamento do login com Google/Discord/Twitch por cima de qualquer tela. O resultado final é tratado por quem pediu. */
+// login Google/Discord/Twitch rolando, por cima de qualquer tela
 @Composable
 private fun OAuthOverlay() {
     val oauth by Accounts.oauth.collectAsStateWithLifecycle()

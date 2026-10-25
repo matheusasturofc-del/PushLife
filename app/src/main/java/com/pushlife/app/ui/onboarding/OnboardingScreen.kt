@@ -184,7 +184,7 @@ import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 
-/** As telas das boas-vindas, na ordem em que aparecem. */
+// telas das boas-vindas, na ordem
 private enum class Step {
     WELCOME, NAME, GOALS, USAGE, TARGET, APPS, REASONS, STATE, RESULT, PROJECTION, GOOD_NEWS, TRIED,
     REPLACE, HOW_PUSH, HOW_SCROLL, REMINDER, FREQUENCY, SETUP, USAGE_ACCESS, OVERLAY, PERMISSIONS, SELECT_APPS, PLAN,
@@ -193,7 +193,7 @@ private enum class Step {
 
 private const val MAX_PICKS = 3
 
-/** Uma opção de resposta: o valor, o texto e o ícone. */
+// opção de resposta (valor, texto e ícone)
 private data class Choice<T>(val value: T, @StringRes val label: Int, val icon: ImageVector)
 
 private val GOAL_OPTIONS = listOf(
@@ -255,10 +255,7 @@ private val FREQUENCY_OPTIONS = listOf(
     Choice(ExerciseFrequency.DAILY, R.string.freq_daily, Icons.Rounded.Bolt),
 )
 
-/**
- * Boas-vindas da primeira abertura. Ao terminar, salva o perfil, liga o bloqueio (se a pessoa
- * escolheu) e chama [onFinished] com o exercício para testar agora, ou null.
- */
+// boas-vindas: no fim salva o perfil, liga o bloqueio (se quiser) e já manda pro treino
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun OnboardingScreen(onFinished: (startExercise: Exercise?) -> Unit) {
@@ -277,7 +274,7 @@ fun OnboardingScreen(onFinished: (startExercise: Exercise?) -> Unit) {
     var accountError by remember { mutableStateOf<Int?>(null) }
     val account by Accounts.current.collectAsStateWithLifecycle()
     val scope = rememberCoroutineScope()
-    // O @ só é conferido na tela de criar conta (no fim das boas-vindas).
+    // o @ só é checado na tela de criar conta
     val handleStatus = rememberHandleStatus(if (step == Step.ACCOUNT && account == null && !codeSent) username else "")
     var goals by rememberSaveable { mutableStateOf(emptyList<Goal>()) }
     var phoneHours by rememberSaveable { mutableFloatStateOf(5f) }
@@ -291,7 +288,7 @@ fun OnboardingScreen(onFinished: (startExercise: Exercise?) -> Unit) {
     var reminderOn by rememberSaveable { mutableStateOf(false) }
     var protectNow by rememberSaveable { mutableStateOf(true) }
 
-    // Sem Supabase configurado, ou já com conta (entrou sem backup), a tela de criar conta é pulada.
+    // sem Supabase ou já logado: pula a tela de criar conta
     fun skipped(s: Step) =
         (s == Step.ACCOUNT && (guestMode || !Accounts.available || Accounts.current.value != null)) || (s == Step.NAME && guestMode)
     fun go(next: Step) { step = next }
@@ -326,7 +323,7 @@ fun OnboardingScreen(onFinished: (startExercise: Exercise?) -> Unit) {
         code = ""
         codeSent = true
     }
-    // Criar conta em dois passos: manda o código para o e-mail e, com o código certo, cria a conta.
+    // criar conta: manda o código pro e-mail, depois confere e cria
     fun createAccount() {
         if (!codeSent) {
             if (handleStatus == HandleStatus.FREE && emailPasswordValid(email, password)) sendSignUpCode()
@@ -365,7 +362,7 @@ fun OnboardingScreen(onFinished: (startExercise: Exercise?) -> Unit) {
         onFinished(startExercise)
     }
 
-    // Volta do login com Google/Discord/Twitch durante as boas-vindas.
+    // volta do login Google/Discord/Twitch
     val oauth by Accounts.oauth.collectAsStateWithLifecycle()
     LaunchedEffect(oauth) {
         val done = oauth as? Accounts.OAuthState.Done ?: return@LaunchedEffect
@@ -400,7 +397,7 @@ fun OnboardingScreen(onFinished: (startExercise: Exercise?) -> Unit) {
                     onStart = ::next,
                     onLogin = if (Accounts.available) ({ showLogin = true }) else null,
                     onGuest = {
-                        // Convidado: nome automático, sem conta e sem backup.
+                        // convidado: nome automático, sem conta nem backup
                         guestMode = true
                         name = "guest" + Random.nextInt(10_000, 100_000)
                         go(Step.GOALS)
@@ -447,7 +444,7 @@ fun OnboardingScreen(onFinished: (startExercise: Exercise?) -> Unit) {
                     if (codeSent) {
                         CodeEntry(email, code, { code = it }, onComplete = ::createAccount, onResend = { accountAttempt { Accounts.resendSignUpCode(email) } }, onChangeEmail = { codeSent = false })
                     } else {
-                        // O @ não pode repetir: o campo confere no servidor enquanto a pessoa digita.
+                        // @ não pode repetir, confere no servidor enquanto digita
                         UsernameField(username, { username = it; usernameEdited = true }, handleStatus)
                         EmailPasswordFields(email, { email = it }, password, { password = it }, onDone = ::createAccount)
                         SocialLoginButtons()
@@ -524,7 +521,7 @@ fun OnboardingScreen(onFinished: (startExercise: Exercise?) -> Unit) {
                     buttonEnabled = tried.isNotEmpty(),
                 ) {
                     MultiChoice(TRIED_OPTIONS, tried, limit = TRIED_OPTIONS.size) { picked ->
-                        // "Nada ainda" não combina com as outras opções.
+                        // "nada ainda" não junta com as outras
                         val newest = picked - tried.toSet()
                         tried = when {
                             TriedMethod.NOTHING in newest -> listOf(TriedMethod.NOTHING)
@@ -655,11 +652,11 @@ fun OnboardingScreen(onFinished: (startExercise: Exercise?) -> Unit) {
                 onLoggedIn = { result ->
                     val backup = result.backup
                     if (backup != null && Backup.import(context, backup)) {
-                        // Conta com progresso salvo: traz tudo e vai direto para o app.
+                        // conta com progresso: puxa tudo e vai direto pro app
                         AppGraph.profile.save(AppGraph.profile.state.value.copy(username = result.username))
                         reloadAfterDataChange(context)
                     } else {
-                        // Conta sem backup ainda: continua as boas-vindas de onde faz sentido.
+                        // conta sem backup: segue as boas-vindas
                         if (result.name.isNotBlank()) name = result.name
                         username = result.username
                         usernameEdited = true
@@ -672,7 +669,7 @@ fun OnboardingScreen(onFinished: (startExercise: Exercise?) -> Unit) {
     }
 }
 
-/** O bloqueio só pode ser ligado com as permissões e pelo menos um app escolhido. */
+// só liga o bloqueio com as permissões e pelo menos 1 app
 private fun canProtect(context: Context) =
     Permissions.allRequired(context) && AppGraph.blocking.state.value.blockedPackages.isNotEmpty()
 
@@ -706,7 +703,7 @@ private fun WelcomeStep(onStart: () -> Unit, onLogin: (() -> Unit)?, onGuest: ()
     }
 }
 
-/** "Como você está" × "Com o PushLife", com a pesquisa que associa uso intenso de redes a irritabilidade. */
+// antes × depois, com a pesquisa de redes x irritabilidade
 @Composable
 private fun StateStep(apps: List<DistractionApp>) {
     Column(Modifier.fillMaxWidth().padding(top = 16.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(14.dp)) {
@@ -755,7 +752,7 @@ private fun MoodChip(icon: ImageVector, @StringRes label: Int, color: Color) {
     }
 }
 
-/** Resultado com barras que crescem: seu índice × o índice da sua meta. */
+// barras que crescem: seu índice × meta
 @Composable
 private fun ResultStep(yours: Int, goal: Int) {
     val yourBar = remember { Animatable(0f) }
@@ -788,7 +785,7 @@ private fun ResultStep(yours: Int, goal: Int) {
 @Composable
 private fun Bar(fraction: Float, label: String, brush: Brush, @StringRes caption: Int) {
     Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        // O número fica em cima da barra: dentro dela, barras baixas (ex.: 10%) cortavam o texto.
+        // número em cima da barra (dentro, barra baixa cortava o texto)
         Text(label, style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onBackground)
         Box(
             Modifier
@@ -870,7 +867,7 @@ private fun HowCard(icon: ImageVector, @StringRes title: Int, @StringRes body: I
     }
 }
 
-/** Explica uma permissão especial, abre a tela do Android e confere ao voltar. */
+// permissão especial: explica, abre o Android e confere na volta
 @Composable
 private fun PermissionStep(
     step: Step,
@@ -922,10 +919,10 @@ private fun PermissionStep(
     }
 }
 
-/** Uma linha da lista de permissões. */
+// item da lista de permissões
 private data class PermissionItem(@StringRes val title: Int, @StringRes val body: Int, val granted: Boolean, val ask: () -> Unit)
 
-/** Todas as permissões de uma vez: bloqueio, avisos, bateria, câmera e passos. */
+// todas as permissões juntas: bloqueio, avisos, bateria, câmera, passos
 @Composable
 private fun AllPermissionsStep(step: Step, onBack: () -> Unit, onNext: () -> Unit) {
     val context = LocalContext.current
@@ -986,7 +983,7 @@ private fun AllPermissionsStep(step: Step, onBack: () -> Unit, onNext: () -> Uni
     }
 }
 
-/** Escolha dos apps que distraem, com a média de uso de cada um (vira a lista do bloqueio). */
+// escolher os apps que distraem (com média de uso), vira a lista do bloqueio
 @Composable
 private fun SelectAppsStep(step: Step, onBack: () -> Unit, onNext: () -> Unit) {
     val context = LocalContext.current
@@ -1041,7 +1038,7 @@ private fun SelectAppsStep(step: Step, onBack: () -> Unit, onNext: () -> Unit) {
     }
 }
 
-/** Resumo do plano antes de terminar (no lugar da tela de criar conta). */
+// resumo do plano no final (no lugar de criar conta)
 @Composable
 private fun PlanStep(dailyGoal: Int, targetHours: Float, reminder: LocalTime?, protectNow: Boolean, onProtectNow: (Boolean) -> Unit) {
     val context = LocalContext.current
@@ -1100,7 +1097,7 @@ private fun ExerciseCard(icon: ImageVector, @StringRes name: Int, onClick: () ->
 
 // ---------- Peças comuns ----------
 
-/** Moldura comum: voltar + barra de progresso, títulos, conteúdo rolável e botões no rodapé. */
+// moldura padrão: voltar, progresso, título, conteúdo e botões
 @Composable
 private fun StepLayout(
     step: Step,
@@ -1149,7 +1146,7 @@ private fun StepLayout(
     }
 }
 
-/** Lista de opções em que se pode marcar até [limit]. */
+// lista de opções, marca até o limit
 @Composable
 private fun <T> MultiChoice(options: List<Choice<T>>, selected: List<T>, limit: Int, onChange: (List<T>) -> Unit) {
     options.forEach { option ->

@@ -6,9 +6,9 @@ import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.math.sqrt
 
-/** Flexão contada pelo cotovelo (sem o classificador), para câmeras em ângulos que o Google não reconhece. */
+// flexão pelo cotovelo, sem classificador (ângulos que o Google não pega)
 class PushupElbowTest {
-    /** De perfil: mãos no chão (y = 400) embaixo dos ombros; o corpo desce junto com os ombros. */
+    // de lado: mãos no chão (y = 400), corpo desce junto com os ombros
     private fun pushup(elbowAngle: Float): PoseFrame {
         val arm = 100f
         val d = sqrt(2 * arm * arm * (1 - cos(Math.toRadians(elbowAngle.toDouble())))).toFloat()
@@ -26,7 +26,7 @@ class PushupElbowTest {
         )
     }
 
-    /** Em pé dobrando o braço (rosca): punho abaixo do ombro, mas tronco na vertical. */
+    // rosca em pé: punho abaixo do ombro, mas tronco reto
     private fun standingCurl(elbowAngle: Float): PoseFrame {
         val r = Math.toRadians((180f - elbowAngle).toDouble())
         return PoseFrame(

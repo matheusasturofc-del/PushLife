@@ -9,11 +9,11 @@ import kotlinx.coroutines.flow.asStateFlow
 data class BlockSettings(
     val enabled: Boolean = false,
     val blockedPackages: Set<String> = emptySet(),
-    /** Filtro de sites adultos (fase 6). */
+    // filtro de sites adultos (fase 6)
     val adultFilter: Boolean = false,
 )
 
-/** Quais apps ficam bloqueados e se a proteção está ligada. */
+// apps bloqueados e se a proteção tá ligada
 class BlockSettingsRepository(context: Context) {
     private val prefs = context.getSharedPreferences("blocking", Context.MODE_PRIVATE)
     private val _state = MutableStateFlow(

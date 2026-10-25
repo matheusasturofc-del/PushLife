@@ -3,7 +3,7 @@ package com.pushlife.app.core
 import java.time.LocalTime
 import kotlin.math.roundToInt
 
-/** Com que frequência a pessoa treina hoje; define a meta diária inicial de flexões. */
+// quanto treina hoje, define a meta inicial de flexões
 enum class ExerciseFrequency(val dailyGoal: Int) {
     NEVER(20),
     ONE_TO_THREE(30),
@@ -11,15 +11,15 @@ enum class ExerciseFrequency(val dailyGoal: Int) {
     DAILY(80),
 }
 
-/** Objetivos que a pessoa pode escolher nas boas-vindas (até 3). */
+// objetivos das boas-vindas (até 3)
 enum class Goal { LESS_PHONE, NIGHT_SCROLL, DISCIPLINE, STUDY, WORK, FITNESS }
 
 data class Profile(
     val onboardingDone: Boolean = false,
     val name: String = "",
-    /** O @ da conta (sem o "@"); vazio se a pessoa não tem conta. */
+    // @ da conta, sem o "@" (vazio se não tem conta)
     val username: String = "",
-    /** Convidado: nome "guest" + números, sem backup e sem trocar nome ou foto. */
+    // convidado: "guest" + números, sem backup, não troca nome nem foto
     val guest: Boolean = false,
     val goals: Set<Goal> = emptySet(),
     val phoneHours: Float = 5f,
@@ -27,23 +27,23 @@ data class Profile(
     val exerciseFrequency: ExerciseFrequency? = null,
     val dailyGoal: Int = ExerciseFrequency.ONE_TO_THREE.dailyGoal,
     val reminder: LocalTime? = null,
-    /** Índice da cor do avatar. */
+    // cor do avatar (índice)
     val avatarColor: Int = 0,
     val notifyStreak: Boolean = true,
     val notifyWeekly: Boolean = true,
     val notifyLowTime: Boolean = true,
-    // Respostas das boas-vindas (para personalizar o app no futuro).
+    // respostas das boas-vindas (pra personalizar depois)
     val distractions: Set<DistractionApp> = emptySet(),
     val quitReasons: Set<QuitReason> = emptySet(),
     val triedMethods: Set<TriedMethod> = emptySet(),
 )
 
-/** A conta mostrada nas boas-vindas: horas por dia × 365 ÷ 24 = dias inteiros por ano. */
+// conta das boas-vindas: horas/dia × 365 ÷ 24 = dias por ano
 object Projection {
     fun daysPerYear(hoursPerDay: Float): Int = (hoursPerDay.coerceAtLeast(0f) * 365f / 24f).roundToInt()
 
     fun daysRecovered(currentHours: Float, targetHours: Float): Int = daysPerYear(currentHours - targetHours)
 
-    /** Meta sugerida: 2 h a menos que hoje, nunca abaixo de meia hora. */
+    // meta: 2 h a menos que hoje, mínimo meia hora
     fun suggestedTarget(currentHours: Float): Float = (currentHours - 2f).coerceAtLeast(0.5f)
 }

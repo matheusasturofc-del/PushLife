@@ -17,21 +17,21 @@ class PushLifeApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
-        // Na versão das capturas de tela, datas e dias da semana também ficam em inglês.
+        // na versão das capturas, datas também em inglês
         if (resources.getBoolean(R.bool.english_only)) Locale.setDefault(Locale.US)
         AppGraph.load(this)
         Accounts.init(this)
     }
 }
 
-/** Objetos compartilhados pelo app inteiro. */
+// coisas compartilhadas pelo app todo
 object AppGraph {
     lateinit var bank: BankRepository
     lateinit var profile: ProfileRepository
     lateinit var blocking: BlockSettingsRepository
     lateinit var progress: ProgressRepository
 
-    /** (Re)lê tudo do armazenamento; usado ao abrir o app e depois de restaurar um backup. */
+    // relê tudo do armazenamento (ao abrir e depois de restaurar backup)
     fun load(context: Context) {
         val app = context.applicationContext
         bank = BankRepository(app)

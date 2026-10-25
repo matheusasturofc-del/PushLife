@@ -2,35 +2,33 @@ package com.pushlife.app.core
 
 import java.time.LocalDate
 
-/** Regras do tempo de tela combinadas no questionário. */
+// regras do tempo de tela
 object Rules {
     const val FREE_SECONDS_PER_DAY = 60L * 60 // 1 h grátis por dia (não acumula)
     const val MAX_EARNED_SECONDS = 2L * 60 * 60 // o saldo ganho acumula até 2 h
 
-    // Emergência: libera os apps sem saldo, mas a pessoa fica devendo exercício.
+    // emergência: libera sem saldo, mas fica devendo exercício
     const val EMERGENCY_SECONDS = 5L * 60
     const val EMERGENCY_DEBT_PUSHUPS = 10
     const val EMERGENCY_DEBT_SECONDS = EMERGENCY_DEBT_PUSHUPS * 60L
     const val MAX_EMERGENCIES_PER_DAY = 3
 }
 
-/**
- * Saldo de tempo de tela. O tempo grátis do dia é gasto primeiro e zera à meia-noite;
- * o tempo ganho com exercício acumula até [Rules.MAX_EARNED_SECONDS].
- */
+// saldo de tela: o grátis do dia sai primeiro e zera à meia-noite
+// o ganho com exercício acumula até MAX_EARNED_SECONDS
 data class BankState(
     val earnedSeconds: Long = 0,
     val freeUsedSeconds: Long = 0,
     val freeDay: LocalDate? = null,
-    /** Quanto de cada exercício foi feito por dia (repetições, segundos de prancha ou passos). */
+    // quanto fez de cada exercício por dia (reps, segundos ou passos)
     val countsByDay: Map<LocalDate, Map<Exercise, Int>> = emptyMap(),
-    /** Tempo de tela que os exercícios de cada dia valeram, mesmo acima do limite guardado. */
+    // quanto o exercício de cada dia valeu, mesmo passando do limite
     val effortByDay: Map<LocalDate, Long> = emptyMap(),
-    /** Tempo devido por emergências; é pago antes de o exercício virar saldo. */
+    // dívida das emergências, paga antes de virar saldo
     val debtSeconds: Long = 0,
     val emergencyDay: LocalDate? = null,
     val emergenciesUsed: Int = 0,
-    /** Até quando (relógio do sistema, em ms) a emergência atual libera os apps. */
+    // até quando a emergência libera (ms, relógio do sistema)
     val emergencyUntilMs: Long = 0,
 ) {
     fun freeRemaining(today: LocalDate): Long =
@@ -40,17 +38,17 @@ data class BankState(
 
     fun countOn(day: LocalDate, exercise: Exercise): Int = countsByDay[day]?.get(exercise) ?: 0
 
-    /** Minutos ganhos com exercício no dia (1 flexão = 1 minuto): é a unidade da meta diária. */
+    // minutos ganhos no dia (1 flexão = 1 min), é o que conta pra meta
     fun effortMinutesOn(day: LocalDate): Int = ((effortByDay[day] ?: 0) / 60).toInt()
 
-    /** A dívida mostrada em flexões, arredondando para cima. */
+    // dívida em flexões, arredonda pra cima
     val debtPushups: Int get() = ((debtSeconds + 59) / 60).toInt()
 
     fun emergenciesLeft(today: LocalDate): Int =
         Rules.MAX_EMERGENCIES_PER_DAY - if (emergencyDay == today) emergenciesUsed else 0
 }
 
-/** Resultado de registrar exercício: o novo estado, quanto entrou no saldo e quanto pagou da dívida. */
+// resultado: novo estado, quanto entrou e quanto pagou da dívida
 data class Credit(val state: BankState, val creditedSeconds: Long, val hitCap: Boolean, val debtPaidSeconds: Long = 0)
 
 object TimeBank {
@@ -71,14 +69,14 @@ object TimeBank {
         return Credit(newState, credited, hitCap = credited < wanted, debtPaidSeconds = debtPaid)
     }
 
-    /** Prêmio (ex.: desafio semanal): entra no saldo respeitando o limite, sem contar como exercício. */
+    // prêmio (desafio semanal): entra no saldo, mas não conta como exercício
     fun addBonus(state: BankState, seconds: Long): Credit {
         val newEarned = (state.earnedSeconds + seconds).coerceAtMost(Rules.MAX_EARNED_SECONDS)
         val credited = (newEarned - state.earnedSeconds).coerceAtLeast(0)
         return Credit(state.copy(earnedSeconds = maxOf(newEarned, state.earnedSeconds)), credited, hitCap = credited < seconds)
     }
 
-    /** Gasta tempo de tela: primeiro o grátis do dia, depois o ganho. Não deixa ficar negativo. */
+    // gasta tempo: primeiro o grátis, depois o ganho, nunca negativo
     fun spend(state: BankState, seconds: Long, today: LocalDate): BankState {
         require(seconds >= 0)
         val fromFree = minOf(seconds, state.freeRemaining(today))
@@ -91,7 +89,7 @@ object TimeBank {
         )
     }
 
-    /** Usa uma emergência, se ainda houver hoje. Retorna null quando acabaram. */
+    // usa uma emergência; null se acabaram as de hoje
     fun emergency(state: BankState, today: LocalDate, nowMs: Long): BankState? {
         if (state.emergenciesLeft(today) <= 0) return null
         return state.copy(

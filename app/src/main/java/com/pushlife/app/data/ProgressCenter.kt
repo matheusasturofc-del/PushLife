@@ -7,21 +7,21 @@ import com.pushlife.app.core.progress.WeeklyChallenge
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
 
-/** Junta saldo, perfil e progresso para as regras da gamificação. */
+// junta saldo, perfil e progresso pra gamificação
 object ProgressCenter {
     fun stats(today: LocalDate = LocalDate.now()): Stats {
         val progress = AppGraph.progress.state.value
         return Stats.from(AppGraph.bank.state.value, progress.goalMetDays, progress.claimedWeeks.size, today)
     }
 
-    /** Depois de cada exercício: registra o dia se a meta foi batida. */
+    // depois de cada exercício: marca o dia se bateu a meta
     fun afterExercise(today: LocalDate = LocalDate.now()) {
         if (AppGraph.bank.state.value.effortMinutesOn(today) >= AppGraph.profile.state.value.dailyGoal) {
             AppGraph.progress.markGoalMet(today)
         }
     }
 
-    /** Resgata o prêmio do desafio da semana, se concluído e ainda não resgatado. */
+    // resgata o prêmio da semana (se concluiu e ainda não pegou)
     fun claimChallenge(today: LocalDate = LocalDate.now()): Boolean {
         val weekStart = WeeklyChallenge.weekStart(today)
         val challenge = WeeklyChallenge.forWeek(weekStart)
@@ -32,10 +32,7 @@ object ProgressCenter {
         return true
     }
 
-    /**
-     * Meta que evolui: uma vez a cada 7 dias olha a semana anterior e ajusta a meta diária.
-     * @return a nova meta, se mudou.
-     */
+    // meta que evolui: 1x por semana olha a semana passada e ajusta; devolve a nova se mudou
     fun adjustGoalIfDue(today: LocalDate = LocalDate.now()): Int? {
         val last = AppGraph.progress.state.value.lastGoalAdjust
         if (last == null) {

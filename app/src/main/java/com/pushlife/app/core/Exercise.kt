@@ -1,15 +1,12 @@
 package com.pushlife.app.core
 
-/** Como o app acompanha cada exercício. */
+// como cada exercício é acompanhado
 enum class Tracking { FACE, POSE, STEPS }
 
-/** Em que unidade o exercício é contado. */
+// unidade de contagem
 enum class ExerciseUnit { REPS, SECONDS, STEPS }
 
-/**
- * Os exercícios do app e quanto tempo de tela cada unidade vale.
- * Referência: 1 flexão = 1 minuto; os outros seguem o esforço relativo.
- */
+// exercícios e quanto vale cada unidade (base: 1 flexão = 1 min)
 enum class Exercise(val secondsPerUnit: Double, val unit: ExerciseUnit, val tracking: Tracking) {
     PUSHUP(60.0, ExerciseUnit.REPS, Tracking.POSE),
     SQUAT(30.0, ExerciseUnit.REPS, Tracking.POSE),
@@ -23,18 +20,15 @@ enum class Exercise(val secondsPerUnit: Double, val unit: ExerciseUnit, val trac
     WALK(0.6, ExerciseUnit.STEPS, Tracking.STEPS),
     ;
 
-    /** Tempo de tela (s) que [amount] unidades valem. */
+    // tempo de tela (s) que essa quantidade vale
     fun valueOf(amount: Int): Long = Math.round(amount * secondsPerUnit)
 }
 
-/** Os exercícios sugeridos na tela inicial e na tela de bloqueio. */
+// sugeridos na home e na tela de bloqueio
 object Recommendations {
     private val DEFAULTS = listOf(Exercise.PUSHUP, Exercise.SITUP)
 
-    /**
-     * Os [n] mais praticados: primeiro em quantos dias a pessoa fez, depois em quanto tempo de tela
-     * valeram. Sem histórico (ou com pouco), completa com flexão e abdominal.
-     */
+    // os n mais feitos (por dias, depois por tempo); sem histórico completa com flexão e abdominal
     fun top(countsByDay: Map<java.time.LocalDate, Map<Exercise, Int>>, n: Int = 2): List<Exercise> {
         val days = mutableMapOf<Exercise, Int>()
         val value = mutableMapOf<Exercise, Long>()

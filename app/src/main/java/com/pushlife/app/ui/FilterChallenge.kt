@@ -47,14 +47,14 @@ import com.pushlife.app.ui.theme.Orange
 import kotlinx.coroutines.delay
 import java.time.LocalDate
 
-// Para desligar o filtro: reescrever 15 linhas sobre o mal da pornografia, em até 3 minutos e sem colar.
-// Só 1 tentativa por dia (pela data do celular): conta ao tocar em "Começar".
+// pra desligar o filtro: reescrever 15 linhas em até 3 min, sem colar
+// só 1 tentativa por dia, conta ao tocar em "Começar"
 @Composable
 fun FilterChallengeDialog(onDisable: () -> Unit, onKeep: () -> Unit) {
     val context = LocalContext.current
     val lines = stringArrayResource(R.array.filter_challenge_lines).toList()
     var started by rememberSaveable { mutableStateOf(false) }
-    // Já tentou hoje? (lido ao abrir; começar a tentativa grava o dia)
+    // já tentou hoje? (o dia é gravado ao começar)
     val usedToday = rememberSaveable { !Challenge.canTry(lastTry(context), LocalDate.now()) }
     var typed by rememberSaveable { mutableStateOf("") }
     var secondsLeft by rememberSaveable { mutableIntStateOf(Challenge.SECONDS) }
@@ -108,7 +108,7 @@ fun FilterChallengeDialog(onDisable: () -> Unit, onKeep: () -> Unit) {
             }
             Text(stringResource(R.string.challenge_body), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
 
-            // O texto, com as linhas já reescritas apagadinhas.
+            // texto, com as linhas já feitas apagadinhas
             Column(
                 Modifier
                     .weight(1f)

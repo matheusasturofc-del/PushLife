@@ -16,10 +16,7 @@ import java.time.LocalDate
 import java.time.LocalTime
 import java.time.ZonedDateTime
 
-/**
- * Verificação diária às 20 h: avisa se a sequência está em risco, manda o resumo da semana
- * aos domingos e ajusta a meta diária uma vez por semana.
- */
+// checagem das 20 h: sequência em risco, resumo no domingo e ajuste semanal da meta
 object DailyCheck {
     private val TIME: LocalTime = LocalTime.of(20, 0)
 

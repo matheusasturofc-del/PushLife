@@ -1,14 +1,7 @@
 package com.pushlife.app.core
 
-/**
- * Decide o que fazer a cada "tique" (≈1 s) do serviço de bloqueio, a partir do app que está
- * na tela. Não sabe nada de Android: quem chama informa o app da frente, o saldo e a hora.
- *
- * - Entrou num app bloqueado com saldo: [Event.Entered] (o app avisa quanto tempo resta).
- * - Entrou sem saldo, ou o saldo acabou enquanto usava: [Event.Block].
- * - Enquanto fica num app bloqueado, o tempo vai para [pendingSeconds] para ser descontado.
- * - Durante uma emergência, nada é descontado nem bloqueado.
- */
+// roda a cada ~1 s com o app da frente, saldo e hora (nada de Android aqui)
+// com saldo = Entered, sem saldo = Block; em emergência não cobra nem bloqueia
 class BlockerEngine(
     private val maxGapMs: Long = 5_000,
     private val reblockAfterMs: Long = 3_000,
@@ -19,7 +12,7 @@ class BlockerEngine(
         data class Left(val packageName: String) : Event
     }
 
-    /** Segundos gastos que ainda não foram descontados do saldo. */
+    // segundos gastos que ainda não saíram do saldo
     var pendingSeconds = 0L
         private set
 
@@ -72,10 +65,10 @@ class BlockerEngine(
         return events
     }
 
-    /** Entrega o gasto acumulado para ser salvo e zera o contador. */
+    // entrega o gasto pra salvar e zera
     fun takePending(): Long = pendingSeconds.also { pendingSeconds = 0 }
 
-    // Evita abrir a tela de bloqueio várias vezes enquanto ela ainda está aparecendo.
+    // não abre a tela de bloqueio de novo enquanto ela tá aparecendo
     private fun block(app: String, nowMs: Long): Event.Block? {
         if (nowMs - lastBlockMs < reblockAfterMs) return null
         lastBlockMs = nowMs

@@ -83,7 +83,7 @@ import java.time.format.FormatStyle
 
 private const val PRIVACY_URL = "https://github.com/matheusasturofc-del/PushLife/blob/claude/great-pasteur-y7qbv5/PRIVACY.md"
 
-/** Cores para o avatar (todas com bom contraste com texto escuro). */
+// cores do avatar (todas legíveis com texto escuro)
 private val AVATAR_COLORS = listOf(Orange, Yellow, Color(0xFF4CD964), Color(0xFF5AC8FA), Color(0xFFFF6B8B), Color(0xFFB98BFF))
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -131,7 +131,7 @@ fun ProfileScreen(modifier: Modifier = Modifier) {
                     Modifier
                         .size(80.dp)
                         .background(color, CircleShape)
-                        // Convidado não troca a foto (a cor do avatar).
+                        // convidado não troca a cor do avatar
                         .clickable(enabled = !profile.guest) { save { it.copy(avatarColor = (it.avatarColor + 1) % AVATAR_COLORS.size) } },
                     contentAlignment = Alignment.Center,
                 ) {
@@ -205,7 +205,7 @@ fun ProfileScreen(modifier: Modifier = Modifier) {
 
         item { Section(R.string.profile_language) }
         item {
-            // Segue o celular; quem quiser fixa um idioma aqui e o app reabre traduzido.
+            // segue o celular, ou fixa um idioma e o app reabre traduzido
             val current = remember { AppLanguage.get(context) }
             Column(
                 Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surfaceContainer, RoundedCornerShape(16.dp)).padding(vertical = 8.dp),
@@ -238,7 +238,7 @@ fun ProfileScreen(modifier: Modifier = Modifier) {
                 verticalArrangement = Arrangement.spacedBy(10.dp),
             ) {
                 if (profile.guest) {
-                    // Convidado não faz backup (nem em arquivo): precisa criar uma conta.
+                    // convidado não tem backup (nem em arquivo), precisa criar conta
                     Text(stringResource(R.string.guest_no_backup), style = MaterialTheme.typography.bodyMedium)
                 } else {
                     Text(stringResource(R.string.backup_body), style = MaterialTheme.typography.bodyMedium)
@@ -297,7 +297,7 @@ fun ProfileScreen(modifier: Modifier = Modifier) {
         item { Section(R.string.profile_about) }
         item {
             val version = remember {
-                // Nome e número da versão; o número é o que vai no update.json.
+                // nome e versão (o número é o mesmo do update.json)
                 runCatching {
                     val info = context.packageManager.getPackageInfo(context.packageName, 0)
                     "${info.versionName} (${PackageInfoCompat.getLongVersionCode(info)})"
@@ -411,7 +411,7 @@ fun ProfileScreen(modifier: Modifier = Modifier) {
         }
     }
 
-    // Volta do login com Google/Discord/Twitch feito pelo Perfil.
+    // volta do login Google/Discord/Twitch pelo Perfil
     val oauth by Accounts.oauth.collectAsStateWithLifecycle()
     LaunchedEffect(oauth) {
         val done = oauth as? Accounts.OAuthState.Done ?: return@LaunchedEffect
@@ -424,7 +424,7 @@ fun ProfileScreen(modifier: Modifier = Modifier) {
     }
 
     if (confirmDeleteAccount) {
-        // Para não apagar sem querer: só apaga com o código que chega no e-mail da conta.
+        // segurança: só apaga com o código do e-mail
         var codeSent by remember { mutableStateOf(false) }
         var code by remember { mutableStateOf("") }
         var error by remember { mutableStateOf<Int?>(null) }
@@ -503,7 +503,7 @@ fun ProfileScreen(modifier: Modifier = Modifier) {
     }
 
     pendingRestore?.let { result ->
-        // Este celular já tem dados: a pessoa escolhe com quais ficar.
+        // já tem dados aqui: a pessoa escolhe quais ficam
         AlertDialog(
             onDismissRequest = {},
             title = { Text(stringResource(R.string.account_restore_title)) },
@@ -536,12 +536,12 @@ private fun FullScreenDialog(onDismiss: () -> Unit, content: @Composable () -> U
     }
 }
 
-/** Depois de restaurar ou apagar: ajusta serviços e lembretes e recria a tela com os dados novos. */
+// depois de restaurar/apagar: ajusta serviços e lembretes e recria a tela
 private fun afterDataChange(context: Context) = reloadAfterDataChange(context)
 
 private fun Context.toast(@StringRes text: Int) = Toast.makeText(this, text, Toast.LENGTH_SHORT).show()
 
-/** Nome de cada idioma escrito nele mesmo (assim todo mundo acha o seu). */
+// nome de cada idioma na própria língua
 @Composable
 private fun languageName(tag: String): String = when (tag) {
     "pt" -> "Português"

@@ -32,7 +32,7 @@ class DomainBlocklistTest {
 }
 
 class DnsTest {
-    /** Consulta tipo A para [name], como um celular mandaria. */
+    // consulta tipo A, igual um celular mandaria
     private fun query(name: String, id: Int = 0x1234, withEdns: Boolean = false): ByteArray {
         val out = mutableListOf<Byte>()
         fun u16(v: Int) { out += (v ushr 8).toByte(); out += v.toByte() }

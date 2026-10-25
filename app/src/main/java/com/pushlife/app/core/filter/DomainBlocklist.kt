@@ -1,10 +1,7 @@
 package com.pushlife.app.core.filter
 
-/**
- * Lista de domínios bloqueados pelo filtro de sites adultos. Um domínio bloqueia também todos
- * os seus subdomínios (bloquear "site.com" bloqueia "www.site.com"). Palavras-chave pegam
- * espelhos e domínios novos que não estão na lista.
- */
+// sites adultos bloqueados; o domínio já pega os subdomínios
+// palavras-chave pegam espelhos e domínios novos
 class DomainBlocklist(
     domains: Collection<String> = ADULT_DOMAINS,
     private val keywords: List<String> = ADULT_KEYWORDS,
@@ -28,10 +25,10 @@ class DomainBlocklist(
     private fun normalize(host: String) = host.trim().trimEnd('.').lowercase()
 
     companion object {
-        /** Partes de nome que quase só aparecem em sites adultos ("sex" fica de fora: "essex", "sussex"…). */
+        // pedaços de nome quase só de site adulto ("sex" ficou de fora por causa de "essex")
         val ADULT_KEYWORDS = listOf("porn", "xxx", "hentai", "xvideo", "xnxx", "xhamster", "redtube", "rule34")
 
-        // Os mais acessados, sempre bloqueados. A lista grande (assets/filter) cobre o resto.
+        // os mais acessados, sempre bloqueados (o resto vem de assets/filter)
         val ADULT_DOMAINS = listOf(
             "pornhub.com", "pornhub.org", "xvideos.com", "xvideos2.com", "xnxx.com", "xhamster.com",
             "xhamster.desi", "redtube.com", "youporn.com", "tube8.com", "spankbang.com", "eporner.com",
