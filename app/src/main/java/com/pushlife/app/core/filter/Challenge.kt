@@ -1,6 +1,7 @@
 package com.pushlife.app.core.filter
 
 import java.text.Normalizer
+import java.time.LocalDate
 
 /**
  * Desafio para desligar o filtro de sites adultos: reescrever um texto de 15 linhas em até 3 minutos.
@@ -49,4 +50,7 @@ object Challenge {
     }
 
     fun looksPasted(before: String, after: String): Boolean = after.length - before.length > MAX_JUMP
+
+    // Uma tentativa por dia, pela data do celular: libera de novo à meia-noite.
+    fun canTry(lastTry: LocalDate?, today: LocalDate): Boolean = lastTry == null || today.isAfter(lastTry)
 }

@@ -518,11 +518,11 @@
     <string name="account_deleted">Account deleted.</string>
     <!-- Desafio para desligar o filtro adulto -->
     <string name="challenge_title">Turn off the filter?</string>
-    <string name="challenge_body">To turn it off, rewrite the whole text below within 3 minutes. No pasting. If time runs out, the filter stays on.</string>
+    <string name="challenge_body">To turn it off, rewrite the whole text below within 3 minutes. No pasting. You only get 1 try per day: if time runs out or you close it, the filter stays on until tomorrow.</string>
     <string name="challenge_start">Start (3 minutes)</string>
     <string name="challenge_keep">Keep the filter on</string>
-    <string name="challenge_retry">Try again</string>
-    <string name="challenge_time_up">Time is up! The filter stays on.</string>
+    <string name="challenge_used_today">You already used today\'s try. You can try again tomorrow, after midnight.</string>
+    <string name="challenge_time_up">Time is up! The filter stays on. You can try again tomorrow.</string>
     <string name="challenge_lines">Lines: %1$d of %2$d</string>
     <string name="challenge_hint">Type the text here…</string>
     <string name="challenge_no_paste">No pasting. Type the text.</string>

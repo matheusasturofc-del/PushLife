@@ -511,11 +511,11 @@
     <string name="account_deleted">Conta apagada.</string>
     <!-- Desafio para desligar o filtro adulto -->
     <string name="challenge_title">Desligar o filtro?</string>
-    <string name="challenge_body">Para desligar, reescreva o texto abaixo inteiro em até 3 minutos. Colar não vale. Se o tempo acabar, o filtro continua ligado.</string>
+    <string name="challenge_body">Para desligar, reescreva o texto abaixo inteiro em até 3 minutos. Colar não vale. Você só tem 1 tentativa por dia: se o tempo acabar ou você fechar, o filtro fica ligado até amanhã.</string>
     <string name="challenge_start">Começar (3 minutos)</string>
     <string name="challenge_keep">Manter o filtro ligado</string>
-    <string name="challenge_retry">Tentar de novo</string>
-    <string name="challenge_time_up">Tempo esgotado! O filtro continua ligado.</string>
+    <string name="challenge_used_today">Você já usou a tentativa de hoje. Dá para tentar de novo amanhã, a partir da meia-noite.</string>
+    <string name="challenge_time_up">Tempo esgotado! O filtro continua ligado. Você pode tentar de novo amanhã.</string>
     <string name="challenge_lines">Linhas: %1$d de %2$d</string>
     <string name="challenge_hint">Digite o texto aqui…</string>
     <string name="challenge_no_paste">Colar não vale. Digite o texto.</string>

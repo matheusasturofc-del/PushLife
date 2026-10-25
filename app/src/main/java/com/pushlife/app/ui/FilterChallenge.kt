@@ -1,5 +1,6 @@
 package com.pushlife.app.ui
 
+import android.content.Context
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -31,6 +32,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -38,27 +40,29 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.core.content.edit
 import com.pushlife.app.R
 import com.pushlife.app.core.filter.Challenge
 import com.pushlife.app.ui.theme.Orange
 import kotlinx.coroutines.delay
+import java.time.LocalDate
 
-/**
- * Para desligar o filtro de sites adultos: reescrever 15 linhas sobre o mal que a pornografia faz,
- * em até 3 minutos e sem colar. Se o tempo acabar, o filtro continua ligado.
- */
+// Para desligar o filtro: reescrever 15 linhas sobre o mal da pornografia, em até 3 minutos e sem colar.
+// Só 1 tentativa por dia (pela data do celular): conta ao tocar em "Começar".
 @Composable
 fun FilterChallengeDialog(onDisable: () -> Unit, onKeep: () -> Unit) {
+    val context = LocalContext.current
     val lines = stringArrayResource(R.array.filter_challenge_lines).toList()
     var started by rememberSaveable { mutableStateOf(false) }
-    var attempt by rememberSaveable { mutableIntStateOf(0) }
+    // Já tentou hoje? (lido ao abrir; começar a tentativa grava o dia)
+    val usedToday = rememberSaveable { !Challenge.canTry(lastTry(context), LocalDate.now()) }
     var typed by rememberSaveable { mutableStateOf("") }
     var secondsLeft by rememberSaveable { mutableIntStateOf(Challenge.SECONDS) }
     var pasted by remember { mutableStateOf(false) }
     val progress = remember(typed, lines) { Challenge.progress(typed, lines) }
     val timeUp = started && secondsLeft == 0 && !progress.done
 
-    LaunchedEffect(started, attempt) {
+    LaunchedEffect(started) {
         while (started && secondsLeft > 0) {
             delay(1000)
             secondsLeft--
@@ -68,12 +72,12 @@ fun FilterChallengeDialog(onDisable: () -> Unit, onKeep: () -> Unit) {
         if (progress.done && started && secondsLeft > 0) onDisable()
     }
 
-    fun restart() {
+    fun start() {
+        markTried(context)
         typed = ""
         secondsLeft = Challenge.SECONDS
         pasted = false
         started = true
-        attempt++
     }
 
     Dialog(
@@ -128,8 +132,7 @@ fun FilterChallengeDialog(onDisable: () -> Unit, onKeep: () -> Unit) {
             when {
                 timeUp -> {
                     Text(stringResource(R.string.challenge_time_up), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.titleMedium)
-                    Button(onClick = ::restart, modifier = Modifier.fillMaxWidth().height(56.dp)) { Text(stringResource(R.string.challenge_retry)) }
-                    OutlinedButton(onClick = onKeep, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.challenge_keep)) }
+                    Button(onClick = onKeep, modifier = Modifier.fillMaxWidth().height(56.dp)) { Text(stringResource(R.string.challenge_keep)) }
                 }
                 started -> {
                     LinearProgressIndicator(progress = { progress.correct.toFloat() / progress.total.coerceAtLeast(1) }, modifier = Modifier.fillMaxWidth())
@@ -163,11 +166,22 @@ fun FilterChallengeDialog(onDisable: () -> Unit, onKeep: () -> Unit) {
                     )
                     OutlinedButton(onClick = onKeep, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.challenge_keep)) }
                 }
+                usedToday -> {
+                    Text(stringResource(R.string.challenge_used_today), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.titleMedium)
+                    Button(onClick = onKeep, modifier = Modifier.fillMaxWidth().height(56.dp)) { Text(stringResource(R.string.challenge_keep)) }
+                }
                 else -> {
-                    Button(onClick = ::restart, modifier = Modifier.fillMaxWidth().height(56.dp)) { Text(stringResource(R.string.challenge_start)) }
+                    Button(onClick = ::start, modifier = Modifier.fillMaxWidth().height(56.dp)) { Text(stringResource(R.string.challenge_start)) }
                     OutlinedButton(onClick = onKeep, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.challenge_keep)) }
                 }
             }
         }
     }
 }
+
+private fun prefs(context: Context) = context.getSharedPreferences("filter_challenge", Context.MODE_PRIVATE)
+
+private fun lastTry(context: Context): LocalDate? =
+    prefs(context).getString("last_try", null)?.let { runCatching { LocalDate.parse(it) }.getOrNull() }
+
+private fun markTried(context: Context) = prefs(context).edit { putString("last_try", LocalDate.now().toString()) }

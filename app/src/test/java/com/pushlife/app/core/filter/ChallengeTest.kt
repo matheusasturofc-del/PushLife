@@ -39,4 +39,14 @@ class ChallengeTest {
         assertTrue(Challenge.looksPasted("", "Pornografia rouba meu tempo e minha energia."))
         assertFalse(Challenge.looksPasted("Porno", "Pornografia "))
     }
+
+    @Test
+    fun umaTentativaPorDiaPeloRelogioDoCelular() {
+        val hoje = java.time.LocalDate.of(2026, 10, 25)
+        assertTrue(Challenge.canTry(null, hoje))
+        assertFalse(Challenge.canTry(hoje, hoje))
+        assertTrue(Challenge.canTry(hoje, hoje.plusDays(1)))
+        // Voltar o relógio não libera de novo.
+        assertFalse(Challenge.canTry(hoje, hoje.minusDays(1)))
+    }
 }
