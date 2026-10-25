@@ -38,7 +38,7 @@ private enum class Tab(@StringRes val label: Int, val icon: ImageVector) {
 @Composable
 fun PushLifeApp(trainRequests: Int = 0, pendingExercise: Exercise? = null, onExerciseOpened: () -> Unit = {}) {
     var selected by rememberSaveable { mutableIntStateOf(Tab.Home.ordinal) }
-    // Exercício escolhido nas recomendações da tela inicial (abre direto no treino).
+    // exercício escolhido na tela inicial, abre direto no treino
     var homePick by rememberSaveable { mutableStateOf<Exercise?>(null) }
     LaunchedEffect(trainRequests) {
         if (trainRequests > 0) selected = Tab.Train.ordinal
@@ -53,7 +53,7 @@ fun PushLifeApp(trainRequests: Int = 0, pendingExercise: Exercise? = null, onExe
                         selected = t == tab,
                         onClick = { selected = t.ordinal },
                         icon = { Icon(t.icon, contentDescription = null) },
-                        // Uma linha só, em fonte menor: com 5 abas "Progresso" quebrava em duas.
+                        // uma linha só e fonte menor, senão "Progresso" quebra com 5 abas
                         label = { Text(stringResource(t.label), maxLines = 1, softWrap = false, style = MaterialTheme.typography.labelSmall) },
                     )
                 }

@@ -10,11 +10,8 @@ import android.os.LocaleList
 import androidx.core.content.edit
 import java.util.Locale
 
-/**
- * Idioma do app: "" segue o celular; "pt", "en" ou "es" fixam um idioma.
- * No Android 13+ quem guarda e aplica é o próprio sistema (idioma por app);
- * nas versões anteriores o app guarda a escolha e aplica em cada tela e serviço via [wrap].
- */
+// idioma: "" segue o celular, "pt"/"en"/"es" fixa
+// Android 13+ o sistema cuida; antes disso a gente guarda e aplica na mão via wrap()
 object AppLanguage {
     val TAGS = listOf("", "pt", "en", "es")
 
@@ -33,7 +30,7 @@ object AppLanguage {
             activity.getSystemService(LocaleManager::class.java).applicationLocales =
                 if (tag.isEmpty()) LocaleList.getEmptyLocaleList() else LocaleList.forLanguageTags(tag)
         } else {
-            // Atualiza também o contexto do app (notificações) sem precisar reiniciar.
+            // atualiza o contexto do app também (notificações), sem reiniciar
             val res = activity.applicationContext.resources
             val config = Configuration(res.configuration).apply { setLocale(localeFor(tag)) }
             Locale.setDefault(localeFor(tag))
@@ -43,7 +40,7 @@ object AppLanguage {
         }
     }
 
-    /** Usar em attachBaseContext de Application, Activities e Services. */
+    // chamar no attachBaseContext (Application, Activities e Services)
     fun wrap(base: Context): Context {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) return base
         val locale = localeFor(prefs(base).getString(KEY, "").orEmpty())

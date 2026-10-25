@@ -94,7 +94,7 @@ fun BlockScreen(modifier: Modifier = Modifier) {
     var askDisable by remember { mutableStateOf(false) }
     var askDisableFilter by remember { mutableStateOf(false) }
     val filterRunning by DnsFilterService.running.collectAsStateWithLifecycle()
-    // O Android pede autorização uma única vez para o app criar a VPN local do filtro.
+    // o Android pede autorização uma vez só pra criar a VPN do filtro
     val vpnConsent = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
             AppGraph.blocking.setAdultFilter(true)
@@ -102,7 +102,7 @@ fun BlockScreen(modifier: Modifier = Modifier) {
         }
     }
 
-    // Ao voltar das configurações do Android, relê as permissões e recarrega as médias de uso.
+    // voltou das configurações: relê permissões e médias de uso
     LifecycleResumeEffect(Unit) {
         val before = permissions.usage
         permissions = PermissionState.read(context)
@@ -245,7 +245,7 @@ fun BlockScreen(modifier: Modifier = Modifier) {
         )
     }
     if (askDisableFilter) {
-        // Desligar o filtro adulto é de propósito difícil: reescrever o texto em até 3 minutos.
+        // desligar o filtro é difícil de propósito (reescrever o texto em 3 min)
         FilterChallengeDialog(
             onDisable = {
                 askDisableFilter = false
@@ -386,7 +386,7 @@ private fun AppRow(app: AppEntry, blocked: Boolean, onToggle: () -> Unit) {
     }
 }
 
-/** Desligar a proteção exige esperar 30 s: um freio para o impulso de burlar. */
+// desligar a proteção = esperar 30 s, freio pro impulso
 @Composable
 private fun DisableDialog(@StringRes title: Int, onConfirm: () -> Unit, onDismiss: () -> Unit) {
     var secondsLeft by remember { mutableIntStateOf(DISABLE_WAIT_SECONDS) }

@@ -6,11 +6,11 @@ import org.junit.Test
 import kotlin.math.cos
 import kotlin.math.sin
 
-/** Monta poses sintéticas (lado esquerdo, de perfil) a partir dos ângulos das articulações. */
+// poses de mentira (lado esquerdo, de perfil) montadas pelos ângulos
 private object Poses {
     private fun rad(deg: Float) = Math.toRadians(deg.toDouble())
 
-    /** Ponto a [len] px de [from], na direção [deg] (0 = para cima, 90 = para a direita). */
+    // anda len px a partir do ponto; 0° = pra cima, 90° = pra direita
     fun toward(from: Point, deg: Float, len: Float = 100f) =
         Point(from.x + (len * sin(rad(deg))).toFloat(), from.y - (len * cos(rad(deg))).toFloat())
 
@@ -21,17 +21,17 @@ private object Poses {
         ),
     )
 
-    /** Agachamento de perfil com o joelho em [kneeAngle] e o tronco inclinado [lean] graus. */
+    // agachamento de lado: ângulo do joelho + inclinação do tronco
     fun squat(kneeAngle: Float, lean: Float = 10f): PoseFrame {
         val ankle = Point(300f, 600f)
         val knee = Point(300f, 500f)
-        // Do joelho para o quadril: para cima, girando para trás conforme o joelho dobra.
+        // joelho → quadril: sobe e vai girando pra trás conforme dobra
         val hip = toward(knee, -(180f - kneeAngle))
         val shoulder = toward(hip, lean)
         return side(shoulder, toward(shoulder, 180f, 60f), toward(shoulder, 180f, 120f), hip, knee, ankle)
     }
 
-    /** Abdominal: deitado com joelhos dobrados; [hipAngle] entre tronco e coxa. */
+    // abdominal deitado com joelho dobrado; hipAngle = tronco x coxa
     fun situp(hipAngle: Float): PoseFrame {
         val hip = Point(300f, 500f)
         val knee = toward(hip, 60f) // coxa subindo para a direita
@@ -40,7 +40,7 @@ private object Poses {
         return side(shoulder, toward(shoulder, 180f, 50f), toward(shoulder, 180f, 90f), hip, knee, ankle)
     }
 
-    /** Barra fixa de frente/perfil: ângulo do cotovelo [elbowAngle]. */
+    // barra fixa, só muda o cotovelo
     fun pullup(elbowAngle: Float): PoseFrame {
         val shoulder = Point(300f, 300f)
         val elbow = toward(shoulder, 0f)
@@ -50,7 +50,7 @@ private object Poses {
         return side(shoulder, elbow, wrist, hip, knee, toward(knee, 180f))
     }
 
-    /** Corpo inteiro com o tronco a [lean] graus da vertical (0 em pé, 90 deitado). */
+    // corpo todo inclinado: 0 = em pé, 90 = deitado
     fun torso(lean: Float, hipSag: Float = 0f): PoseFrame {
         val hip = Point(300f, 400f + hipSag)
         val shoulder = toward(Point(300f, 400f), lean, 120f)
@@ -59,7 +59,7 @@ private object Poses {
         return side(shoulder, toward(shoulder, 180f, 60f), toward(shoulder, 180f, 120f), hip, knee, ankle)
     }
 
-    /** Polichinelo de frente. */
+    // polichinelo de frente
     fun jack(open: Boolean): PoseFrame {
         val ls = Point(260f, 200f)
         val rs = Point(340f, 200f)
@@ -159,7 +159,7 @@ class TrackersTest {
         val tr = JumpingJackTracker()
         val c = Poses.jack(open = false)
         val o = Poses.jack(open = true)
-        // fechado, aberto, fechado, aberto, fechado = 2; um quadro solto aberto no meio é ignorado
+        // fecha/abre/fecha/abre/fecha = 2; quadro aberto solto no meio não conta
         tr.run(listOf(c, c, c, o, o, o, c, c, c, o, c, c, o, o, o, c, c, c), stepMs = 200)
         assertEquals(2, tr.count)
     }
@@ -204,7 +204,7 @@ class TrackersTest {
     @Test
     fun emPeDobrandoOTroncoNaoContaAbdominal() {
         val tr = SitupTracker()
-        // Em pé (coxa vertical), dobrando o tronco para a frente até 60° e voltando.
+        // em pé, só dobrando o tronco pra frente até 60° e voltando
         val hip = Point(300f, 400f)
         val knee = Poses.toward(hip, 180f)
         val ankle = Poses.toward(knee, 180f)
@@ -221,7 +221,7 @@ class TrackersTest {
     @Test
     fun roscaComAsMaosEmbaixoNaoContaBarra() {
         val tr = PullupTracker()
-        // Em pé com o braço para baixo dobrando o cotovelo (rosca): mãos abaixo dos ombros.
+        // rosca em pé: dobra o cotovelo com as mãos abaixo dos ombros
         fun curl(elbowAngle: Float): PoseFrame {
             val shoulder = Point(300f, 300f)
             val elbow = Poses.toward(shoulder, 180f)
@@ -230,7 +230,7 @@ class TrackersTest {
             val knee = Poses.toward(hip, 180f)
             return Poses.side(shoulder, elbow, wrist, hip, knee, Poses.toward(knee, 180f))
         }
-        // Dobra até 50° (o mesmo que conta na barra), mas com as mãos abaixo dos ombros.
+        // dobra até 50° igual na barra, mas com as mãos abaixo dos ombros
         val angles = sweep(170f, 170f, 3) + sweep(170f, 50f) + sweep(50f, 170f)
         tr.run(angles.map { curl(it) })
         assertEquals(0, tr.count)
@@ -239,7 +239,7 @@ class TrackersTest {
     @Test
     fun pranchaDeJoelhosNaoContaTempo() {
         val tr = PlankTracker()
-        // Deitado, mas com o joelho no chão: perna dobrada a ~90°.
+        // deitado mas com o joelho no chão (perna a ~90°)
         val shoulder = Point(200f, 300f)
         val hip = Point(380f, 330f)
         val knee = Point(480f, 400f)

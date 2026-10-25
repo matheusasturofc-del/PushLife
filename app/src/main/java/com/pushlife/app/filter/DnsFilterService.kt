@@ -24,11 +24,10 @@ import java.net.InetAddress
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
-// Filtro de sites adultos: uma VPN local que só recebe as consultas de DNS (o resto da internet
-// não passa por ela). Site da lista recebe "não existe"; os outros seguem para o DNS normal da
-// internet da pessoa (Wi-Fi ou operadora). Nenhum serviço de fora no meio.
+// filtro adulto: VPN local que só pega o DNS (o resto da internet passa por fora)
+// site da lista = "não existe", o resto vai pro DNS normal da pessoa, sem serviço de fora
 class DnsFilterService : VpnService() {
-    // Começa com a lista curta; a grande (quase 1 milhão de sites) carrega em segundo plano.
+    // começa com a lista curta, a grande (~1 milhão de sites) carrega em segundo plano
     @Volatile private var blocklist = DomainBlocklist()
     private var dnsServers: List<InetAddress> = emptyList()
     private var dnsServersAt = 0L
@@ -86,12 +85,12 @@ class DnsFilterService : VpnService() {
                 continue
             }
             if (length <= 0) {
-                if (!pause()) return // Android 8 e 9: a leitura não bloqueia, então espera um pouco
+                if (!pause()) return // Android 8/9: a leitura não bloqueia, então espera
                 continue
             }
             val packet = Packets.parseUdp(buffer, length) ?: continue
             if (packet.destinationPort != 53) continue
-            // runCatching: ao desligar, o executor pode recusar tarefas novas.
+            // runCatching pq ao desligar o executor pode recusar tarefa nova
             runCatching {
                 workers?.execute {
                     val query = packet.payload
@@ -106,7 +105,7 @@ class DnsFilterService : VpnService() {
         }
     }
 
-    /** Espera um instante; false se a thread foi interrompida (filtro desligando). */
+    // espera um pouco; false = thread interrompida (filtro desligando)
     private fun pause(): Boolean = try {
         Thread.sleep(20)
         true
@@ -119,7 +118,7 @@ class DnsFilterService : VpnService() {
         if (big != null) blocklist = DomainBlocklist(big = big)
     }
 
-    // Repassa a consulta ao DNS da internet da pessoa, por fora da VPN.
+    // manda a consulta pro DNS de verdade, por fora da VPN
     private fun forward(query: ByteArray): ByteArray? {
         for (server in systemDns()) {
             try {
@@ -139,7 +138,7 @@ class DnsFilterService : VpnService() {
         return null
     }
 
-    // Os servidores de DNS do Wi-Fi ou dos dados móveis (sem a nossa VPN), relidos a cada 10 s.
+    // DNS do Wi-Fi/dados móveis (sem a nossa VPN), relê a cada 10 s
     @Suppress("DEPRECATION") // allNetworks: o substituto exige ficar ouvindo mudanças de rede
     private fun systemDns(): List<InetAddress> = synchronized(this) {
         val now = System.currentTimeMillis()
@@ -176,7 +175,7 @@ class DnsFilterService : VpnService() {
         private val _running = MutableStateFlow(false)
         val running: StateFlow<Boolean> = _running.asStateFlow()
 
-        /** Liga ou desliga o filtro conforme o ajuste salvo (só liga se a VPN já foi autorizada). */
+        // liga/desliga conforme o ajuste (só liga se a VPN já foi autorizada)
         fun syncWithSettings(context: Context) {
             val wanted = AppGraph.blocking.state.value.adultFilter
             val intent = Intent(context, DnsFilterService::class.java)

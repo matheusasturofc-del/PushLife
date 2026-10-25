@@ -6,14 +6,14 @@ import kotlin.math.cos
 
 import kotlin.math.sqrt
 
-/** Flexão de joelhos não vale. */
+// flexão de joelho não vale
 class PushupFormTest {
     private fun PoseTracker.feed(frames: List<PoseFrame>, stepMs: Long = 150): List<TrackerUpdate> {
         var t = 0L
         return frames.map { f -> update(f, t).also { t += stepMs } }
     }
 
-    /** De perfil, como no PushupElbowTest, mas com o joelho no chão: perna dobrada a ~90°. */
+    // de lado igual o PushupElbowTest, mas com o joelho no chão (perna a ~90°)
     private fun kneePushup(elbowAngle: Float): PoseFrame {
         val arm = 100f
         val d = sqrt(2 * arm * arm * (1 - cos(Math.toRadians(elbowAngle.toDouble())))).toFloat()

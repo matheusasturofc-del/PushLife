@@ -1,6 +1,6 @@
 package com.pushlife.app.core.filter
 
-/** Um pacote UDP sobre IPv4 lido da VPN (ou a ser escrito nela). */
+// pacote UDP/IPv4 que entra ou sai da VPN
 class UdpPacket(
     val sourceIp: ByteArray,
     val destinationIp: ByteArray,
@@ -9,7 +9,7 @@ class UdpPacket(
     val payload: ByteArray,
 )
 
-/** Leitura e montagem de pacotes IPv4/UDP, o mínimo para responder consultas de DNS. */
+// IPv4/UDP no mínimo, só pra responder DNS
 object Packets {
     private const val UDP = 17
 
@@ -31,7 +31,7 @@ object Packets {
         )
     }
 
-    /** Monta um pacote IPv4/UDP (sem checksum de UDP, que é opcional no IPv4). */
+    // monta o pacote (sem checksum UDP, no IPv4 é opcional)
     fun buildUdp(sourceIp: ByteArray, destinationIp: ByteArray, sourcePort: Int, destinationPort: Int, payload: ByteArray): ByteArray {
         val total = 20 + 8 + payload.size
         val p = ByteArray(total)
@@ -70,14 +70,14 @@ object Packets {
     }
 }
 
-/** O mínimo de DNS: ler o nome perguntado e responder "não existe" (NXDOMAIN). */
+// DNS no mínimo: lê o nome e responde NXDOMAIN
 object Dns {
     private const val HEADER = 12
 
-    /** O nome da primeira pergunta ("www.site.com"), ou null se a mensagem for inválida. */
+    // nome da 1ª pergunta ("www.site.com"); null se a mensagem vier zoada
     fun questionName(message: ByteArray): String? = questionEnd(message)?.let { readName(message) }
 
-    /** Resposta "domínio não existe" para a consulta, com a pergunta original. */
+    // resposta "não existe" mantendo a pergunta original
     fun nxDomain(query: ByteArray): ByteArray? {
         val end = questionEnd(query) ?: return null
         val r = query.copyOf(end)
@@ -100,7 +100,7 @@ object Dns {
         return null
     }
 
-    /** Onde termina a primeira pergunta (nome + tipo + classe). */
+    // fim da 1ª pergunta (nome + tipo + classe)
     private fun questionEnd(m: ByteArray): Int? {
         if (m.size < HEADER + 5 || Packets.u16(m, 4) < 1) return null
         var i = HEADER

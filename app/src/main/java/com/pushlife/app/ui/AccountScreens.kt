@@ -72,13 +72,13 @@ import com.pushlife.app.ui.theme.Orange
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-/** Situação do @ enquanto a pessoa digita. */
+// status do @ enquanto digita
 enum class HandleStatus { EMPTY, TOO_SHORT, BAD_START, CHECKING, FREE, TAKEN, OFFLINE }
 
-/** Confere o @ no servidor meio segundo depois que a pessoa para de digitar. */
+// checa o @ no servidor meio segundo depois de parar de digitar
 @Composable
 fun rememberHandleStatus(handle: String): HandleStatus {
-    // Guarda junto o @ conferido: um resultado antigo nunca vale para o @ novo.
+    // guarda o @ junto pra resposta velha não valer pro @ novo
     var checked by remember { mutableStateOf("" to HandleStatus.EMPTY) }
     LaunchedEffect(handle) {
         val local = when (Username.problem(handle)) {
@@ -100,7 +100,7 @@ fun rememberHandleStatus(handle: String): HandleStatus {
     return if (checked.first == handle) checked.second else HandleStatus.CHECKING
 }
 
-/** Campo do @: já limpa o que é digitado e mostra se está livre. */
+// campo do @ (limpa o texto e mostra se tá livre)
 @Composable
 fun UsernameField(value: String, onValueChange: (String) -> Unit, status: HandleStatus, modifier: Modifier = Modifier) {
     val bad = status == HandleStatus.TAKEN || status == HandleStatus.TOO_SHORT || status == HandleStatus.BAD_START
@@ -138,7 +138,7 @@ fun UsernameField(value: String, onValueChange: (String) -> Unit, status: Handle
     )
 }
 
-/** E-mail e senha, com o olhinho para mostrar a senha. */
+// e-mail + senha com o olhinho
 @Composable
 fun EmailPasswordFields(email: String, onEmail: (String) -> Unit, password: String, onPassword: (String) -> Unit, onDone: () -> Unit) {
     var show by rememberSaveable { mutableStateOf(false) }
@@ -192,10 +192,8 @@ fun accountErrorText(error: Accounts.Error): Int = when (error) {
 const val CODE_LENGTH = 6
 private const val RESEND_SECONDS = 60
 
-/**
- * Onde a pessoa digita o código que chegou no e-mail. Quando completa os 6 dígitos, chama [onComplete].
- * "Reenviar" só libera depois de 1 minuto (o servidor também exige isso).
- */
+// código do e-mail (6 dígitos)
+// reenviar só depois de 1 min, o servidor também exige
 @Composable
 fun CodeEntry(email: String, code: String, onCode: (String) -> Unit, onComplete: () -> Unit, onResend: () -> Unit, onChangeEmail: () -> Unit) {
     var wait by rememberSaveable { mutableIntStateOf(RESEND_SECONDS) }
@@ -233,7 +231,7 @@ fun CodeEntry(email: String, code: String, onCode: (String) -> Unit, onComplete:
     }
 }
 
-/** Tela cheia com voltar, conteúdo rolável e o botão principal embaixo. */
+// tela padrão: voltar, conteúdo rolando e botão embaixo
 @Composable
 private fun AccountScaffold(
     onBack: () -> Unit,
@@ -272,16 +270,14 @@ private fun AccountScaffold(
     }
 }
 
-/** Mostra o erro da conta em vermelho, se houver. */
+// erro da conta em vermelho
 @Composable
 fun AccountError(@StringRes error: Int?) {
     error?.let { Text(stringResource(it), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium) }
 }
 
-/**
- * "Já tem uma conta?": e-mail e senha → código no e-mail → entra e devolve o que estava salvo na nuvem.
- * "Esqueci minha senha": código no e-mail + senha nova → entra.
- */
+// login: e-mail/senha → código → entra e puxa o que tá na nuvem
+// esqueci a senha: código + senha nova → entra
 @Composable
 fun LoginScreen(onBack: () -> Unit, onLoggedIn: (Accounts.LoginResult) -> Unit) {
     val scope = rememberCoroutineScope()
@@ -413,12 +409,12 @@ private fun NewPasswordField(password: String, onPassword: (String) -> Unit) {
     )
 }
 
-/** Criar conta depois das boas-vindas (pelo Perfil): @, e-mail e senha → código no e-mail → conta criada. */
+// criar conta pelo Perfil: @, e-mail, senha → código → pronto
 @Composable
 fun SignUpScreen(initialName: String, onBack: () -> Unit, onDone: () -> Unit) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    // Sem nome (ex.: convidado criando conta), pede o nome também.
+    // convidado não tem nome, então pede aqui também
     val askName = initialName.isBlank()
     var name by rememberSaveable { mutableStateOf(initialName) }
     var handle by rememberSaveable { mutableStateOf(Username.suggest(initialName)) }
@@ -505,10 +501,8 @@ fun SignUpScreen(initialName: String, onBack: () -> Unit, onDone: () -> Unit) {
     }
 }
 
-/**
- * "ou continue com" Google, Discord e Twitch. Abre o navegador; a volta chega no MainActivity
- * (pushlife://auth-callback) e o andamento aparece por cima de tudo ([Accounts.oauth]).
- */
+// Google/Discord/Twitch: abre o navegador, a volta cai no MainActivity (pushlife://auth-callback)
+// o andamento aparece por cima de tudo via Accounts.oauth
 @Composable
 fun SocialLoginButtons() {
     if (!Accounts.available) return
@@ -536,7 +530,7 @@ fun SocialLoginButtons() {
     }
 }
 
-/** Primeira vez com Google/Discord/Twitch: escolher o nome e o @ (que não pode repetir). */
+// primeira vez com Google/Discord/Twitch: escolhe nome e @ (não pode repetir)
 @Composable
 fun ChooseUsernameScreen(initialName: String, onCancel: () -> Unit) {
     val scope = rememberCoroutineScope()
@@ -580,7 +574,7 @@ fun ChooseUsernameScreen(initialName: String, onCancel: () -> Unit) {
     }
 }
 
-/** Depois de restaurar, apagar ou trazer dados da conta: ajusta serviços e lembretes e recria a tela. */
+// depois de mexer nos dados da conta: reajusta serviços/lembretes e recria a tela
 fun reloadAfterDataChange(context: Context) {
     BlockerService.syncWithSettings(context)
     DnsFilterService.syncWithSettings(context)

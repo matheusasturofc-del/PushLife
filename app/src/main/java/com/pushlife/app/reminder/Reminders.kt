@@ -12,13 +12,13 @@ import com.pushlife.app.filter.DnsFilterService
 import java.time.LocalTime
 import java.time.ZonedDateTime
 
-/** Lembrete diário de treino, no horário escolhido nas boas-vindas. */
+// lembrete diário de treino, no horário das boas-vindas
 object Reminders {
     fun schedule(context: Context, time: LocalTime) {
         val now = ZonedDateTime.now()
         var next = now.with(time).withSecond(0).withNano(0)
         if (!next.isAfter(now)) next = next.plusDays(1)
-        // Horário aproximado (o Android pode atrasar alguns minutos para poupar bateria).
+        // horário aproximado, o Android pode atrasar uns minutos pra poupar bateria
         context.getSystemService(AlarmManager::class.java).setInexactRepeating(
             AlarmManager.RTC_WAKEUP,
             next.toInstant().toEpochMilli(),
@@ -51,7 +51,7 @@ class ReminderReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) = Reminders.show(context)
 }
 
-/** Ao reiniciar o celular: reagenda o lembrete (o Android apaga os alarmes) e religa o bloqueio. */
+// celular reiniciou: reagenda o lembrete (Android apaga os alarmes) e religa o bloqueio
 class BootReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action != Intent.ACTION_BOOT_COMPLETED) return

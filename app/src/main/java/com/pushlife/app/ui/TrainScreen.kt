@@ -108,7 +108,7 @@ fun TrainScreen(
     var exercise by rememberSaveable { mutableStateOf(Exercise.PUSHUP) }
     var result by remember { mutableStateOf(SessionResult(Exercise.PUSHUP, 0, 0, false)) }
 
-    // Pedido para abrir um exercício direto (ex.: "testar agora" nas boas-vindas).
+    // abrir exercício direto (tipo o "testar agora" das boas-vindas)
     LaunchedEffect(pendingExercise) {
         pendingExercise?.let {
             exercise = it
@@ -295,7 +295,7 @@ private fun Step(number: Int, @StringRes text: Int) {
     }
 }
 
-/** Estado de uma sessão de treino, atualizado pela câmera ou pelo sensor de passos. */
+// estado do treino (quem atualiza é a câmera ou o sensor de passos)
 private class Session(val exercise: Exercise) {
     var amount by mutableIntStateOf(0)
     var progress by mutableFloatStateOf(0f)
@@ -304,7 +304,7 @@ private class Session(val exercise: Exercise) {
     var earned by mutableLongStateOf(0L)
     var hitCap by mutableStateOf(false)
 
-    /** Credita [units] unidades no saldo (a dívida de emergência é paga primeiro). */
+    // joga no saldo; paga a dívida de emergência primeiro
     fun credit(units: Int) {
         if (units <= 0) return
         val credit = AppGraph.bank.addExercise(exercise, units, LocalDate.now())
@@ -330,7 +330,7 @@ private fun ActiveStage(exercise: Exercise, onFinish: (SessionResult) -> Unit, m
             tone?.release()
         }
     }
-    // Uma frase de incentivo a cada 5 repetições (ou a cada 15 s de prancha).
+    // frase de incentivo a cada 5 reps (ou 15 s de prancha)
     val phraseEvery = if (exercise.unit == ExerciseUnit.SECONDS) 15 else 5
     fun onCounted(units: Int) {
         if (units <= 0) return
@@ -373,7 +373,7 @@ private fun ActiveStage(exercise: Exercise, onFinish: (SessionResult) -> Unit, m
                 }
             }
         } else {
-            // Câmera grande e quadrada, com o "rig" do corpo (esqueleto) desenhado por cima.
+            // câmera quadrada com o esqueleto desenhado por cima
             val shape = RoundedCornerShape(28.dp)
             Box(
                 Modifier
@@ -388,7 +388,7 @@ private fun ActiveStage(exercise: Exercise, onFinish: (SessionResult) -> Unit, m
                     onPose = { reading ->
                         val now = SystemClock.elapsedRealtime()
                         val update = tracker.update(reading?.frame, now)
-                        // Diagnóstico pequeno na tela: qual IA, quadros por segundo e o que o contador vê.
+                        // debug na tela: qual IA, fps e o que o contador vê
                         if (lastFrameAt > 0) fps += 0.2f * (1000f / (now - lastFrameAt).coerceAtLeast(1) - fps)
                         lastFrameAt = now
                         diagnostics = listOfNotNull(if (reading == null) "sem corpo" else null, "${fps.toInt()} q/s", update.debug).joinToString(" · ")
@@ -401,7 +401,7 @@ private fun ActiveStage(exercise: Exercise, onFinish: (SessionResult) -> Unit, m
                     modifier = Modifier.fillMaxSize(),
                 )
                 RigOverlay(rig, Modifier.fillMaxSize())
-                // Canto de baixo: quadros por segundo e o que o contador está vendo (ângulos).
+                // canto de baixo: fps e os ângulos que o contador tá vendo
                 if (diagnostics.isNotEmpty()) {
                     Text(
                         diagnostics,
@@ -466,7 +466,7 @@ private fun ActiveStage(exercise: Exercise, onFinish: (SessionResult) -> Unit, m
     }
 }
 
-/** No abdominal "Desça mais" vira "Suba mais": a mesma meia repetição, na direção certa. */
+// no abdominal "Desça mais" vira "Suba mais" (mesma meia rep, direção certa)
 @StringRes
 private fun cueText(exercise: Exercise, cue: Cue): Int =
     if (exercise == Exercise.SITUP && cue == Cue.GO_LOWER) R.string.cue_go_higher else cue.text
@@ -487,7 +487,7 @@ private fun SummaryStage(
     modifier: Modifier = Modifier,
 ) {
     val bank by AppGraph.bank.state.collectAsStateWithLifecycle()
-    // Conquistas e nível novos desde a última vez que a pessoa viu; depois de mostrar, marca como vistos.
+    // conquistas/nível novos desde a última vez; mostra e marca como visto
     val (newAchievements, newLevel) = remember {
         val seen = AppGraph.progress.state.value
         val stats = ProgressCenter.stats()

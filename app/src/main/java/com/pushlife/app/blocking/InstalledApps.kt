@@ -11,12 +11,12 @@ data class AppEntry(
     val packageName: String,
     val label: String,
     val icon: Bitmap?,
-    /** Média diária de uso nos últimos 7 dias, em ms (0 sem acesso aos dados de uso). */
+    // média diária dos últimos 7 dias em ms (0 se não tiver acesso ao uso)
     val dailyAverageMs: Long,
 )
 
 object InstalledApps {
-    /** Apps que aparecem na tela inicial, os mais usados primeiro. Lento: chame fora da thread principal. */
+    // apps da tela inicial, mais usados primeiro. é lento, roda fora da main thread
     fun load(context: Context): List<AppEntry> {
         val pm = context.packageManager
         val launcher = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER)

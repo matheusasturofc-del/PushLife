@@ -13,7 +13,7 @@ import android.os.Process
 import android.provider.Settings
 import androidx.core.content.ContextCompat
 
-/** Permissões especiais que o bloqueio precisa e os atalhos para as telas do Android que as liberam. */
+// permissões especiais do bloqueio + atalhos pras telas do Android
 object Permissions {
     fun hasUsageAccess(context: Context): Boolean {
         val appOps = context.getSystemService(AppOpsManager::class.java)
@@ -35,7 +35,7 @@ object Permissions {
     fun ignoresBatteryOptimizations(context: Context): Boolean =
         context.getSystemService(PowerManager::class.java).isIgnoringBatteryOptimizations(context.packageName)
 
-    /** Tudo o que é obrigatório para o bloqueio funcionar. */
+    // tudo que é obrigatório pro bloqueio funcionar
     fun allRequired(context: Context): Boolean =
         hasUsageAccess(context) && canDrawOverlays(context) && hasNotifications(context)
 
@@ -51,17 +51,15 @@ object Permissions {
         Build.VERSION.SDK_INT < Build.VERSION_CODES.Q ||
             ContextCompat.checkSelfPermission(context, Manifest.permission.ACTIVITY_RECOGNITION) == PackageManager.PERMISSION_GRANTED
 
-    /**
-     * Pede para o Android não fechar o app em segundo plano (essencial na Samsung para o bloqueio
-     * continuar funcionando). Se a janela direta não existir, abre a página do app.
-     */
+    // pede pro Android não matar o app em segundo plano (essencial na Samsung)
+    // se não tiver a janela direta, abre a página do app
     @SuppressLint("BatteryLife")
     fun requestBatteryExemption(context: Context) {
         val direct = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, Uri.parse("package:${context.packageName}"))
         runCatching { context.startActivity(direct) }.onFailure { runCatching { context.startActivity(appDetailsIntent(context)) } }
     }
 
-    /** Página do app nas configurações; na Samsung é lá que fica "Bateria > Sem restrições". */
+    // página do app nas configurações (na Samsung é lá o "Bateria > Sem restrições")
     fun appDetailsIntent(context: Context) =
         Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", context.packageName, null))
 }

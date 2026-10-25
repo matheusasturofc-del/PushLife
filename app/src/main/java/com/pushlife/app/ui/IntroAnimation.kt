@@ -42,10 +42,8 @@ import kotlinx.coroutines.launch
 
 private const val WORD = "PUSHLIFE"
 
-/**
- * Abertura do app (~2 s): a logo entra girando com um "pulo", um anel laranja se desenha em
- * volta e "PUSHLIFE" aparece letra por letra embaixo. Depois tudo some e chama [onDone].
- */
+// abertura (~2 s): logo girando com pulo, anel laranja e "PUSHLIFE" letra por letra
+// no fim some tudo e chama onDone
 @Composable
 fun IntroAnimation(onDone: () -> Unit) {
     val logoScale = remember { Animatable(0.3f) }

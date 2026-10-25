@@ -13,7 +13,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import java.time.LocalTime
 
-/** Perfil e respostas das boas-vindas, guardados no próprio celular. */
+// perfil e respostas das boas-vindas, salvos no celular
 class ProfileRepository(context: Context) {
     private val prefs = context.getSharedPreferences("profile", Context.MODE_PRIVATE)
     private val _state = MutableStateFlow(load())
