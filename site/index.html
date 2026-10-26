@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PushLife — troque a rolagem por flexões</title>
+  <meta name="description" content="O PushLife bloqueia os apps que roubam seu tempo. Cada flexão vale 1 minuto para usar neles. A câmera conta para você. Grátis e sem anúncios.">
+  <meta name="theme-color" content="#1a1208">
+  <meta property="og:title" content="PushLife — troque a rolagem por flexões">
+  <meta property="og:description" content="Cada flexão vale 1 minuto de tela. A câmera conta para você.">
+  <meta property="og:image" content="assets/icon-512.png">
+  <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+  <a class="skip" href="#conteudo">Pular para o conteúdo</a>
+  <div class="progress" aria-hidden="true"></div>
+
+  <header class="nav">
+    <div class="wrap">
+      <a class="brand" href="#"><img src="assets/icon.svg" alt="" width="34" height="34">PushLife</a>
+      <nav aria-label="Seções">
+        <a href="#experimente">Experimente</a>
+        <a href="#como-funciona">Como funciona</a>
+        <a href="#exercicios">Exercícios</a>
+        <a href="#duvidas">Dúvidas</a>
+      </nav>
+      <a class="btn btn-primary btn-small" href="#baixar">Baixar</a>
+    </div>
+  </header>
+
+  <main id="conteudo">
+    <!-- topo -->
+    <section class="hero">
+      <div class="glow" aria-hidden="true"></div>
+      <div class="wrap hero-grid">
+        <div>
+          <h1 aria-label="Troque a rolagem por flexões.">
+            <span class="word" style="animation-delay:.05s">Troque</span>
+            <span class="word" style="animation-delay:.15s">a</span>
+            <span class="word" style="animation-delay:.25s">rolagem</span><br>
+            <span class="word" style="animation-delay:.4s">por</span>
+            <span class="word hot" style="animation-delay:.55s">flexões.</span>
+          </h1>
+          <p class="lead">O PushLife bloqueia os apps que roubam seu tempo. Cada flexão vale 1 minuto para usar neles, e a câmera conta para você.</p>
+          <div class="hero-cta">
+            <a class="btn btn-primary" href="#baixar">Baixar grátis</a>
+            <a class="btn btn-ghost" href="#experimente">Experimentar aqui</a>
+          </div>
+          <div class="badges"><span>Grátis</span><span>Sem anúncios</span><span>IA no próprio celular</span></div>
+        </div>
+        <div class="float">
+          <div class="phone">
+            <div class="screen">
+              <video src="assets/promo.mp4" poster="assets/icon-512.png" autoplay muted loop playsinline preload="metadata" aria-label="Vídeo mostrando o PushLife"></video>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- arraste para fazer flexão -->
+    <section class="section drag-section" id="experimente">
+      <div class="wrap">
+        <div class="section-head" data-reveal>
+          <span class="eyebrow">Experimente</span>
+          <h2>Faça uma flexão.<br>Aqui mesmo.</h2>
+          <p class="lead">Arraste a bolinha até embaixo e volte. Cada flexão completa soma 1 minuto ao seu saldo, igual no app (lá é a câmera que conta).</p>
+        </div>
+        <div class="drag-grid" data-reveal>
+          <div class="stage" id="stage">
+            <div class="hud">
+              <span class="chip">Flexões: <b id="reps">0</b></span>
+              <span class="chip">Saldo: <b id="balance">0 min</b></span>
+            </div>
+            <svg viewBox="10 70 182 118" aria-hidden="true"><g id="figure"></g></svg>
+          </div>
+          <div>
+            <div class="slider" id="slider" role="slider" tabindex="0" aria-label="Descer e subir na flexão" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+              <div class="fill" id="fill"></div>
+              <div class="handle" id="handle">↕</div>
+            </div>
+            <p class="drag-hint" id="dragHint">Arraste ↓ e ↑</p>
+          </div>
+        </div>
+        <p class="drag-done center" id="dragMsg" aria-live="polite"></p>
+      </div>
+    </section>
+
+    <!-- como funciona -->
+    <section class="section" id="como-funciona">
+      <div class="wrap">
+        <div class="section-head" data-reveal>
+          <span class="eyebrow">Como funciona</span>
+          <h2>Simples assim.</h2>
+        </div>
+        <div class="steps" id="steps">
+          <div class="rail"><i id="rail"></i></div>
+          <div class="step" data-reveal="right">
+            <span class="num">1</span>
+            <h3>Escolha os apps que te prendem</h3>
+            <p>Redes sociais, vídeos curtos, jogos… Eles só abrem enquanto você tiver saldo.</p>
+          </div>
+          <div class="step" data-reveal="right">
+            <span class="num">2</span>
+            <h3>Treine para ganhar tempo</h3>
+            <p>Coloque o celular no chão e faça o exercício. A IA conta cada repetição direto no aparelho, e nenhuma imagem sai dele.</p>
+          </div>
+          <div class="step" data-reveal="right">
+            <span class="num">3</span>
+            <h3>Use seu saldo sem culpa</h3>
+            <p>Todo dia começa com 1 hora grátis, e o saldo guarda até 2 horas. Numa emergência, libere 5 minutos e pague depois com exercício.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- celular bloqueado -->
+    <section class="section block-section">
+      <div class="wrap block-grid">
+        <div data-reveal="left">
+          <span class="eyebrow">Toque e veja</span>
+          <h2>O app só abre<br>com saldo.</h2>
+          <p class="lead" style="margin-top:16px">Toque num app com cadeado. Se você fez flexões lá em cima, dá para usar o saldo para liberar.</p>
+          <div class="balance-pill">Seu saldo: <b id="balance2">0 min</b></div>
+        </div>
+        <div data-reveal="zoom">
+          <div class="phone">
+            <div class="screen" id="demoPhone">
+              <div class="home" id="home"></div>
+              <div class="blocker" id="blocker" role="dialog" aria-modal="false" aria-labelledby="blockTitle">
+                <div class="big">⏳</div>
+                <h4 id="blockTitle">Seu saldo acabou</h4>
+                <p id="blockText">Faça flexões para liberar.</p>
+                <button class="btn btn-primary" id="useBalance">Usar meu saldo</button>
+                <a class="btn btn-line" href="#experimente" id="goTrain">Fazer flexões</a>
+                <button class="btn btn-line" id="emergency">Emergência: 5 min</button>
+                <button class="close" id="closeBlock">Voltar</button>
+              </div>
+              <div class="toast" id="toast" aria-live="polite"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- exercícios -->
+    <section class="section" id="exercicios">
+      <div class="wrap">
+        <div class="section-head center" data-reveal>
+          <span class="eyebrow">10 exercícios</span>
+          <h2>Cada um vale um tempo.</h2>
+          <p class="lead">Toque numa carta para virar.</p>
+        </div>
+        <div class="cards" id="cards"></div>
+      </div>
+    </section>
+
+    <!-- calculadora -->
+    <section class="section" style="padding-top:0">
+      <div class="wrap">
+        <div class="section-head center" data-reveal>
+          <span class="eyebrow">Faça as contas</span>
+          <h2>Quanto tempo você ganha?</h2>
+        </div>
+        <div class="calc" data-reveal="zoom">
+          <label for="perDay">Flexões por dia <output id="perDayOut">30</output></label>
+          <input type="range" id="perDay" min="0" max="150" step="5" value="30">
+          <div>
+            <div class="daybar" aria-hidden="true"><span class="free" id="barFree"></span><span class="earned" id="barEarned"></span></div>
+            <div class="legend" style="margin-top:10px"><span><i style="background:var(--yellow)"></i>1 h grátis</span><span><i style="background:var(--orange)"></i>ganho com flexões</span><span>limite: 2 h guardadas</span></div>
+          </div>
+          <div class="calc-out">
+            <div class="stat"><b id="outDay">1 h 30 min</b><span>de tela por dia</span></div>
+            <div class="stat"><b id="outMonth">900</b><span>flexões em um mês</span></div>
+            <div class="stat"><b id="outYear">10.950</b><span>flexões em um ano</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- filtro -->
+    <section class="section" style="padding-top:0">
+      <div class="wrap">
+        <div class="filter-card" data-reveal>
+          <div>
+            <span class="eyebrow">Proteção extra</span>
+            <h2>Filtro de sites adultos.</h2>
+            <p class="lead">Bloqueia sites adultos em qualquer navegador e app, e deixa as buscas no modo seguro. Tudo acontece no celular. Tente desligar ao lado.</p>
+          </div>
+          <div>
+            <button class="switch" id="filterSwitch" role="switch" aria-checked="true" aria-label="Filtro de sites adultos"></button>
+            <p class="switch-label" id="filterLabel">Ligado</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- privacidade -->
+    <section class="section" style="padding-top:0">
+      <div class="wrap">
+        <div class="section-head center" data-reveal>
+          <span class="eyebrow">Privacidade</span>
+          <h2>Seu celular, suas regras.</h2>
+        </div>
+        <div class="trust">
+          <div data-reveal><span class="emo">📷</span><h3>Câmera sem gravar</h3><p>A IA roda no aparelho. Nenhuma imagem ou vídeo é salvo ou enviado.</p></div>
+          <div data-reveal><span class="emo">🚫</span><h3>Sem anúncios</h3><p>Grátis de verdade. Não vendemos nem compartilhamos dados.</p></div>
+          <div data-reveal><span class="emo">🔐</span><h3>Conta só sua</h3><p>Só o seu progresso vai para a nuvem, para você não perder nada.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- dúvidas -->
+    <section class="section" id="duvidas" style="padding-top:0">
+      <div class="wrap">
+        <div class="section-head center" data-reveal>
+          <span class="eyebrow">Dúvidas</span>
+          <h2>Perguntas frequentes</h2>
+        </div>
+        <div class="faq" data-reveal>
+          <details><summary>É grátis mesmo?</summary><p>Sim. Sem anúncios e sem assinatura.</p></details>
+          <details><summary>Funciona no iPhone?</summary><p>Por enquanto só no Android 8.0 ou mais novo.</p></details>
+          <details><summary>Como a câmera conta as flexões?</summary><p>Uma IA de detecção de pose roda no próprio celular e mede o ângulo dos braços (ou das pernas, conforme o exercício). Para a flexão, coloque o celular em pé no chão, a uns 2 metros, de lado para você, com o corpo inteiro aparecendo.</p></details>
+          <details><summary>E se eu precisar muito usar um app?</summary><p>Todo dia começa com 1 hora grátis. Se acabar, a emergência libera 5 minutos, e você paga depois com exercício.</p></details>
+          <details><summary>Por que o app pede tantas permissões?</summary><p>Para saber qual app está aberto e mostrar a tela de bloqueio por cima dele. A câmera é só para contar repetições, e a VPN local é só para o filtro de sites. Tudo funciona no celular.</p></details>
+          <details><summary>Como apago minha conta?</summary><p>No app: Perfil → Conta → Apagar conta. Ou veja <a href="excluir-conta.html">como apagar a conta</a>.</p></details>
+        </div>
+      </div>
+    </section>
+
+    <!-- baixar -->
+    <section class="section download" id="baixar">
+      <div class="wrap" data-reveal="zoom">
+        <img class="icon-big" src="assets/icon.svg" alt="Ícone do PushLife" width="110" height="110">
+        <h2>Comece hoje.</h2>
+        <p class="lead">Baixe o PushLife e transforme o tempo de tela em treino.</p>
+        <a class="btn btn-dark" href="https://github.com/matheusasturofc-del/PushLife/releases/latest/download/PushLife.apk">⬇ Baixar para Android</a>
+        <p class="alt">Android 8.0 ou mais novo · também no <a href="https://pushlife.br.uptodown.com/android">Uptodown</a></p>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="wrap">
+      <p class="made">PushLife · feito por <b>Built with Mir</b></p>
+      <nav aria-label="Rodapé">
+        <a href="privacidade.html">Privacidade</a>
+        <a href="excluir-conta.html">Apagar conta</a>
+        <a href="mailto:matheusasturofc@gmail.com">Contato</a>
+      </nav>
+    </div>
+  </footer>
+
+  <!-- desafio para desligar o filtro -->
+  <div class="modal" id="challenge" role="dialog" aria-modal="true" aria-labelledby="chTitle">
+    <div class="box">
+      <h3 id="chTitle">Desligar o filtro?</h3>
+      <p style="color:var(--muted);margin-top:8px">No app, para desligar você reescreve um texto de 15 linhas em até 3 minutos, sem colar. E só tem 1 tentativa por dia.</p>
+      <div class="timer" id="chTimer">3:00</div>
+      <ol>
+        <li>Os sites adultos roubam meu tempo e minha energia.</li>
+        <li>Eles viciam e sempre pedem mais.</li>
+        <li>Eles mudam o jeito como eu vejo as pessoas.</li>
+        <li>…e mais 12 linhas.</li>
+      </ol>
+      <div class="row">
+        <button class="btn btn-primary" id="chKeep">Manter o filtro ligado</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="assets/app.js"></script>
+</body>
+</html>

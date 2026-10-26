@@ -3,7 +3,7 @@ name: Gerar APK
 on:
   push:
     branches: [claude/great-pasteur-y7qbv5, main]
-    paths-ignore: ['**.md', 'update.json', 'play-store/**', 'supabase/**', '.github/workflows/supabase-keepalive.yml']
+    paths-ignore: ['**.md', 'update.json', 'play-store/**', 'supabase/**', '.github/workflows/supabase-keepalive.yml', 'site/**', '.github/workflows/site.yml']
   workflow_dispatch:
 
 permissions:
