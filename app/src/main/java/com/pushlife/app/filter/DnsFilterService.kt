@@ -11,6 +11,7 @@ import com.pushlife.app.core.filter.Dns
 import com.pushlife.app.core.filter.DomainBlocklist
 import com.pushlife.app.core.filter.HashedDomains
 import com.pushlife.app.core.filter.Packets
+import com.pushlife.app.core.filter.SafeSearch
 import com.pushlife.app.data.AppLanguage
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -23,6 +24,7 @@ import java.net.DatagramSocket
 import java.net.InetAddress
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
+import kotlin.random.Random
 
 // filtro adulto: VPN local que só pega o DNS (o resto da internet passa por fora)
 // site da lista = "não existe", o resto vai pro DNS normal da pessoa, sem serviço de fora
@@ -95,7 +97,11 @@ class DnsFilterService : VpnService() {
                 workers?.execute {
                     val query = packet.payload
                     val name = Dns.questionName(query)
-                    val answer = if (name != null && blocklist.isBlocked(name)) Dns.nxDomain(query) else forward(query)
+                    val answer = when {
+                        name == null -> forward(query)
+                        blocklist.isBlocked(name) -> Dns.nxDomain(query)
+                        else -> SafeSearch.target(name)?.let { safeSearch(query, it) } ?: forward(query)
+                    }
                     if (answer != null) {
                         val reply = Packets.buildUdp(packet.destinationIp, packet.sourceIp, packet.destinationPort, packet.sourcePort, answer)
                         synchronized(output) { runCatching { output.write(reply) } }
@@ -119,6 +125,14 @@ class DnsFilterService : VpnService() {
     }
 
     // manda a consulta pro DNS de verdade, por fora da VPN
+    // buscador: responde com o endereço da versão segura dele (outros tipos de pergunta ficam sem resposta)
+    private fun safeSearch(query: ByteArray, target: String): ByteArray? {
+        val type = Dns.questionType(query) ?: return null
+        if (type != Dns.TYPE_A && type != Dns.TYPE_AAAA) return Dns.answer(query, type, emptyList())
+        val response = forward(Dns.query(Random.nextInt(65_536), target, type)) ?: return null
+        return Dns.answer(query, type, Dns.addresses(response, type))
+    }
+
     private fun forward(query: ByteArray): ByteArray? {
         for (server in systemDns()) {
             try {

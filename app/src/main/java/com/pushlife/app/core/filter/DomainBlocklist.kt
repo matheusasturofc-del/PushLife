@@ -4,7 +4,7 @@ package com.pushlife.app.core.filter
 // palavras-chave pegam espelhos e domínios novos
 class DomainBlocklist(
     domains: Collection<String> = ADULT_DOMAINS + GORE_DOMAINS,
-    private val keywords: List<String> = ADULT_KEYWORDS,
+    private val keywords: List<String> = ADULT_KEYWORDS + SHOCK_KEYWORDS,
     private val big: HashedDomains? = null,
 ) {
     private val set = domains.map(::normalize).toHashSet()
@@ -55,7 +55,11 @@ class DomainBlocklist(
             "bestgore.com", "bestgore.fun", "bestgore.org", "theync.com", "kaotic.com", "documentingreality.com",
             "crazyshit.com", "goregrish.com", "seegore.com", "gorecenter.com", "goresee.com", "deathaddict.com",
             "watchpeopledie.tv", "runthegauntlet.org", "ogrish.com", "rotten.com", "heavy-r.com", "efukt.com",
+            "livegore.com", "goredb.com",
         )
+
+        // os mais acessados sem "gore" no nome (Similarweb): pega espelhos com outro final
+        val SHOCK_KEYWORDS = listOf("theync", "watchpeopledie", "documentingreality", "deathaddict", "crazyshit")
 
         // palavras com "gore" que não são gore
         val GORE_SAFE = listOf("goretex", "gore-tex", "gorenje", "goregaon", "gorey", "gorebridge", "algore", "gorean", "goreville")

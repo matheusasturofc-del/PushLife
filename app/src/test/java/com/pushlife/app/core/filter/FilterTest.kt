@@ -111,5 +111,10 @@ class GoreFilterTest {
         assertFalse(list.isBlocked("gore.com"))
         assertFalse(list.isBlocked("algore.com"))
         assertFalse(list.isBlocked("google.com"))
+        // os mais acessados sem "gore" no nome, e espelhos deles
+        assertTrue(list.isBlocked("livegore.com"))
+        assertTrue(list.isBlocked("theync.org"))
+        assertTrue(list.isBlocked("www.documentingreality.net"))
+        assertTrue(list.isBlocked("kaotic.com"))
     }
 }
