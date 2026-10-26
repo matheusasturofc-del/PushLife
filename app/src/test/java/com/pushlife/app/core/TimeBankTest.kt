@@ -77,6 +77,16 @@ class TimeBankTest {
         val hoje = TimeBank.spend(ontem, 600L, day)
         assertEquals(50 * 60L, hoje.freeRemaining(day))
     }
+
+    @Test
+    fun tempoGratisEhMetadeDaMeta() {
+        assertEquals(1800L, Rules.freeSecondsFor(1f)) // meta 1 h → 30 min
+        assertEquals(900L, Rules.freeSecondsFor(0.5f))
+        assertEquals(5400L, Rules.freeSecondsFor(3f))
+        assertEquals(300L, Rules.freeSecondsFor(0f)) // nunca menos de 5 min
+        val s = BankState(freeDailySeconds = 1800L)
+        assertEquals(1800L, s.freeRemaining(day))
+    }
 }
 
 class EmergencyTest {

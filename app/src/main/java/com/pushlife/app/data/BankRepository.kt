@@ -5,6 +5,7 @@ import androidx.core.content.edit
 import com.pushlife.app.core.BankState
 import com.pushlife.app.core.Credit
 import com.pushlife.app.core.Exercise
+import com.pushlife.app.core.Rules
 import com.pushlife.app.core.TimeBank
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -36,6 +37,12 @@ class BankRepository(context: Context) {
         save(TimeBank.spend(_state.value, seconds, today))
     }
 
+    // grátis por dia mudou (a meta de tela mudou)
+    @Synchronized
+    fun setFreeDaily(seconds: Long) {
+        if (_state.value.freeDailySeconds != seconds) save(_state.value.copy(freeDailySeconds = seconds))
+    }
+
     // gasta uma emergência; false se acabaram as de hoje
     @Synchronized
     fun emergency(today: LocalDate = LocalDate.now(), nowMs: Long = System.currentTimeMillis()): Boolean {
@@ -61,6 +68,7 @@ class BankRepository(context: Context) {
             emergencyDay = prefs.getString(KEY_EMERGENCY_DAY, null)?.let(LocalDate::parse),
             emergenciesUsed = prefs.getInt(KEY_EMERGENCIES_USED, 0),
             emergencyUntilMs = prefs.getLong(KEY_EMERGENCY_UNTIL, 0),
+            freeDailySeconds = prefs.getLong(KEY_FREE_DAILY, Rules.FREE_SECONDS_PER_DAY),
         )
     }
 
@@ -75,6 +83,7 @@ class BankRepository(context: Context) {
             putString(KEY_EMERGENCY_DAY, state.emergencyDay?.toString())
             putInt(KEY_EMERGENCIES_USED, state.emergenciesUsed)
             putLong(KEY_EMERGENCY_UNTIL, state.emergencyUntilMs)
+            putLong(KEY_FREE_DAILY, state.freeDailySeconds)
             remove(KEY_LEGACY_REPS)
             remove(KEY_LEGACY_DEBT)
         }
@@ -91,6 +100,7 @@ class BankRepository(context: Context) {
         const val KEY_EMERGENCY_DAY = "emergency_day"
         const val KEY_EMERGENCIES_USED = "emergencies_used"
         const val KEY_EMERGENCY_UNTIL = "emergency_until_ms"
+        const val KEY_FREE_DAILY = "free_daily_seconds"
         const val KEY_LEGACY_REPS = "reps_by_day"
         const val KEY_LEGACY_DEBT = "debt_reps"
 

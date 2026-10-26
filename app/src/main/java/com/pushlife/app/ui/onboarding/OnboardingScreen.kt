@@ -154,6 +154,7 @@ import com.pushlife.app.core.Profile
 import com.pushlife.app.core.Projection
 import com.pushlife.app.core.Quiz
 import com.pushlife.app.core.QuitReason
+import com.pushlife.app.core.Rules
 import com.pushlife.app.core.TriedMethod
 import com.pushlife.app.core.Username
 import com.pushlife.app.data.Accounts
@@ -1052,7 +1053,7 @@ private fun PlanStep(dailyGoal: Int, targetHours: Float, reminder: LocalTime?, p
         reminder?.let { stringResource(R.string.ob_plan_reminder, it.format(DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT))) }
             ?: stringResource(R.string.ob_plan_no_reminder),
     )
-    PlanRow(Icons.Rounded.Timer, stringResource(R.string.ob_plan_free))
+    PlanRow(Icons.Rounded.Timer, stringResource(R.string.ob_plan_free, formatDuration(Rules.freeSecondsFor(targetHours))))
     Row(
         Modifier.fillMaxWidth().padding(top = 8.dp).background(MaterialTheme.colorScheme.primaryContainer, RoundedCornerShape(20.dp)).padding(16.dp),
         verticalAlignment = Alignment.CenterVertically,

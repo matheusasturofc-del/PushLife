@@ -66,6 +66,7 @@ import androidx.core.content.pm.PackageInfoCompat
 import com.pushlife.app.AppGraph
 import com.pushlife.app.R
 import com.pushlife.app.core.Profile
+import com.pushlife.app.core.Rules
 import com.pushlife.app.core.progress.Levels
 import com.pushlife.app.data.Accounts
 import com.pushlife.app.data.AppLanguage
@@ -167,6 +168,38 @@ fun ProfileScreen(modifier: Modifier = Modifier) {
         }
 
         item { Section(R.string.profile_goals) }
+        // meta de tela: o grátis do dia é a metade dela
+        item {
+            SettingRow(
+                stringResource(R.string.profile_screen_target),
+                stringResource(R.string.profile_screen_target_value, hoursText(profile.targetHours), formatDuration(Rules.freeSecondsFor(profile.targetHours))),
+            ) {
+                FilledTonalIconButton(onClick = { save { it.copy(targetHours = (it.targetHours - 0.5f).coerceAtLeast(0.5f)) } }) {
+                    Icon(Icons.Rounded.Remove, contentDescription = "−30 min")
+                }
+                FilledTonalIconButton(onClick = { save { it.copy(targetHours = (it.targetHours + 0.5f).coerceAtMost(12f)) } }) {
+                    Icon(Icons.Rounded.Add, contentDescription = "+30 min")
+                }
+            }
+        }
+        item {
+            SettingRow(stringResource(R.string.profile_screen_now), stringResource(R.string.profile_screen_now_value, hoursText(profile.phoneHours))) {
+                FilledTonalIconButton(onClick = { save { it.copy(phoneHours = (it.phoneHours - 0.5f).coerceAtLeast(0.5f)) } }) {
+                    Icon(Icons.Rounded.Remove, contentDescription = "−30 min")
+                }
+                FilledTonalIconButton(onClick = { save { it.copy(phoneHours = (it.phoneHours + 0.5f).coerceAtMost(16f)) } }) {
+                    Icon(Icons.Rounded.Add, contentDescription = "+30 min")
+                }
+            }
+        }
+        item {
+            Text(
+                stringResource(R.string.profile_free_hint),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(horizontal = 4.dp),
+            )
+        }
         item {
             SettingRow(stringResource(R.string.profile_daily_goal), stringResource(R.string.profile_daily_goal_value, profile.dailyGoal)) {
                 FilledTonalIconButton(onClick = { save { it.copy(dailyGoal = (it.dailyGoal - 5).coerceAtLeast(10)) } }) {
@@ -596,3 +629,5 @@ private fun ToggleRow(@StringRes title: Int, checked: Boolean, onChange: (Boolea
         Switch(checked = checked, onCheckedChange = onChange)
     }
 }
+
+private fun hoursText(hours: Float): String = java.text.NumberFormat.getInstance().apply { maximumFractionDigits = 1 }.format(hours)

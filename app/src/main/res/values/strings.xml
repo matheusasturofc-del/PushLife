@@ -9,7 +9,7 @@
     <string name="tab_profile">Profile</string>
 
     <string name="balance_label">Your screen time</string>
-    <string name="balance_rules">1 push-up = 1 minute · 1 h free per day · other exercises count too</string>
+    <string name="balance_rules">1 push-up = 1 minute · %1$s free per day · other exercises count too</string>
     <string name="start_training">Start workout</string>
 
     <string name="roadmap_title">Building PushLife</string>
@@ -89,8 +89,8 @@
     <string name="ob_how_push_body">Every push-up adds 1 minute to your balance. The camera counts for you.</string>
     <string name="ob_how_scroll_title">Use</string>
     <string name="ob_how_scroll_body">Spend your minutes on the apps you choose to lock. Your balance stacks up to 2 h.</string>
-    <string name="ob_how_free_title">1 h free</string>
-    <string name="ob_how_free_body">Every day starts with 1 free hour, so you\'re never stuck.</string>
+    <string name="ob_how_free_title">Free time</string>
+    <string name="ob_how_free_body">Every day you get free time: half of your screen goal, so you\'re never stuck.</string>
     <string name="ob_freq_kicker">Speaking of exercise,</string>
     <string name="ob_freq_title">How often do you work out today?</string>
     <string name="freq_never">Never</string>
@@ -427,7 +427,7 @@
     <string name="ob_plan_apps">Blocked apps: %1$d</string>
     <string name="ob_plan_reminder">Workout reminder at %1$s</string>
     <string name="ob_plan_no_reminder">No workout reminder</string>
-    <string name="ob_plan_free">1 free hour every day</string>
+    <string name="ob_plan_free">%1$s free every day (half your goal)</string>
     <string name="ob_plan_protect">Turn on blocking now</string>
     <string name="ob_plan_protect_hint">Blocked apps start using your balance right away.</string>
     <string name="ob_plan_protect_later">Missing permissions or apps. You can turn it on later in the Block tab.</string>
@@ -573,4 +573,9 @@
     <string name="ob_guest">Continue as guest</string>
     <string name="guest_badge">Guest</string>
     <string name="guest_no_backup">As a guest you have no backup and cannot change your name or photo. Create an account to save your progress.</string>
+    <string name="profile_screen_target">Daily screen goal</string>
+    <string name="profile_screen_target_value">%1$s h · %2$s free per day</string>
+    <string name="profile_screen_now">How much you use today</string>
+    <string name="profile_screen_now_value">%1$s h per day</string>
+    <string name="profile_free_hint">Your free time is half of your goal. E.g.: 1 h goal → 30 min free.</string>
 </resources>

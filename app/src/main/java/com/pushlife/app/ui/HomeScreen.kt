@@ -144,7 +144,7 @@ private fun BalanceCard(bank: BankState, today: LocalDate, dailyGoal: Int) {
             if (bank.debtSeconds > 0) {
                 Text(stringResource(R.string.debt_label, bank.debtPushups), style = MaterialTheme.typography.bodyMedium, color = Ink)
             }
-            Text(stringResource(R.string.balance_rules), style = MaterialTheme.typography.bodySmall, color = Ink.copy(alpha = 0.7f))
+            Text(stringResource(R.string.balance_rules, formatDuration(bank.freeDailySeconds)), style = MaterialTheme.typography.bodySmall, color = Ink.copy(alpha = 0.7f))
         }
     }
 }

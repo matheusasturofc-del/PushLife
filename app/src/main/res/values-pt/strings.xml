@@ -8,7 +8,7 @@
     <string name="tab_profile">Perfil</string>
 
     <string name="balance_label">Seu tempo de tela</string>
-    <string name="balance_rules">1 flexão = 1 minuto · 1 h grátis por dia · outros exercícios também contam</string>
+    <string name="balance_rules">1 flexão = 1 minuto · %1$s grátis por dia · outros exercícios também contam</string>
     <string name="start_training">Começar treino</string>
 
     <string name="roadmap_title">Construção do PushLife</string>
@@ -83,8 +83,8 @@
     <string name="ob_how_push_body">Cada flexão soma 1 minuto ao seu saldo. A câmera conta para você.</string>
     <string name="ob_how_scroll_title">Use</string>
     <string name="ob_how_scroll_body">Gaste seus minutos nos apps que você escolher bloquear. O saldo acumula até 2 h.</string>
-    <string name="ob_how_free_title">1 h grátis</string>
-    <string name="ob_how_free_body">Todo dia começa com 1 hora grátis, para você nunca ficar travado.</string>
+    <string name="ob_how_free_title">Tempo grátis</string>
+    <string name="ob_how_free_body">Todo dia você ganha um tempo grátis: metade da sua meta de tela, para nunca ficar travado.</string>
     <string name="ob_freq_kicker">Falando em exercício,</string>
     <string name="ob_freq_title">Com que frequência você treina hoje?</string>
     <string name="freq_never">Nunca</string>
@@ -420,7 +420,7 @@
     <string name="ob_plan_apps">Apps bloqueados: %1$d</string>
     <string name="ob_plan_reminder">Lembrete de treino às %1$s</string>
     <string name="ob_plan_no_reminder">Sem lembrete de treino</string>
-    <string name="ob_plan_free">1 hora grátis todo dia</string>
+    <string name="ob_plan_free">%1$s grátis todo dia (metade da sua meta)</string>
     <string name="ob_plan_protect">Ligar o bloqueio agora</string>
     <string name="ob_plan_protect_hint">Os apps bloqueados já começam a gastar seu saldo.</string>
     <string name="ob_plan_protect_later">Faltam permissões ou apps. Dá para ligar depois na aba Bloqueio.</string>
@@ -566,4 +566,9 @@
     <string name="ob_guest">Entrar como convidado</string>
     <string name="guest_badge">Convidado</string>
     <string name="guest_no_backup">Como convidado você não faz backup e não troca o nome nem a foto. Crie uma conta para salvar seu progresso.</string>
+    <string name="profile_screen_target">Meta de tela por dia</string>
+    <string name="profile_screen_target_value">%1$s h · %2$s grátis por dia</string>
+    <string name="profile_screen_now">Quanto você usa hoje</string>
+    <string name="profile_screen_now_value">%1$s h por dia</string>
+    <string name="profile_free_hint">Seu tempo grátis é metade da sua meta. Ex.: meta 1 h → 30 min grátis.</string>
 </resources>

@@ -38,5 +38,9 @@ object AppGraph {
         profile = ProfileRepository(app)
         blocking = BlockSettingsRepository(app)
         progress = ProgressRepository(app)
+        // grátis do dia = metade da meta de tela; acompanha quando a meta muda
+        val syncFree = { p: com.pushlife.app.core.Profile -> bank.setFreeDaily(com.pushlife.app.core.Rules.freeSecondsFor(p.targetHours)) }
+        profile.onSaved = syncFree
+        syncFree(profile.state.value)
     }
 }

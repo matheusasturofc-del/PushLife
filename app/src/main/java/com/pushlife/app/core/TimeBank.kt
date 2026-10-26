@@ -4,7 +4,7 @@ import java.time.LocalDate
 
 // regras do tempo de tela
 object Rules {
-    const val FREE_SECONDS_PER_DAY = 60L * 60 // 1 h grátis por dia (não acumula)
+    const val FREE_SECONDS_PER_DAY = 60L * 60 // padrão: 1 h grátis por dia (não acumula)
     const val MAX_EARNED_SECONDS = 2L * 60 * 60 // o saldo ganho acumula até 2 h
 
     // emergência: libera sem saldo, mas fica devendo exercício
@@ -12,6 +12,12 @@ object Rules {
     const val EMERGENCY_DEBT_PUSHUPS = 10
     const val EMERGENCY_DEBT_SECONDS = EMERGENCY_DEBT_PUSHUPS * 60L
     const val MAX_EMERGENCIES_PER_DAY = 3
+
+    // grátis do dia = metade da meta de tela (meta 1 h → 30 min), de 5 em 5 min, mínimo 5 min
+    fun freeSecondsFor(targetHours: Float): Long {
+        val half = targetHours.coerceAtLeast(0f) * 3600f / 2f
+        return (Math.round(half / 300f) * 300L).coerceAtLeast(300L)
+    }
 }
 
 // saldo de tela: o grátis do dia sai primeiro e zera à meia-noite
@@ -30,9 +36,11 @@ data class BankState(
     val emergenciesUsed: Int = 0,
     // até quando a emergência libera (ms, relógio do sistema)
     val emergencyUntilMs: Long = 0,
+    // grátis por dia (metade da meta de tela da pessoa)
+    val freeDailySeconds: Long = Rules.FREE_SECONDS_PER_DAY,
 ) {
     fun freeRemaining(today: LocalDate): Long =
-        if (freeDay == today) (Rules.FREE_SECONDS_PER_DAY - freeUsedSeconds).coerceAtLeast(0) else Rules.FREE_SECONDS_PER_DAY
+        if (freeDay == today) (freeDailySeconds - freeUsedSeconds).coerceAtLeast(0) else freeDailySeconds
 
     fun available(today: LocalDate): Long = freeRemaining(today) + earnedSeconds
 

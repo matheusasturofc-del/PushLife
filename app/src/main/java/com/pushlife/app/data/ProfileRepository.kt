@@ -19,6 +19,9 @@ class ProfileRepository(context: Context) {
     private val _state = MutableStateFlow(load())
     val state: StateFlow<Profile> = _state.asStateFlow()
 
+    // avisado a cada salvamento (o saldo usa a meta de tela para o grátis do dia)
+    var onSaved: ((Profile) -> Unit)? = null
+
     @Synchronized
     fun save(profile: Profile) {
         prefs.edit {
@@ -41,6 +44,7 @@ class ProfileRepository(context: Context) {
             putStringSet(KEY_TRIED, profile.triedMethods.map { it.name }.toSet())
         }
         _state.value = profile
+        onSaved?.invoke(profile)
     }
 
     private fun load(): Profile {
