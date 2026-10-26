@@ -21,6 +21,43 @@ html,body{width:1080px;height:1920px;overflow:hidden;background:#0b0b0e;font-fam
 </style></head>
 <body><div id="stage"></div>
 <script>
+const LANG = new URLSearchParams(location.search).get('lang') || 'en';
+const L = {
+  en: { tag: 'Move more. Scroll less.', a1: "Can't stop", a2: 'scrolling?', b1: 'Turn it into', b2: 'exercise.',
+    h3a: 'Do <span class="grad">push-ups.</span>', h3b: null, h3s: 'The camera counts every rep with AI.',
+    h4a: 'Earn <span class="grad">screen time.</span>', h4b: null, h4s: '1 push-up = 1 minute of your apps.',
+    h5a: 'Block the apps that', h5b: '<span class="grad">steal your time.</span>',
+    camTitle: 'Push-ups', camSub: 'Phone on the floor, side on', ready: 'Get ready', down: 'Go down', up: 'Push up!',
+    earned: 'Earned', goal: 'Goal: 10 reps', level: 'Level 7', balance: 'Screen time balance', perRep: '+1 min for every push-up',
+    today: 'Push-ups today', free: 'Free hour', week: 'This week', blocked: 'Blocked apps', blockedSub: 'They only open while you have time',
+    timesUp: "Time's up!", unlock: 'Do 10 push-ups to unlock<br>10 more minutes.', earnBtn: 'Earn time',
+    h6a: 'Everything', h6b: 'you <span class="grad">need.</span>',
+    feats: ['10 exercises', 'AI rep counting', 'Streaks, levels & badges', 'Adaptive daily goal', 'Adult-site blocker', 'Free · No ads · Private'],
+    cta: 'Download free', streak: '12-day streak', days: 'MTWTFSS' },
+  pt: { tag: 'Mexa-se mais. Role menos.', a1: 'Viciado em', a2: 'rolar a tela?', b1: 'Transforme em', b2: 'exercício.',
+    h3a: 'Faça <span class="grad">flexões.</span>', h3b: null, h3s: 'A câmera conta cada repetição com IA.',
+    h4a: 'Ganhe', h4b: '<span class="grad">tempo de tela.</span>', h4s: '1 flexão = 1 minuto nos seus apps.',
+    h5a: 'Bloqueie os apps que', h5b: '<span class="grad">roubam seu tempo.</span>',
+    camTitle: 'Flexões', camSub: 'Celular no chão, de lado', ready: 'Prepare-se', down: 'Desça', up: 'Suba!',
+    earned: 'Ganhou', goal: 'Meta: 10 repetições', level: 'Nível 7', balance: 'Saldo de tempo de tela', perRep: '+1 min por flexão',
+    today: 'Flexões hoje', free: 'Hora grátis', week: 'Esta semana', blocked: 'Apps bloqueados', blockedSub: 'Só abrem enquanto você tem tempo',
+    timesUp: 'Acabou o tempo!', unlock: 'Faça 10 flexões para liberar<br>mais 10 minutos.', earnBtn: 'Ganhar tempo',
+    h6a: 'Tudo que', h6b: 'você <span class="grad">precisa.</span>',
+    feats: ['10 exercícios', 'A IA conta as repetições', 'Sequência, níveis e conquistas', 'Meta diária que se adapta', 'Bloqueio de sites adultos', 'Grátis · Sem anúncios · Privado'],
+    cta: 'Baixe grátis', streak: '12 dias seguidos', days: 'STQQSSD' },
+  es: { tag: 'Muévete más. Scrollea menos.', a1: '¿Enganchado', a2: 'al scroll?', b1: 'Conviértelo en', b2: 'ejercicio.',
+    h3a: 'Haz <span class="grad">flexiones.</span>', h3b: null, h3s: 'La cámara cuenta cada repetición con IA.',
+    h4a: 'Gana tiempo', h4b: '<span class="grad">de pantalla.</span>', h4s: '1 flexión = 1 minuto en tus apps.',
+    h5a: 'Bloquea las apps que', h5b: '<span class="grad">roban tu tiempo.</span>',
+    camTitle: 'Flexiones', camSub: 'Teléfono en el suelo, de lado', ready: 'Prepárate', down: 'Baja', up: '¡Sube!',
+    earned: 'Ganado', goal: 'Meta: 10 repeticiones', level: 'Nivel 7', balance: 'Saldo de tiempo de pantalla', perRep: '+1 min por flexión',
+    today: 'Flexiones hoy', free: 'Hora gratis', week: 'Esta semana', blocked: 'Apps bloqueadas', blockedSub: 'Solo se abren mientras tengas tiempo',
+    timesUp: '¡Sin tiempo!', unlock: 'Haz 10 flexiones para liberar<br>10 minutos más.', earnBtn: 'Ganar tiempo',
+    h6a: 'Todo lo que', h6b: '<span class="grad">necesitas.</span>',
+    feats: ['10 ejercicios', 'La IA cuenta las repeticiones', 'Rachas, niveles y logros', 'Meta diaria que se adapta', 'Bloqueo de sitios para adultos', 'Gratis · Sin anuncios · Privado'],
+    cta: 'Descarga gratis', streak: '12 días seguidos', days: 'LMMJVSD' },
+}[LANG];
+document.documentElement.lang = LANG;
 const stage = document.getElementById('stage');
 function el(parent, css, html = '', cls = '') {
   const e = document.createElement('div');
@@ -83,7 +120,7 @@ const letters = [...'PUSHLIFE'].map((ch, i) => {
   s.textContent = ch; s.style.display = 'inline-block'; s.style.color = i < 4 ? '#fff' : '#FF7A00';
   word.appendChild(s); return s;
 });
-const tag1 = el(s1, { top: '1300px' }, 'Move more. Scroll less.', 'c sub');
+const tag1 = el(s1, { top: '1300px' }, L.tag, 'c sub');
 
 /* ---------- Cena 2: rolagem infinita ---------- */
 const s2 = el(stage, { inset: 0 });
@@ -109,10 +146,10 @@ function maskLine(parent, top, size, html, cls = '') {
   const inner = el(m, { left: 0, top: 0, width: '1080px', fontSize: size + 'px' }, html, 'h ' + cls);
   return inner;
 }
-const a1 = maskLine(s2, 760, 130, "Can't stop");
-const a2 = maskLine(s2, 905, 130, 'scrolling?');
-const b1 = maskLine(s2, 760, 130, 'Turn it into');
-const b2 = maskLine(s2, 905, 130, '<span class="grad">exercise.</span>');
+const a1 = maskLine(s2, 760, 130, L.a1);
+const a2 = maskLine(s2, 905, 130, L.a2);
+const b1 = maskLine(s2, 760, 130, L.b1);
+const b2 = maskLine(s2, 905, 130, `<span class="grad">${L.b2}</span>`);
 
 /* ---------- Títulos das cenas com o celular ---------- */
 const heads = [];
@@ -123,9 +160,9 @@ function headline(l1, l2, sub) {
   const s = el(g, { top: (l2 ? 405 : 290) + 'px' }, sub, 'c sub');
   return { g, x1, x2, s };
 }
-const H3 = headline('Do <span class="grad">push-ups.</span>', null, 'The camera counts every rep with AI.');
-const H4 = headline('Earn <span class="grad">screen time.</span>', null, '1 push-up = 1 minute of your apps.');
-const H5 = headline('Block the apps that', '<span class="grad">steal your time.</span>', '');
+const H3 = headline(L.h3a, L.h3b, L.h3s);
+const H4 = headline(L.h4a, L.h4b, L.h4s);
+const H5 = headline(L.h5a, L.h5b, '');
 
 /* ---------- Celular ---------- */
 const phone = el(stage, {}, '', 'phone');
@@ -134,8 +171,8 @@ screen.style.position = 'relative';
 
 // Página: câmera
 const pCam = el(screen, {}, '', 'page');
-el(pCam, { left: '36px', top: '86px', fontSize: '44px', fontWeight: 800 }, 'Push-ups');
-el(pCam, { left: '36px', top: '144px', fontSize: '24px' }, 'Phone on the floor, below your face', 'lbl');
+el(pCam, { left: '36px', top: '86px', fontSize: '44px', fontWeight: 800 }, L.camTitle);
+el(pCam, { left: '36px', top: '144px', fontSize: '24px' }, L.camSub, 'lbl');
 const cam = el(pCam, { left: '24px', top: '200px', width: '516px', height: '516px', borderRadius: '40px', overflow: 'hidden',
   background: 'radial-gradient(circle at 50% 40%, #3a2c22, #1c1612 70%, #0f0c0a)' });
 const face = el(cam, { left: '168px', top: '120px', width: '180px', height: '230px', borderRadius: '50%',
@@ -144,12 +181,12 @@ const hair = el(cam, { left: '160px', top: '96px', width: '196px', height: '120p
 const rigSvg = el(cam, { inset: 0 }, '<svg width="516" height="516" id="rig"></svg>');
 const rig = rigSvg.querySelector('#rig');
 const camCount = el(cam, { left: 0, top: '330px', width: '516px', textAlign: 'center', fontSize: '150px', fontWeight: 900, textShadow: '0 8px 30px rgba(0,0,0,.6)' }, '0');
-const cue = el(pCam, { left: '24px', top: '744px', width: '516px', height: '88px', borderRadius: '44px', textAlign: 'center', lineHeight: '88px', fontSize: '34px', fontWeight: 800, background: '#FF6A00' }, 'Go down');
-el(pCam, { left: '36px', top: '868px', fontSize: '26px' }, 'Earned', 'lbl');
+const cue = el(pCam, { left: '24px', top: '744px', width: '516px', height: '88px', borderRadius: '44px', textAlign: 'center', lineHeight: '88px', fontSize: '34px', fontWeight: 800, background: '#FF6A00' }, L.down);
+el(pCam, { left: '36px', top: '868px', fontSize: '26px' }, L.earned, 'lbl');
 const earned = el(pCam, { left: '36px', top: '904px', fontSize: '76px', fontWeight: 900, color: '#FF8A00' }, '+0 min');
 el(pCam, { left: '36px', top: '1022px', width: '492px', height: '22px', borderRadius: '11px', background: '#26262c' });
 const bar = el(pCam, { left: '36px', top: '1022px', width: '0px', height: '22px', borderRadius: '11px', background: 'linear-gradient(90deg,#FFC300,#FF5A00)' });
-el(pCam, { left: '36px', top: '1062px', fontSize: '24px' }, 'Goal: 10 reps', 'lbl');
+el(pCam, { left: '36px', top: '1062px', fontSize: '24px' }, L.goal, 'lbl');
 const chips = [];
 for (let i = 0; i < 12; i++) chips.push(el(pCam, { left: '360px', top: '600px', fontSize: '34px', fontWeight: 900, color: '#FFC300', opacity: 0, textShadow: '0 4px 18px rgba(0,0,0,.7)' }, '+1 min'));
 
@@ -157,27 +194,27 @@ for (let i = 0; i < 12; i++) chips.push(el(pCam, { left: '360px', top: '600px', 
 const pHome = el(screen, {}, '', 'page');
 el(pHome, { left: '36px', top: '82px', width: '60px', height: '60px' }, LOGO);
 el(pHome, { left: '110px', top: '88px', fontSize: '40px', fontWeight: 900, fontStyle: 'italic', letterSpacing: '-1px' }, 'PUSH<span style="color:#FF7A00">LIFE</span>');
-const streak = el(pHome, { left: '36px', top: '170px', height: '58px', padding: '0 22px 0 14px', borderRadius: '29px', background: '#2a1a10', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '26px', fontWeight: 800, color: '#FFB15c' }, `${svg('flame', 34)}<span>12-day streak</span>`);
+const streak = el(pHome, { left: '36px', top: '170px', height: '58px', padding: '0 22px 0 14px', borderRadius: '29px', background: '#2a1a10', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '26px', fontWeight: 800, color: '#FFB15c' }, `${svg('flame', 34)}<span>${L.streak}</span>`);
 streak.querySelector('svg path').setAttribute('fill', '#FF7A00');
-el(pHome, { left: '330px', top: '170px', height: '58px', padding: '0 22px', borderRadius: '29px', background: '#1f1f25', lineHeight: '58px', fontSize: '26px', fontWeight: 800, color: '#ddd' }, 'Level 7');
+el(pHome, { left: '330px', top: '170px', height: '58px', padding: '0 22px', borderRadius: '29px', background: '#1f1f25', lineHeight: '58px', fontSize: '26px', fontWeight: 800, color: '#ddd' }, L.level);
 const card = el(pHome, { left: '24px', top: '260px', width: '516px', height: '350px', borderRadius: '44px', overflow: 'hidden', background: 'linear-gradient(135deg,#FF9A1F,#FF4E00)', boxShadow: '0 30px 60px rgba(255,80,0,.35)' });
 el(card, { right: '-80px', top: '-80px', width: '300px', height: '300px', borderRadius: '50%', background: 'rgba(255,255,255,.12)' });
 el(card, { right: '40px', bottom: '-120px', width: '220px', height: '220px', borderRadius: '50%', background: 'rgba(255,255,255,.08)' });
-el(card, { left: '36px', top: '36px', fontSize: '28px', fontWeight: 700, color: 'rgba(255,255,255,.88)' }, 'Screen time balance');
+el(card, { left: '36px', top: '36px', fontSize: '28px', fontWeight: 700, color: 'rgba(255,255,255,.88)' }, L.balance);
 const bal = el(card, { left: '32px', top: '86px', fontSize: '150px', fontWeight: 900, letterSpacing: '-5px' }, '0');
-el(card, { left: '36px', top: '268px', fontSize: '26px', fontWeight: 600, color: 'rgba(255,255,255,.9)' }, '+1 min for every push-up');
+el(card, { left: '36px', top: '268px', fontSize: '26px', fontWeight: 600, color: 'rgba(255,255,255,.9)' }, L.perRep);
 const minLbl = el(card, { left: '250px', top: '170px', fontSize: '54px', fontWeight: 800 }, 'min');
 const t1 = el(pHome, { left: '24px', top: '640px', width: '248px', height: '170px' }, '', 'tile');
-el(t1, { left: '28px', top: '28px', fontSize: '24px' }, 'Push-ups today', 'lbl');
+el(t1, { left: '28px', top: '28px', fontSize: '24px' }, L.today, 'lbl');
 const puToday = el(t1, { left: '28px', top: '70px', fontSize: '66px', fontWeight: 900 }, '0');
 const t2 = el(pHome, { left: '292px', top: '640px', width: '248px', height: '170px' }, '', 'tile');
-el(t2, { left: '28px', top: '28px', fontSize: '24px' }, 'Free hour', 'lbl');
+el(t2, { left: '28px', top: '28px', fontSize: '24px' }, L.free, 'lbl');
 el(t2, { left: '28px', top: '70px', fontSize: '66px', fontWeight: 900 }, '60<span style="font-size:32px"> min</span>');
 const chart = el(pHome, { left: '24px', top: '840px', width: '516px', height: '300px' }, '', 'tile');
-el(chart, { left: '28px', top: '26px', fontSize: '24px' }, 'This week', 'lbl');
+el(chart, { left: '28px', top: '26px', fontSize: '24px' }, L.week, 'lbl');
 const bars = [];
 const barH = [.45, .7, .55, .9, .62, .8, 1];
-'MTWTFSS'.split('').forEach((d, i) => {
+L.days.split('').forEach((d, i) => {
   const x = 40 + i * 66;
   bars.push(el(chart, { left: x + 'px', bottom: '58px', width: '40px', height: '0px', borderRadius: '12px', background: i === 6 ? 'linear-gradient(#FFC300,#FF5A00)' : '#3a3a42' }));
   el(chart, { left: (x + 10) + 'px', bottom: '18px', fontSize: '22px', fontWeight: 700 }, d, 'lbl');
@@ -185,8 +222,8 @@ const barH = [.45, .7, .55, .9, .62, .8, 1];
 
 // Página: bloqueio
 const pBlock = el(screen, {}, '', 'page');
-el(pBlock, { left: '36px', top: '86px', fontSize: '44px', fontWeight: 800 }, 'Blocked apps');
-el(pBlock, { left: '36px', top: '144px', fontSize: '24px' }, 'They only open while you have time', 'lbl');
+el(pBlock, { left: '36px', top: '86px', fontSize: '44px', fontWeight: 800 }, L.blocked);
+el(pBlock, { left: '36px', top: '144px', fontSize: '24px' }, L.blockedSub, 'lbl');
 const appKeys = ['play', 'camera', 'chat', 'music', 'game', 'heart'];
 const appCols = ['#FF2D55', '#8A3FFC', '#0A9BFF', '#13C46A', '#FFB300', '#FF5E3A'];
 const apps = appKeys.map((k, i) => {
@@ -197,15 +234,15 @@ const apps = appKeys.map((k, i) => {
 });
 const sheet = el(pBlock, { left: 0, top: '600px', width: '564px', height: '600px', borderRadius: '52px 52px 0 0', background: '#1b1b20', boxShadow: '0 -30px 80px rgba(0,0,0,.6)' });
 const lockBig = el(sheet, { left: '212px', top: '48px', width: '140px', height: '140px', borderRadius: '50%', background: 'linear-gradient(135deg,#FF9A1F,#FF4E00)', display: 'flex', alignItems: 'center', justifyContent: 'center' }, svg('lock', 90));
-el(sheet, { left: 0, top: '214px', width: '564px', textAlign: 'center', fontSize: '56px', fontWeight: 900 }, "Time's up!");
-el(sheet, { left: '50px', top: '296px', width: '464px', textAlign: 'center', fontSize: '28px', lineHeight: 1.35 }, 'Do 10 push-ups to unlock<br>10 more minutes.', 'lbl');
-const btn = el(sheet, { left: '40px', top: '420px', width: '484px', height: '108px', borderRadius: '54px', background: '#FF6A00', textAlign: 'center', lineHeight: '108px', fontSize: '38px', fontWeight: 800, boxShadow: '0 16px 40px rgba(255,90,0,.45)' }, 'Earn time');
+el(sheet, { left: 0, top: '214px', width: '564px', textAlign: 'center', fontSize: '56px', fontWeight: 900 }, L.timesUp);
+el(sheet, { left: '50px', top: '296px', width: '464px', textAlign: 'center', fontSize: '28px', lineHeight: 1.35 }, L.unlock, 'lbl');
+const btn = el(sheet, { left: '40px', top: '420px', width: '484px', height: '108px', borderRadius: '54px', background: '#FF6A00', textAlign: 'center', lineHeight: '108px', fontSize: '38px', fontWeight: 800, boxShadow: '0 16px 40px rgba(255,90,0,.45)' }, L.earnBtn);
 
 /* ---------- Cena 6: recursos ---------- */
 const s6 = el(stage, { inset: 0 });
-const h6a = maskLine(s6, 250, 110, 'Everything');
-const h6b = maskLine(s6, 375, 110, 'you <span class="grad">need.</span>');
-const feats = [['dumbbell', '8 exercises'], ['eye', 'AI rep counting'], ['flame', 'Streaks, levels & badges'], ['target', 'Adaptive daily goal'], ['shield', 'Adult-site blocker'], ['star', 'Free · No ads · Private']];
+const h6a = maskLine(s6, 250, 110, L.h6a);
+const h6b = maskLine(s6, 375, 110, L.h6b);
+const feats = ['dumbbell', 'eye', 'flame', 'target', 'shield', 'star'].map((k, i) => [k, L.feats[i]]);
 const featEls = feats.map(([k, txt], i) => {
   const r = el(s6, { left: '110px', top: (600 + i * 160) + 'px', width: '860px', height: '128px', borderRadius: '64px', background: 'rgba(255,255,255,.06)', border: '2px solid rgba(255,138,0,.35)', display: 'flex', alignItems: 'center', gap: '28px', padding: '0 24px', fontSize: '46px', fontWeight: 800, letterSpacing: '-1px' },
     `<div style="width:84px;height:84px;border-radius:50%;background:linear-gradient(135deg,#FF9A1F,#FF4E00);display:flex;align-items:center;justify-content:center;flex:none">${svg(k, 56)}</div><span>${txt}</span>`);
@@ -224,8 +261,8 @@ const letters7 = [...'PUSHLIFE'].map((ch, i) => {
   s.textContent = ch; s.style.display = 'inline-block'; s.style.color = i < 4 ? '#fff' : '#FF7A00';
   word7.appendChild(s); return s;
 });
-const tag7 = el(s7, { top: '1180px' }, 'Move more. Scroll less.', 'c sub');
-const cta = el(s7, { left: '250px', top: '1310px', width: '580px', height: '128px', borderRadius: '64px', background: 'linear-gradient(90deg,#FF9A1F,#FF4E00)', textAlign: 'center', lineHeight: '128px', fontSize: '50px', fontWeight: 900, letterSpacing: '-1px', boxShadow: '0 20px 60px rgba(255,80,0,.45)' }, 'Download free');
+const tag7 = el(s7, { top: '1180px' }, L.tag, 'c sub');
+const cta = el(s7, { left: '250px', top: '1310px', width: '580px', height: '128px', borderRadius: '64px', background: 'linear-gradient(90deg,#FF9A1F,#FF4E00)', textAlign: 'center', lineHeight: '128px', fontSize: '50px', fontWeight: 900, letterSpacing: '-1px', boxShadow: '0 20px 60px rgba(255,80,0,.45)' }, L.cta);
 
 /* ---------- Linha do tempo ---------- */
 function rigDraw(ph) {
@@ -304,7 +341,7 @@ window.render = function (t) {
   const since = lt > 0 ? lt - reps * PER : 9;
   tf(camCount, `scale(${1 + .28 * Math.exp(-since * 7) * (reps > 0 ? 1 : 0)})`);
   const goingDown = lt > 0 && Math.sin(2 * Math.PI * lt / PER) > 0;
-  cue.textContent = lt <= 0 ? 'Get ready' : (goingDown ? 'Go down' : 'Push up!');
+  cue.textContent = lt <= 0 ? L.ready : (goingDown ? L.down : L.up);
   cue.style.background = goingDown ? '#FF6A00' : '#FFB000';
   cue.style.color = goingDown ? '#fff' : '#1a1000';
   earned.textContent = `+${reps} min`;

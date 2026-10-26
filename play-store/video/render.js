@@ -1,4 +1,4 @@
-// Uso: node render.js preview t1 t2 ...  |  AUDIO=musica.wav node render.js video saida.mp4
+// Uso: node render.js preview t1 t2 ...  |  AUDIO=musica.wav LANG_VIDEO=pt node render.js video saida.mp4 (pt, en ou es)
 const { chromium } = require('playwright');
 const { spawn } = require('child_process');
 const path = require('path');
@@ -7,12 +7,12 @@ const path = require('path');
   const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium', args: ['--no-sandbox'] });
   const page = await browser.newPage({ viewport: { width: 1080, height: 1920 }, deviceScaleFactor: 1 });
   page.on('pageerror', e => console.error('PAGE ERROR', e.message));
-  await page.goto('file://' + path.resolve(__dirname, 'promo.html'));
+  await page.goto('file://' + path.resolve(__dirname, 'promo.html') + '?lang=' + (process.env.LANG_VIDEO || 'en'));
   await page.evaluate(() => document.fonts.ready);
   if (mode === 'preview') {
     for (const t of rest) {
       await page.evaluate(x => window.render(x), parseFloat(t));
-      await page.screenshot({ path: `prev-${t}.png` });
+      await page.screenshot({ path: `prev-${process.env.LANG_VIDEO || 'en'}-${t}.png` });
     }
   } else {
     const out = rest[0], FPS = 30, DUR = 30;
