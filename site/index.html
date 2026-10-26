@@ -26,6 +26,7 @@
         <a href="#experimente" data-i18n="nav_try">Experimente</a>
         <a href="#como-funciona" data-i18n="nav_how">Como funciona</a>
         <a href="#exercicios" data-i18n="nav_ex">Exercícios</a>
+        <a href="#programas" data-i18n="nav_packs">Programas</a>
         <a href="#duvidas" data-i18n="nav_faq">Dúvidas</a>
       </nav>
       <div class="lang" role="group" data-i18n-attr="aria-label:lang_label">
@@ -35,6 +36,14 @@
     </div>
   </header>
 
+  <div class="update-bar" id="updateBar" hidden>
+    <div class="wrap">
+      <span class="ub-dot" aria-hidden="true"></span>
+      <p><b id="ubTitle"></b> <span id="ubNotes"></span></p>
+      <a class="btn btn-primary btn-small" id="ubLink" target="_blank" rel="noopener" data-i18n="ub_button"></a>
+      <button type="button" class="ub-close" id="ubClose" data-i18n-attr="aria-label:ub_close">×</button>
+    </div>
+  </div>
   <main id="conteudo">
     <!-- topo -->
     <section class="hero">
@@ -168,6 +177,55 @@
       </div>
     </section>
 
+    <!-- programas (packs) -->
+    <section class="section" id="programas">
+      <div class="wrap">
+        <div class="section-head center" data-reveal>
+          <span class="eyebrow" data-i18n="pk_eyebrow"></span>
+          <h2 data-i18n="pk_title"></h2>
+          <p class="lead" data-i18n="pk_lead"></p>
+        </div>
+        <div class="pack-tabs" role="tablist" data-reveal>
+          <button type="button" role="tab" data-cat="strength" aria-selected="true" data-i18n="pk_strength"></button>
+          <button type="button" role="tab" data-cat="challenge" aria-selected="false" data-i18n="pk_challenge"></button>
+          <button type="button" role="tab" data-cat="stretch" aria-selected="false" data-i18n="pk_stretch"></button>
+        </div>
+        <div class="packs" id="packs" aria-live="polite"></div>
+
+        <div class="ladder" data-reveal>
+          <div class="ladder-text">
+            <span class="eyebrow" data-i18n="ld_eyebrow"></span>
+            <h3 data-i18n="ld_title"></h3>
+            <p data-i18n="ld_lead"></p>
+            <div class="ld-buttons">
+              <button type="button" class="btn btn-line" data-fb="-0.5" data-i18n="ld_hard"></button>
+              <button type="button" class="btn btn-line" data-fb="0.5" data-i18n="ld_ok"></button>
+              <button type="button" class="btn btn-primary" data-fb="1" data-i18n="ld_easy"></button>
+            </div>
+          </div>
+          <div class="ladder-demo">
+            <div class="ld-fig"><svg id="ldFig" aria-hidden="true"></svg></div>
+            <p class="ld-now" id="ldNow" aria-live="polite"></p>
+            <ol class="ld-steps" id="ldSteps"></ol>
+          </div>
+        </div>
+
+        <div class="pk-how">
+          <div data-reveal><span class="emo">📅</span><h3 data-i18n="ph1_t"></h3><p data-i18n="ph1_p"></p></div>
+          <div data-reveal><span class="emo">📈</span><h3 data-i18n="ph2_t"></h3><p data-i18n="ph2_p"></p></div>
+          <div data-reveal><span class="emo">⏱️</span><h3 data-i18n="ph3_t"></h3><p data-i18n="ph3_p"></p></div>
+          <div data-reveal><span class="emo">🎵</span><h3 data-i18n="ph4_t"></h3><p data-i18n="ph4_p"></p></div>
+        </div>
+
+        <div class="section-head center" data-reveal style="margin-top:56px">
+          <span class="eyebrow" data-i18n="body_eyebrow"></span>
+          <h2 data-i18n="body_title"></h2>
+        </div>
+        <div class="facts" id="facts"></div>
+        <p class="sources" data-reveal data-i18n="body_sources"></p>
+      </div>
+    </section>
+
     <!-- calculadora -->
     <section class="section" style="padding-top:0">
       <div class="wrap">
@@ -176,11 +234,13 @@
           <h2 data-i18n="calc_title"></h2>
         </div>
         <div class="calc" data-reveal="zoom">
+          <label for="goal"><span data-i18n="calc_goal"></span> <output id="goalOut">1 h</output></label>
+          <input type="range" id="goal" min="0.5" max="6" step="0.5" value="1">
           <label for="perDay"><span data-i18n="calc_label"></span> <output id="perDayOut">30</output></label>
           <input type="range" id="perDay" min="0" max="150" step="5" value="30">
           <div>
             <div class="daybar" aria-hidden="true"><span class="free" id="barFree"></span><span class="earned" id="barEarned"></span></div>
-            <div class="legend" style="margin-top:10px"><span><i style="background:var(--yellow)"></i><span data-i18n="legend_free"></span></span><span><i style="background:var(--orange)"></i><span data-i18n="legend_earned"></span></span><span data-i18n="legend_cap"></span></div>
+            <div class="legend" style="margin-top:10px"><span><i style="background:var(--yellow)"></i><span id="legendFree"></span></span><span><i style="background:var(--orange)"></i><span data-i18n="legend_earned"></span></span><span data-i18n="legend_cap"></span></div>
           </div>
           <div class="calc-out">
             <div class="stat"><b id="outDay">1 h 30 min</b><span data-i18n="out_day"></span></div>
@@ -237,6 +297,8 @@
           <details><summary data-i18n="faq4_q"></summary><p data-i18n="faq4_a"></p></details>
           <details><summary data-i18n="faq5_q"></summary><p data-i18n="faq5_a"></p></details>
           <details><summary data-i18n="faq6_q"></summary><p data-i18n="faq6_a"></p></details>
+          <details><summary data-i18n="faq7_q"></summary><p data-i18n="faq7_a"></p></details>
+          <details><summary data-i18n="faq8_q"></summary><p data-i18n="faq8_a"></p></details>
         </div>
       </div>
     </section>

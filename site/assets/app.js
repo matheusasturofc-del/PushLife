@@ -329,8 +329,71 @@
     }
   }
 
+  // ---------- programas ----------
+  const PACK_FIG = { arms: 'diamond', legs: 'squat', core: 'birddog', full: 'burpee', c10: 'kneepush', c100: 'pushup',
+    morning: 'reach', night: 'child', neck: 'neck', chair: 'seatedreach' };
+  const packsEl = $('#packs');
+  let packCat = 'strength';
+  function renderPacks() {
+    packsEl.querySelectorAll('svg').forEach((svg) => window.Figures.unmount(svg));
+    packsEl.innerHTML = '';
+    t('pk_list').filter((p) => p[0] === packCat).forEach(([, key, name, desc, meta], i) => {
+      const el = document.createElement('article');
+      el.className = 'pack';
+      el.style.animationDelay = `${i * 0.07}s`;
+      el.innerHTML = `<div class="fig"><svg aria-hidden="true"></svg></div>
+        <div class="body"><h3>${name}</h3><p>${desc}</p><span class="val-chip">${meta}</span></div>`;
+      packsEl.appendChild(el);
+      window.Figures.mount(el.querySelector('svg'), PACK_FIG[key]);
+    });
+  }
+  document.querySelectorAll('.pack-tabs button').forEach((b) => b.addEventListener('click', () => {
+    packCat = b.dataset.cat;
+    document.querySelectorAll('.pack-tabs button').forEach((x) => x.setAttribute('aria-selected', String(x === b)));
+    renderPacks();
+  }));
+  renderPacks();
+
+  // escada da flexão: fácil/certo/difícil muda o nível como no app
+  const LADDER = [['wallpush', 1, 8], ['inclinepush', 5, 6], ['kneepush', 9, 6], ['pushup', 13, 5], ['diamond', 18, 5]];
+  let level = 1;
+  let ldKey = '';
+  const ldFig = $('#ldFig');
+  function renderLadder() {
+    const idx = LADDER.reduce((a, r, i) => (level >= r[1] ? i : a), 0);
+    const [key, from, base] = LADDER[idx];
+    const reps = Math.round(base + (level - from));
+    if (key !== ldKey) {
+      window.Figures.unmount(ldFig);
+      ldFig.innerHTML = '';
+      window.Figures.mount(ldFig, key);
+      ldKey = key;
+    }
+    const names = t('ld_names');
+    $('#ldNow').textContent = t('ld_now', { level: Math.floor(level), name: names[idx], reps });
+    $('#ldSteps').innerHTML = names.map((n, i) => `<li class="${i === idx ? 'on' : i < idx ? 'done' : ''}">${n}</li>`).join('');
+  }
+  document.querySelectorAll('.ld-buttons button').forEach((b) => b.addEventListener('click', () => {
+    level = Math.min(20, Math.max(1, level + Number(b.dataset.fb)));
+    renderLadder();
+  }));
+  renderLadder();
+
+  // fatos: toque para abrir
+  function renderFacts() {
+    $('#facts').innerHTML = t('facts').map(([big, title, body]) =>
+      `<button type="button" class="fact" aria-expanded="false"><span class="big">${big}</span><h3>${title}</h3><p>${body}</p><small>${t('fact_more')}</small></button>`).join('');
+    document.querySelectorAll('.fact').forEach((f) => f.addEventListener('click', () => {
+      const open = f.classList.toggle('open');
+      f.setAttribute('aria-expanded', String(open));
+      f.querySelector('small').textContent = t(open ? 'fact_less' : 'fact_more');
+    }));
+  }
+  renderFacts();
+
   // ---------- calculadora ----------
   const perDay = $('#perDay');
+  const goal = $('#goal');
   const fmt = (n) => n.toLocaleString(locale());
   const hm = (min) => {
     const h = Math.floor(min / 60);
@@ -340,15 +403,21 @@
   function calc() {
     const n = Number(perDay.value);
     $('#perDayOut').textContent = n;
+    // grátis = metade da meta de tela (de 5 em 5 min), igual no app
+    const free = Math.max(5, Math.round((Number(goal.value) * 60) / 2 / 5) * 5);
+    $('#goalOut').textContent = `${Number(goal.value).toLocaleString(locale())} h`;
+    $('#legendFree').textContent = t('legend_free', { free: hm(free) });
     const earned = Math.min(n, 120); // o saldo guarda até 2 h
-    const total = 60 + earned;
+    const total = free + earned;
     $('#outDay').textContent = hm(total);
     $('#outMonth').textContent = fmt(n * 30);
     $('#outYear').textContent = fmt(n * 365);
-    $('#barFree').style.width = `${(60 / 180) * 100}%`;
-    $('#barEarned').style.width = `${(earned / 180) * 100}%`;
+    const scale = 180 + 120; // até 3 h grátis (meta 6 h) + 2 h ganhas
+    $('#barFree').style.width = `${(free / scale) * 100}%`;
+    $('#barEarned').style.width = `${(earned / scale) * 100}%`;
   }
   perDay.addEventListener('input', calc);
+  goal.addEventListener('input', calc);
   calc();
 
   // ---------- filtro: tente desligar ----------
@@ -380,6 +449,29 @@
   modal.addEventListener('click', (e) => { if (e.target === modal) keep(); });
   addEventListener('keydown', (e) => { if (e.key === 'Escape' && modal.classList.contains('open')) keep(); });
 
+  // ---------- aviso de versão nova (o mesmo update.json que o app lê) ----------
+  let update = null;
+  function renderUpdate() {
+    const bar = $('#updateBar');
+    if (!update || !update.latestVersionName) return;
+    let closed = '';
+    try { closed = localStorage.getItem('update_closed') || ''; } catch (e) { /* sem armazenamento */ }
+    if (closed === update.latestVersionName) { bar.hidden = true; return; }
+    $('#ubTitle').textContent = t('ub_title', { v: update.latestVersionName });
+    const notes = update.notes || {};
+    $('#ubNotes').textContent = notes[window.I18N.lang] || notes.en || '';
+    $('#ubLink').href = update.url;
+    bar.hidden = false;
+  }
+  $('#ubClose').addEventListener('click', () => {
+    $('#updateBar').hidden = true;
+    try { localStorage.setItem('update_closed', update.latestVersionName); } catch (e) { /* tudo bem */ }
+  });
+  fetch(`update.json?t=${Math.floor(Date.now() / 60000)}`, { cache: 'no-store' })
+    .then((r) => (r.ok ? r.json() : null))
+    .then((j) => { update = j; renderUpdate(); })
+    .catch(() => {});
+
   // ---------- trocou de idioma: refaz o que é montado pelo script ----------
   document.addEventListener('langchange', () => {
     renderHero();
@@ -388,6 +480,10 @@
     renderCards();
     renderVideo();
     renderMarquee();
+    renderPacks();
+    renderLadder();
+    renderFacts();
+    renderUpdate();
     calc();
     setDepth(depth);
     $('#dragMsg').textContent = msgKey ? t(msgKey) : '';

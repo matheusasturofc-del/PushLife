@@ -1,9 +1,10 @@
 {
   "minVersionCode": 0,
+  "latestVersionName": "1.16.0",
   "url": "https://pushlife.br.uptodown.com/android",
   "notes": {
-    "pt": "Agora você escolhe o idioma no Perfil e a tela de resultado ficou corrigida.",
-    "en": "You can now choose the language in Profile, and the result screen was fixed.",
-    "es": "Ahora eliges el idioma en el Perfil y se corrigió la pantalla de resultado."
+    "pt": "Novos programas de treino (força, desafios e alongamentos para qualquer idade), tempo grátis igual à metade da sua meta de tela e recomendados na tela inicial.",
+    "en": "New workout programs (strength, challenges and stretches for any age), free time equal to half your screen goal and recommendations on the home screen.",
+    "es": "Nuevos programas de entrenamiento (fuerza, retos y estiramientos para cualquier edad), tiempo gratis igual a la mitad de tu meta de pantalla y recomendados en la pantalla de inicio."
   }
 }

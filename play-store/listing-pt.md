@@ -12,7 +12,8 @@ YouTube…) e eles só abrem enquanto você tiver saldo. Para ganhar saldo, trei
 • A câmera conta suas repetições com IA, direto no celular. Nenhuma imagem sai do aparelho.
 • 10 exercícios: flexão, agachamento, afundo, abdominal, polichinelo, prancha, agachamento isométrico, barra fixa, burpee e caminhada.
 • Instruções de como fazer cada exercício e avisos de postura durante o treino.
-• 1 hora grátis por dia e saldo que acumula até 2 horas.
+• Tempo grátis todo dia: metade da sua meta de tela (meta 1 h → 30 min); o saldo acumula até 2 horas.
+• Programas de treino: força, desafios (de 0 a 10 flexões, 100 flexões) e alongamentos para qualquer idade, com nível que se ajusta a você.
 • Emergência: libera 5 minutos quando você precisa, e você paga depois com exercício.
 • Bloqueio de sites adultos opcional, em qualquer navegador.
 • Sequência de dias, níveis, conquistas, desafios semanais e gráficos de progresso.

@@ -4,7 +4,7 @@ name: Publicar site
 on:
   push:
     branches: [claude/great-pasteur-y7qbv5]
-    paths: ['site/**', '.github/workflows/site.yml']
+    paths: ['site/**', 'update.json', '.github/workflows/site.yml']
   workflow_dispatch:
 
 permissions:
@@ -32,6 +32,8 @@ jobs:
           cp -r site/. _site/
           cp play-store/icon/pushlife-icon.svg _site/assets/icon.svg
           cp play-store/icon/pushlife-icon-512.png _site/assets/icon-512.png
+          # mesmo arquivo que o app lê: o site mostra o aviso de versão nova
+          cp update.json _site/update.json
 
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
