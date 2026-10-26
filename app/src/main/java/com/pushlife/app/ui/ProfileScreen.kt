@@ -71,6 +71,7 @@ import com.pushlife.app.core.progress.Levels
 import com.pushlife.app.data.Accounts
 import com.pushlife.app.data.AppLanguage
 import com.pushlife.app.data.Backup
+import com.pushlife.app.data.Legal
 import com.pushlife.app.data.ProgressCenter
 import com.pushlife.app.reminder.Reminders
 import com.pushlife.app.ui.theme.Ink
@@ -82,7 +83,6 @@ import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 
-private const val PRIVACY_URL = "https://github.com/matheusasturofc-del/PushLife/blob/claude/great-pasteur-y7qbv5/PRIVACY.md"
 
 // cores do avatar (todas legíveis com texto escuro)
 private val AVATAR_COLORS = listOf(Orange, Yellow, Color(0xFF4CD964), Color(0xFF5AC8FA), Color(0xFFFF6B8B), Color(0xFFB98BFF))
@@ -337,8 +337,13 @@ fun ProfileScreen(modifier: Modifier = Modifier) {
                 }.getOrNull().orEmpty()
             }
             SettingRow(stringResource(R.string.app_name), stringResource(R.string.profile_version, version)) {
-                TextButton(onClick = { context.startSafely(Intent(Intent.ACTION_VIEW, Uri.parse(PRIVACY_URL))) }) {
-                    Text(stringResource(R.string.profile_privacy))
+                Column(horizontalAlignment = Alignment.End) {
+                    TextButton(onClick = { context.startSafely(Intent(Intent.ACTION_VIEW, Uri.parse(Legal.TERMS_URL))) }) {
+                        Text(stringResource(R.string.profile_terms))
+                    }
+                    TextButton(onClick = { context.startSafely(Intent(Intent.ACTION_VIEW, Uri.parse(Legal.PRIVACY_URL))) }) {
+                        Text(stringResource(R.string.profile_privacy))
+                    }
                 }
             }
         }

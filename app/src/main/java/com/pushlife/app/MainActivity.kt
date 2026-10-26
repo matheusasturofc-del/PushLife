@@ -33,13 +33,16 @@ import com.pushlife.app.blocking.BlockerService
 import com.pushlife.app.core.Exercise
 import com.pushlife.app.data.Accounts
 import com.pushlife.app.data.AppLanguage
+import com.pushlife.app.data.Legal
 import com.pushlife.app.data.ProgressCenter
 import com.pushlife.app.data.UpdateChecker
 import com.pushlife.app.filter.DnsFilterService
 import com.pushlife.app.reminder.DailyCheck
 import com.pushlife.app.ui.ChooseUsernameScreen
 import com.pushlife.app.ui.IntroAnimation
+import com.pushlife.app.ui.PreparingScreen
 import com.pushlife.app.ui.PushLifeApp
+import com.pushlife.app.ui.TermsScreen
 import com.pushlife.app.ui.UpdateRequiredScreen
 import com.pushlife.app.ui.accountErrorText
 import com.pushlife.app.ui.onboarding.OnboardingScreen
@@ -69,8 +72,14 @@ class MainActivity : ComponentActivity() {
                 val profile by AppGraph.profile.state.collectAsStateWithLifecycle()
                 val update by UpdateChecker.required.collectAsStateWithLifecycle()
                 var showIntro by rememberSaveable { mutableStateOf(savedInstanceState == null) }
+                var needsPrepare by rememberSaveable { mutableStateOf(Legal.needsPrepare(this@MainActivity)) }
+                var needsTerms by rememberSaveable { mutableStateOf(!Legal.termsAccepted(this@MainActivity)) }
                 if (showIntro) {
                     IntroAnimation(onDone = { showIntro = false })
+                } else if (needsPrepare) {
+                    PreparingScreen(onDone = { needsPrepare = false })
+                } else if (needsTerms) {
+                    TermsScreen(onAccept = { needsTerms = false })
                 } else if (update != null) {
                     // versão velha demais: trava tudo até atualizar
                     UpdateRequiredScreen(update!!)
@@ -90,7 +99,7 @@ class MainActivity : ComponentActivity() {
                         },
                     )
                 }
-                if (!showIntro) OAuthOverlay()
+                if (!showIntro && !needsPrepare && !needsTerms) OAuthOverlay()
               }
             }
         }
