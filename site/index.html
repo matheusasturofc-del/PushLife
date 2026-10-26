@@ -49,15 +49,21 @@
           </div>
           <div class="badges"><span data-i18n="badge1"></span><span data-i18n="badge2"></span><span data-i18n="badge3"></span></div>
         </div>
-        <div class="float">
+        <div class="float hero-phone">
+          <span class="bubble b1" aria-hidden="true">+1 min</span>
+          <span class="bubble b2" aria-hidden="true">💪</span>
+          <span class="bubble b3" aria-hidden="true">+1 min</span>
           <div class="phone">
             <div class="screen">
-              <video src="assets/promo.mp4" poster="assets/icon-512.png" autoplay muted loop playsinline preload="metadata" data-i18n-attr="aria-label:video_label"></video>
+              <video id="heroVideo" poster="assets/icon-512.png" autoplay muted loop playsinline preload="metadata" data-i18n-attr="aria-label:video_label"></video>
             </div>
           </div>
         </div>
       </div>
     </section>
+
+    <!-- faixa correndo -->
+    <div class="marquee" aria-hidden="true"><div class="track" id="marquee"></div></div>
 
     <!-- arraste para fazer flexão -->
     <section class="section drag-section" id="experimente">
@@ -93,6 +99,12 @@
         <div class="section-head" data-reveal>
           <span class="eyebrow" data-i18n="how_eyebrow"></span>
           <h2 data-i18n="how_title"></h2>
+        </div>
+        <div class="counters">
+          <div data-reveal><b data-count="60">0</b><span data-i18n="stat1"></span></div>
+          <div data-reveal><b data-count="10">0</b><span data-i18n="stat2"></span></div>
+          <div data-reveal><b data-count="0">0</b><span data-i18n="stat3"></span></div>
+          <div data-reveal><b data-count="0">0</b><span data-i18n="stat4"></span></div>
         </div>
         <div class="steps" id="steps">
           <div class="rail"><i id="rail"></i></div>
@@ -271,6 +283,7 @@
   </div>
 
   <script src="assets/i18n.js"></script>
+  <script src="assets/figures.js"></script>
   <script src="assets/app.js"></script>
 </body>
 </html>

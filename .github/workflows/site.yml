@@ -25,12 +25,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # O vídeo e o ícone já estão em play-store/: copia em vez de duplicar no repositório.
+      # O ícone já está em play-store/: copia em vez de duplicar no repositório.
       - name: Montar o site
         run: |
           mkdir -p _site
           cp -r site/. _site/
-          cp play-store/video/PushLife-promo-en.mp4 _site/assets/promo.mp4
           cp play-store/icon/pushlife-icon.svg _site/assets/icon.svg
           cp play-store/icon/pushlife-icon-512.png _site/assets/icon-512.png
 

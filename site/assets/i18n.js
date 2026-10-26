@@ -70,6 +70,9 @@
       dl_icon: 'Ícone do PushLife', dl_title: 'Comece hoje.', dl_lead: 'Baixe o PushLife e transforme o tempo de tela em treino.',
       dl_btn: '⬇ Baixar para Android', dl_alt: 'Android 8.0 ou mais novo · também no <a href="https://pushlife.br.uptodown.com/android">Uptodown</a>',
       made: 'Feito com <b>MiR</b>', f_home: 'Início', f_priv: 'Privacidade', f_delete: 'Apagar conta', f_contact: 'Contato',
+      marquee: ['1 flexão = 1 minuto', '10 exercícios', 'IA no próprio celular', 'Sem anúncios', '1 hora grátis por dia', 'Filtro de sites adultos', 'Grátis'],
+      stat1: 'segundos de tela por flexão', stat2: 'exercícios', stat3: 'anúncios', stat4: 'imagens enviadas',
+      card_back: 'Toque para voltar',
       priv_title: 'Política de privacidade — PushLife', del_title: 'Apagar conta — PushLife',
     },
     en: {
@@ -141,6 +144,9 @@
       dl_icon: 'PushLife icon', dl_title: 'Start today.', dl_lead: 'Download PushLife and turn screen time into training.',
       dl_btn: '⬇ Download for Android', dl_alt: 'Android 8.0 or newer · also on <a href="https://pushlife.br.uptodown.com/android">Uptodown</a>',
       made: 'Built with <b>MiR</b>', f_home: 'Home', f_priv: 'Privacy', f_delete: 'Delete account', f_contact: 'Contact',
+      marquee: ['1 push-up = 1 minute', '10 exercises', 'AI on your own phone', 'No ads', '1 free hour a day', 'Adult site filter', 'Free'],
+      stat1: 'seconds of screen time per push-up', stat2: 'exercises', stat3: 'ads', stat4: 'images sent',
+      card_back: 'Tap to flip back',
       priv_title: 'Privacy policy — PushLife', del_title: 'Delete account — PushLife',
     },
     es: {
@@ -212,6 +218,9 @@
       dl_icon: 'Ícono de PushLife', dl_title: 'Empieza hoy.', dl_lead: 'Descarga PushLife y convierte el tiempo de pantalla en entrenamiento.',
       dl_btn: '⬇ Descargar para Android', dl_alt: 'Android 8.0 o más nuevo · también en <a href="https://pushlife.br.uptodown.com/android">Uptodown</a>',
       made: 'Hecho con <b>MiR</b>', f_home: 'Inicio', f_priv: 'Privacidad', f_delete: 'Eliminar cuenta', f_contact: 'Contacto',
+      marquee: ['1 flexión = 1 minuto', '10 ejercicios', 'IA en tu propio teléfono', 'Sin anuncios', '1 hora gratis al día', 'Filtro de sitios para adultos', 'Gratis'],
+      stat1: 'segundos de pantalla por flexión', stat2: 'ejercicios', stat3: 'anuncios', stat4: 'imágenes enviadas',
+      card_back: 'Toca para volver',
       priv_title: 'Política de privacidad — PushLife', del_title: 'Eliminar cuenta — PushLife',
     },
   };
@@ -249,15 +258,39 @@
     const desc = document.querySelector('meta[name="description"]');
     if (desc && !title) desc.setAttribute('content', t('meta_desc'));
     document.querySelectorAll('[data-set-lang]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.setLang === lang)));
+    document.querySelectorAll('.lang').forEach((g) => g.style.setProperty('--i', ['pt', 'en', 'es'].indexOf(lang)));
     document.dispatchEvent(new CustomEvent('langchange', { detail: lang }));
   }
 
+  // troca animada: onda laranja saindo do botão, textos somem desfocando e voltam subindo
+  const calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let busy = false;
   document.addEventListener('click', (e) => {
     const b = e.target.closest('[data-set-lang]');
-    if (!b) return;
-    lang = b.dataset.setLang;
-    try { localStorage.setItem('lang', lang); } catch (err) { /* tudo bem, só não lembra */ }
-    apply();
+    if (!b || busy || b.dataset.setLang === lang) return;
+    const next = b.dataset.setLang;
+    const change = () => {
+      lang = next;
+      try { localStorage.setItem('lang', lang); } catch (err) { /* tudo bem, só não lembra */ }
+      apply();
+    };
+    document.querySelectorAll('.lang').forEach((g) => g.style.setProperty('--i', ['pt', 'en', 'es'].indexOf(next)));
+    if (calm) return change();
+    busy = true;
+    const r = b.getBoundingClientRect();
+    const ripple = document.createElement('span');
+    ripple.className = 'lang-ripple';
+    ripple.style.left = `${r.left + r.width / 2}px`;
+    ripple.style.top = `${r.top + r.height / 2}px`;
+    document.body.appendChild(ripple);
+    setTimeout(() => ripple.remove(), 900);
+    document.body.classList.add('lang-out');
+    setTimeout(() => {
+      change();
+      document.body.classList.remove('lang-out');
+      document.body.classList.add('lang-in');
+      setTimeout(() => { document.body.classList.remove('lang-in'); busy = false; }, 650);
+    }, 230);
   });
 
   window.I18N = { t, get lang() { return lang; }, apply };

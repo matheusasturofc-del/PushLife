@@ -137,6 +137,7 @@
     pop.style.top = '40%';
     stage.appendChild(pop);
     setTimeout(() => pop.remove(), 1000);
+    if ([5, 10, 20].includes(reps)) confetti(stage);
     if (reps === 1) msgKey = 'msg1';
     if (reps === 5) msgKey = 'msg5';
     if (reps === 20) msgKey = 'msg20';
@@ -230,21 +231,38 @@
   $('#goTrain').addEventListener('click', () => blocker.classList.remove('open'));
 
   // ---------- cartas dos exercícios ----------
-  const EMO = ['💪', '🏋️', '🦵', '🔥', '⭐', '🧱', '🪑', '🧗', '⚡', '👟'];
+  const KEYS = ['pushup', 'squat', 'lunge', 'situp', 'jack', 'plank', 'wallsit', 'pullup', 'burpee', 'walk'];
   const cards = $('#cards');
+  const finePointer = matchMedia('(hover: hover) and (pointer: fine)').matches;
   function renderCards() {
     const shown = cards.dataset.shown === '1';
+    cards.querySelectorAll('svg').forEach((svg) => window.Figures.unmount(svg));
     cards.innerHTML = '';
     t('ex').forEach(([name, val, tip], i) => {
       const c = document.createElement('button');
       c.className = 'card';
       c.setAttribute('data-reveal', 'zoom');
       c.setAttribute('aria-label', t('flip_label', { name }));
-      c.innerHTML = `<div class="inner"><div class="face front"><span class="emo">${EMO[i]}</span><div><h3>${name}</h3><small>${t('flip_hint')}</small></div></div>` +
-        `<div class="face back"><span class="val">${val}</span><p>${tip}</p></div></div>`;
+      c.innerHTML = `<div class="inner">
+        <div class="face front"><div class="fig"><svg aria-hidden="true"></svg></div>
+          <div class="meta"><h3>${name}</h3><div class="row"><span class="val-chip">${val}</span><small>${t('flip_hint')}</small></div></div></div>
+        <div class="face back"><span class="val">${val}</span><p>${tip}</p><small>${t('card_back')}</small></div></div>`;
       c.addEventListener('click', () => c.classList.toggle('flipped'));
+      // inclina seguindo o mouse (só no computador)
+      if (finePointer) {
+        c.addEventListener('pointermove', (e) => {
+          c.style.transitionDelay = '0s';
+          const r = c.getBoundingClientRect();
+          c.style.setProperty('--rx', `${((e.clientY - r.top) / r.height - 0.5) * -14}deg`);
+          c.style.setProperty('--ry', `${((e.clientX - r.left) / r.width - 0.5) * 16}deg`);
+          c.style.setProperty('--gx', `${((e.clientX - r.left) / r.width) * 100}%`);
+          c.style.setProperty('--gy', `${((e.clientY - r.top) / r.height) * 100}%`);
+        });
+        c.addEventListener('pointerleave', () => { c.style.setProperty('--rx', '0deg'); c.style.setProperty('--ry', '0deg'); });
+      }
       c.style.transitionDelay = `${(i % 5) * 0.06}s`;
       cards.appendChild(c);
+      window.Figures.mount(c.querySelector('svg'), KEYS[i]);
       if (shown) c.classList.add('shown');
       else io.observe(c);
     });
@@ -252,6 +270,64 @@
   renderCards();
   // depois que as cartas apareceram uma vez, ao trocar de idioma já vêm visíveis
   new IntersectionObserver((e, o) => { if (e[0].isIntersecting) { cards.dataset.shown = '1'; o.disconnect(); } }).observe(cards);
+
+  // ---------- vídeo do topo no idioma escolhido ----------
+  const video = $('#heroVideo');
+  function renderVideo() {
+    const src = `assets/video/promo-${window.I18N.lang}.mp4`;
+    if (video.getAttribute('src') === src) return;
+    video.style.opacity = 0;
+    setTimeout(() => {
+      video.setAttribute('src', src);
+      video.play().catch(() => {});
+      video.style.opacity = 1;
+    }, video.getAttribute('src') ? 250 : 0);
+  }
+  renderVideo();
+
+  // ---------- faixa correndo ----------
+  function renderMarquee() {
+    const items = t('marquee').map((x) => `<span>${x}</span><i>✦</i>`).join('');
+    $('#marquee').innerHTML = items + items; // duas vezes para emendar sem pulo
+  }
+  renderMarquee();
+
+  // ---------- números que contam ao aparecer ----------
+  const counters = new IntersectionObserver((entries) => {
+    entries.forEach((e) => {
+      if (!e.isIntersecting) return;
+      counters.unobserve(e.target);
+      const end = Number(e.target.dataset.count);
+      const t0 = performance.now();
+      const step = (now) => {
+        const k = Math.min(1, (now - t0) / 1200);
+        e.target.textContent = Math.round(end * (1 - Math.pow(1 - k, 3)));
+        if (k < 1) requestAnimationFrame(step);
+        else e.target.classList.add('done');
+      };
+      requestAnimationFrame(step);
+    });
+  }, { threshold: 0.6 });
+  document.querySelectorAll('[data-count]').forEach((el) => counters.observe(el));
+
+  // ---------- confete ----------
+  function confetti(host) {
+    const colors = ['#ff6a00', '#ffc300', '#ff9a1f', '#1a1208', '#ffffff'];
+    for (let i = 0; i < 28; i++) {
+      const p = document.createElement('i');
+      p.className = 'confetti';
+      p.style.background = colors[i % colors.length];
+      p.style.left = '50%';
+      p.style.top = '45%';
+      host.appendChild(p);
+      const a = Math.random() * Math.PI * 2;
+      const d = 90 + Math.random() * 160;
+      p.animate([
+        { transform: 'translate(-50%,-50%) rotate(0deg)', opacity: 1 },
+        { transform: `translate(${Math.cos(a) * d}px, ${Math.sin(a) * d + 60}px) rotate(${Math.random() * 720}deg)`, opacity: 0 },
+      ], { duration: 900 + Math.random() * 500, easing: 'cubic-bezier(.2,.8,.3,1)' }).onfinish = () => p.remove();
+    }
+  }
 
   // ---------- calculadora ----------
   const perDay = $('#perDay');
@@ -310,6 +386,8 @@
     renderApps();
     renderBlocker();
     renderCards();
+    renderVideo();
+    renderMarquee();
     calc();
     setDepth(depth);
     $('#dragMsg').textContent = msgKey ? t(msgKey) : '';
