@@ -18,6 +18,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import com.pushlife.app.core.Exercise
+import com.pushlife.app.core.packs.Move
 import com.pushlife.app.ui.theme.Orange
 import com.pushlife.app.ui.theme.Yellow
 
@@ -26,6 +27,18 @@ import com.pushlife.app.ui.theme.Yellow
 @Composable
 fun ExerciseAnimation(exercise: Exercise, modifier: Modifier = Modifier) {
     val anim = remember(exercise) { animationFor(exercise) }
+    FigureAnimation(anim, modifier)
+}
+
+// mesmo bonequinho, para os movimentos dos packs
+@Composable
+fun MoveAnimation(move: Move, modifier: Modifier = Modifier) {
+    val anim = remember(move) { animationFor(move) }
+    FigureAnimation(anim, modifier)
+}
+
+@Composable
+private fun FigureAnimation(anim: Anim, modifier: Modifier) {
     val n = anim.frames.size
     val transition = rememberInfiniteTransition(label = "exercise")
     val p by transition.animateFloat(
@@ -53,6 +66,18 @@ fun ExerciseAnimation(exercise: Exercise, modifier: Modifier = Modifier) {
         when (anim.prop) {
             Prop.WALL -> bone(Offset(48f, 20f), Offset(48f, 182f), ground, 6f)
             Prop.BAR -> bone(Offset(55f, 20f), Offset(145f, 20f), ground, 6f)
+            // cadeira de lado (encosto à esquerda), banco sem encosto e banquinho visto de frente
+            Prop.CHAIR, Prop.BENCH -> {
+                bone(Offset(22f, 142f), Offset(68f, 142f), ground, 6f)
+                bone(Offset(25f, 142f), Offset(25f, 182f), ground, 4f)
+                bone(Offset(65f, 142f), Offset(65f, 182f), ground, 4f)
+                if (anim.prop == Prop.CHAIR) bone(Offset(22f, 142f), Offset(22f, 96f), ground, 6f)
+            }
+            Prop.STOOL -> {
+                bone(Offset(70f, 142f), Offset(130f, 142f), ground, 6f)
+                bone(Offset(74f, 142f), Offset(74f, 182f), ground, 4f)
+                bone(Offset(126f, 142f), Offset(126f, 182f), ground, 4f)
+            }
             Prop.NONE -> {}
         }
 
@@ -80,12 +105,12 @@ fun ExerciseAnimation(exercise: Exercise, modifier: Modifier = Modifier) {
     }
 }
 
-private enum class Prop { NONE, WALL, BAR }
+internal enum class Prop { NONE, WALL, BAR, CHAIR, BENCH, STOOL }
 
-private class Anim(val frames: List<Figure>, val segmentMs: Int, val facing: Float = 1f, val prop: Prop = Prop.NONE)
+internal class Anim(val frames: List<Figure>, val segmentMs: Int, val facing: Float = 1f, val prop: Prop = Prop.NONE)
 
 // pose: F = frente, B = trás
-private data class Figure(
+internal data class Figure(
     val head: Offset, val neck: Offset, val hip: Offset,
     val elbowF: Offset, val handF: Offset, val elbowB: Offset, val handB: Offset,
     val kneeF: Offset, val footF: Offset, val kneeB: Offset, val footB: Offset,
@@ -97,7 +122,7 @@ private data class Figure(
     )
 }
 
-private fun p(x: Number, y: Number) = Offset(x.toFloat(), y.toFloat())
+internal fun p(x: Number, y: Number) = Offset(x.toFloat(), y.toFloat())
 
 // atalho pra vista de perfil (trás atrás da frente)
 private fun fig(
@@ -107,7 +132,7 @@ private fun fig(
 
 private val STAND = fig(p(100, 26), p(100, 46), p(100, 105), p(100, 76), p(102, 104), p(102, 142), p(100, 180))
 
-private fun animationFor(exercise: Exercise): Anim = when (exercise) {
+internal fun animationFor(exercise: Exercise): Anim = when (exercise) {
     Exercise.PUSHUP -> Anim(
         listOf(
             fig(p(44, 98), p(60, 110), p(127, 147), p(60, 144), p(60, 180), p(155, 163), p(184, 180)),
