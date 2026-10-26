@@ -1,6 +1,7 @@
 package com.pushlife.app.core.packs
 
 import com.pushlife.app.core.ExerciseFrequency
+import com.pushlife.app.core.Goal
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
@@ -128,6 +129,22 @@ object PackPlanner {
             .sortedBy { it.ordinal }
 
     fun finishedProgram(pack: Pack, progress: PackProgress, today: LocalDate): Boolean = progress.week(today) > pack.weeks
+
+    // sugestão da tela inicial: um de força pelo quanto já treina e um alongamento pelos objetivos
+    fun suggest(frequency: ExerciseFrequency?, goals: Set<Goal>): List<PackId> {
+        val strength = when (frequency) {
+            null, ExerciseFrequency.NEVER -> PackId.CHALLENGE_10
+            ExerciseFrequency.ONE_TO_THREE -> PackId.FULL
+            ExerciseFrequency.THREE_TO_FIVE -> PackId.ARMS
+            ExerciseFrequency.DAILY -> PackId.CHALLENGE_100
+        }
+        val stretch = when {
+            Goal.NIGHT_SCROLL in goals -> PackId.STRETCH_NIGHT
+            goals.any { it == Goal.LESS_PHONE || it == Goal.STUDY || it == Goal.WORK } -> PackId.STRETCH_NECK
+            else -> PackId.STRETCH_MORNING
+        }
+        return listOf(strength, stretch)
+    }
 }
 
 // formato guardado nas prefs (uma linha por pack):

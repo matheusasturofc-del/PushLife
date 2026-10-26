@@ -129,4 +129,11 @@ class PacksTest {
         assertEquals(PackProgress(), PackCodec.decode(""))
         assertEquals(PackProgress(), PackCodec.decode("lixo|x=1|lv=abc"))
     }
+
+    @Test
+    fun sugereProgramaPeloPerfil() {
+        assertEquals(listOf(PackId.CHALLENGE_10, PackId.STRETCH_MORNING), PackPlanner.suggest(null, emptySet()))
+        assertEquals(listOf(PackId.ARMS, PackId.STRETCH_NIGHT), PackPlanner.suggest(ExerciseFrequency.THREE_TO_FIVE, setOf(com.pushlife.app.core.Goal.NIGHT_SCROLL)))
+        assertEquals(PackId.STRETCH_NECK, PackPlanner.suggest(ExerciseFrequency.DAILY, setOf(com.pushlife.app.core.Goal.STUDY))[1])
+    }
 }

@@ -38,6 +38,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -103,14 +104,25 @@ fun TrainScreen(
     modifier: Modifier = Modifier,
     pendingExercise: Exercise? = null,
     onExerciseOpened: () -> Unit = {},
+    pendingPackRoute: String? = null,
+    onPackOpened: () -> Unit = {},
 ) {
     var stage by rememberSaveable { mutableStateOf(Stage.Pick) }
+    // aba de cima: programas (packs) ou treino livre
+    var packsMode by rememberSaveable { mutableStateOf(true) }
+    LaunchedEffect(pendingPackRoute) {
+        if (pendingPackRoute != null) {
+            packsMode = true
+            stage = Stage.Pick
+        }
+    }
     var exercise by rememberSaveable { mutableStateOf(Exercise.PUSHUP) }
     var result by remember { mutableStateOf(SessionResult(Exercise.PUSHUP, 0, 0, false)) }
 
     // abrir exercício direto (tipo o "testar agora" das boas-vindas)
     LaunchedEffect(pendingExercise) {
         pendingExercise?.let {
+            packsMode = false
             exercise = it
             stage = Stage.Intro
             onExerciseOpened()
@@ -120,13 +132,21 @@ fun TrainScreen(
     BackHandler(enabled = stage == Stage.Intro) { stage = Stage.Pick }
 
     when (stage) {
-        Stage.Pick -> PickStage(
-            onPick = {
-                exercise = it
-                stage = Stage.Intro
-            },
-            modifier = modifier,
-        )
+        Stage.Pick -> {
+            val header: @Composable () -> Unit = { TrainHeader(packsMode, onMode = { packsMode = it }) }
+            if (packsMode) {
+                PacksFlow(header = header, modifier = modifier, openRoute = pendingPackRoute, onRouteOpened = onPackOpened)
+            } else {
+                PickStage(
+                    header = header,
+                    onPick = {
+                        exercise = it
+                        stage = Stage.Intro
+                    },
+                    modifier = modifier,
+                )
+            }
+        }
         Stage.Intro -> IntroStage(exercise, onBack = { stage = Stage.Pick }, onStart = { stage = Stage.Active }, modifier = modifier)
         Stage.Active -> ActiveStage(
             exercise,
@@ -150,7 +170,18 @@ fun TrainScreen(
 }
 
 @Composable
-private fun PickStage(onPick: (Exercise) -> Unit, modifier: Modifier = Modifier) {
+private fun TrainHeader(packsMode: Boolean, onMode: (Boolean) -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Text(stringResource(R.string.tab_train), style = MaterialTheme.typography.displayMedium)
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            FilterChip(selected = packsMode, onClick = { onMode(true) }, label = { Text(stringResource(R.string.packs_title)) })
+            FilterChip(selected = !packsMode, onClick = { onMode(false) }, label = { Text(stringResource(R.string.packs_free)) })
+        }
+    }
+}
+
+@Composable
+private fun PickStage(header: @Composable () -> Unit, onPick: (Exercise) -> Unit, modifier: Modifier = Modifier) {
     LazyVerticalGrid(
         columns = GridCells.Fixed(2),
         modifier = modifier.fillMaxSize(),
@@ -158,9 +189,7 @@ private fun PickStage(onPick: (Exercise) -> Unit, modifier: Modifier = Modifier)
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        item(span = { GridItemSpan(2) }) {
-            Text(stringResource(R.string.tab_train), style = MaterialTheme.typography.displayMedium)
-        }
+        item(span = { GridItemSpan(2) }) { header() }
         items(Exercise.entries) { ex ->
             val ui = ex.ui
             Column(

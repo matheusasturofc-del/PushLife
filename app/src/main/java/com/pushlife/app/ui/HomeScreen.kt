@@ -47,6 +47,7 @@ import androidx.compose.runtime.remember
 import com.pushlife.app.R
 import com.pushlife.app.core.Exercise
 import com.pushlife.app.core.BankState
+import com.pushlife.app.core.packs.PackId
 import java.time.LocalDate
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -55,7 +56,14 @@ import com.pushlife.app.ui.theme.Orange
 import com.pushlife.app.ui.theme.Yellow
 
 @Composable
-fun HomeScreen(onStartTraining: () -> Unit, onStartExercise: (Exercise) -> Unit, modifier: Modifier = Modifier) {
+fun HomeScreen(
+    onStartTraining: () -> Unit,
+    onStartExercise: (Exercise) -> Unit,
+    onOpenPack: (PackId) -> Unit,
+    onTrainPack: (PackId) -> Unit,
+    onGo: (HomeTarget) -> Unit,
+    modifier: Modifier = Modifier,
+) {
     val bank by AppGraph.bank.state.collectAsStateWithLifecycle()
     val profile by AppGraph.profile.state.collectAsStateWithLifecycle()
     val progress by AppGraph.progress.state.collectAsStateWithLifecycle()
@@ -84,7 +92,8 @@ fun HomeScreen(onStartTraining: () -> Unit, onStartExercise: (Exercise) -> Unit,
             Spacer(Modifier.size(8.dp))
             Text(stringResource(R.string.start_training), style = MaterialTheme.typography.titleLarge)
         }
-        RecommendedExercises(onPick = onStartExercise)
+        RecommendedFeatures(onOpenPack = onOpenPack, onTrainPack = onTrainPack, onGo = onGo)
+        RecommendedExercises(onPick = onStartExercise, title = R.string.quick_exercises)
     }
 }
 

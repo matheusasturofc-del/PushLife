@@ -10,7 +10,7 @@ import org.json.JSONObject
 object Backup {
     private const val APP = "PushLife"
     private const val VERSION = 1
-    private val FILES = listOf("bank", "profile", "blocking", "progress")
+    private val FILES = listOf("bank", "profile", "blocking", "progress", "packs")
 
     fun export(context: Context, pretty: Boolean = true): String {
         val prefs = JSONObject()

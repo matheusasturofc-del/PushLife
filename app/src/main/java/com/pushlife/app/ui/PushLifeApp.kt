@@ -40,6 +40,8 @@ fun PushLifeApp(trainRequests: Int = 0, pendingExercise: Exercise? = null, onExe
     var selected by rememberSaveable { mutableIntStateOf(Tab.Home.ordinal) }
     // exercício escolhido na tela inicial, abre direto no treino
     var homePick by rememberSaveable { mutableStateOf<Exercise?>(null) }
+    // programa aberto pela tela inicial ("detalhe:ARMS" ou "treino:ARMS")
+    var homePack by rememberSaveable { mutableStateOf<String?>(null) }
     LaunchedEffect(trainRequests) {
         if (trainRequests > 0) selected = Tab.Train.ordinal
     }
@@ -68,6 +70,21 @@ fun PushLifeApp(trainRequests: Int = 0, pendingExercise: Exercise? = null, onExe
                     homePick = it
                     selected = Tab.Train.ordinal
                 },
+                onOpenPack = {
+                    homePack = "detalhe:${it.name}"
+                    selected = Tab.Train.ordinal
+                },
+                onTrainPack = {
+                    homePack = "treino:${it.name}"
+                    selected = Tab.Train.ordinal
+                },
+                onGo = { target ->
+                    selected = when (target) {
+                        HomeTarget.BLOCK -> Tab.Block.ordinal
+                        HomeTarget.PROFILE -> Tab.Profile.ordinal
+                        HomeTarget.PROGRESS -> Tab.Progress.ordinal
+                    }
+                },
                 modifier = modifier,
             )
             Tab.Train -> TrainScreen(
@@ -77,6 +94,8 @@ fun PushLifeApp(trainRequests: Int = 0, pendingExercise: Exercise? = null, onExe
                     homePick = null
                     onExerciseOpened()
                 },
+                pendingPackRoute = homePack,
+                onPackOpened = { homePack = null },
                 modifier = modifier,
             )
             Tab.Block -> BlockScreen(modifier)
