@@ -3,28 +3,31 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Política de privacidade — PushLife</title>
+  <title>PushLife</title>
   <meta name="description" content="Como o PushLife trata seus dados: tudo no celular, sem anúncios.">
   <meta name="theme-color" content="#1a1208">
-  <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/style.css">
 </head>
-<body>
+<body data-title="priv_title">
   <header class="nav solid">
     <div class="wrap">
-      <a class="brand" href="index.html"><img src="assets/icon.svg" alt="" width="34" height="34">PushLife</a>
-      <a class="btn btn-primary btn-small" href="index.html#baixar" style="margin-left:auto">Baixar</a>
+      <a class="brand" href="index.html"><img src="assets/icon.svg" alt="" width="34" height="34"><span class="brand-name">PushLife</span></a>
+      <div class="lang" role="group" data-i18n-attr="aria-label:lang_label" style="margin-left:auto">
+        <button type="button" data-set-lang="pt">PT</button><button type="button" data-set-lang="en">EN</button><button type="button" data-set-lang="es">ES</button>
+      </div>
+      <a class="btn btn-primary btn-small" href="index.html#baixar" data-i18n="nav_download">Baixar</a>
     </div>
   </header>
   <main class="doc">
     <div class="wrap">
+      <div data-lang="pt">
       <h1>Política de privacidade</h1>
       <p class="updated">Última atualização: 26 de outubro de 2026</p>
       <p>O PushLife foi feito para funcionar <strong>dentro do seu celular</strong>. A única coisa que sai dele é a sua <strong>conta</strong>: e-mail, nome, @ e o backup do seu progresso, para você não perder nada e poder entrar em outro celular. Não vendemos nem compartilhamos dados pessoais, e o app não tem anúncios.</p>
-
       <h2>O que o app usa e por quê</h2>
       <table>
         <thead><tr><th>Recurso</th><th>Para quê</th><th>Sai do celular?</th></tr></thead>
@@ -37,7 +40,6 @@
           <tr><td>Notificações</td><td>Lembretes, avisos de tempo e resumo da semana</td><td>Não.</td></tr>
         </tbody>
       </table>
-
       <h2>Sua conta</h2>
       <ul>
         <li>Para criar a conta pedimos <strong>e-mail, senha, nome e um @</strong> (nome de usuário).</li>
@@ -47,37 +49,103 @@
         <li>O seu @ é guardado numa lista para que ninguém use o mesmo. O resto da conta só você acessa.</li>
         <li>Para apagar a conta e os dados da nuvem, veja <a href="excluir-conta.html">como apagar a conta</a>.</li>
       </ul>
-
       <h2>Seus dados no celular</h2>
       <ul>
         <li>Saldo, histórico de exercícios, conquistas e ajustes ficam guardados no celular (e, com conta, no backup).</li>
         <li>O backup em arquivo é salvo onde <strong>você</strong> quiser, pelo seletor de arquivos do Android. O PushLife não tem acesso ao seu Drive.</li>
         <li>"Apagar todos os dados", no Perfil, remove tudo do aparelho. Desinstalar o app também.</li>
       </ul>
-
       <h2>Crianças</h2>
       <p>O app não é direcionado a menores de 13 anos.</p>
-
       <h2>Contato</h2>
       <p>Dúvidas: <a href="mailto:matheusasturofc@gmail.com">matheusasturofc@gmail.com</a></p>
+      </div>
+      <div data-lang="en" hidden>
+      <h1>Privacy policy</h1>
+      <p class="updated">Last updated: October 26, 2026</p>
+      <p>PushLife was made to work <strong>on your phone</strong>. The only thing that leaves it is your <strong>account</strong>: email, name, @ and a backup of your progress, so you never lose anything and can sign in on another phone. We do not sell or share personal data, and the app has no ads.</p>
+      <h2>What the app uses and why</h2>
+      <table>
+        <thead><tr><th>Feature</th><th>What for</th><th>Does it leave the phone?</th></tr></thead>
+        <tbody>
+          <tr><td>Camera</td><td>Counting reps with an AI that runs on the device</td><td>No. No image or video is saved or sent.</td></tr>
+          <tr><td>Physical activity (steps)</td><td>Counting steps for walking</td><td>No.</td></tr>
+          <tr><td>Usage access</td><td>Knowing which app is open to spend your balance and show each app's average use</td><td>No.</td></tr>
+          <tr><td>Display over other apps</td><td>Showing the block screen over a blocked app</td><td>No.</td></tr>
+          <tr><td>Local VPN (adult site filter, optional)</td><td>Blocking adult sites by address (DNS) and keeping searches in safe mode</td><td>Only the site address lookups. They are checked on the phone against a list built into the app, and allowed ones go to your normal internet DNS (Wi-Fi or carrier). Nothing is sent to PushLife or any other company. The rest of your traffic does not go through the VPN.</td></tr>
+          <tr><td>Notifications</td><td>Reminders, time alerts and a weekly summary</td><td>No.</td></tr>
+        </tbody>
+      </table>
+      <h2>Your account</h2>
+      <ul>
+        <li>To create an account we ask for <strong>email, password, name and an @</strong> (username).</li>
+        <li>Accounts use <strong>Supabase</strong> (servers in São Paulo): sign-in is handled by Supabase Auth, with your password stored encrypted, and your name, @ and backup are kept in the Supabase database.</li>
+        <li>To create the account, sign in or change your password, we email you a 6-digit code.</li>
+        <li>The backup is a copy of what the app stores (balance, exercise history, achievements, welcome answers, settings and the list of blocked apps). It is sent automatically when you leave the app.</li>
+        <li>Your @ is kept in a list so nobody else can use it. Only you can access the rest of your account.</li>
+        <li>To delete your account and cloud data, see <a href="excluir-conta.html">how to delete your account</a>.</li>
+      </ul>
+      <h2>Your data on the phone</h2>
+      <ul>
+        <li>Balance, exercise history, achievements and settings are stored on the phone (and, with an account, in the backup).</li>
+        <li>A file backup is saved wherever <strong>you</strong> choose, through Android's file picker. PushLife has no access to your Drive.</li>
+        <li>"Delete all data", in Profile, removes everything from the device. Uninstalling the app does too.</li>
+      </ul>
+      <h2>Children</h2>
+      <p>The app is not directed at children under 13.</p>
+      <h2>Contact</h2>
+      <p>Questions: <a href="mailto:matheusasturofc@gmail.com">matheusasturofc@gmail.com</a></p>
+      </div>
+      <div data-lang="es" hidden>
+      <h1>Política de privacidad</h1>
+      <p class="updated">Última actualización: 26 de octubre de 2026</p>
+      <p>PushLife fue hecha para funcionar <strong>en tu teléfono</strong>. Lo único que sale de él es tu <strong>cuenta</strong>: correo, nombre, @ y una copia de tu progreso, para que no pierdas nada y puedas entrar en otro teléfono. No vendemos ni compartimos datos personales, y la app no tiene anuncios.</p>
+      <h2>Qué usa la app y por qué</h2>
+      <table>
+        <thead><tr><th>Recurso</th><th>Para qué</th><th>¿Sale del teléfono?</th></tr></thead>
+        <tbody>
+          <tr><td>Cámara</td><td>Contar repeticiones con una IA que corre en el aparato</td><td>No. Ninguna imagen ni video se guarda o envía.</td></tr>
+          <tr><td>Actividad física (pasos)</td><td>Contar pasos en la caminata</td><td>No.</td></tr>
+          <tr><td>Acceso a datos de uso</td><td>Saber qué app está abierta para descontar el saldo y mostrar el uso promedio de cada app</td><td>No.</td></tr>
+          <tr><td>Mostrar sobre otras apps</td><td>Mostrar la pantalla de bloqueo sobre una app bloqueada</td><td>No.</td></tr>
+          <tr><td>VPN local (filtro de sitios para adultos, opcional)</td><td>Bloquear sitios para adultos por la dirección (DNS) y dejar las búsquedas en modo seguro</td><td>Solo las consultas de dirección de los sitios. Se revisan en el teléfono con una lista incluida en la app, y las permitidas van al DNS normal de tu internet (Wi-Fi u operadora). Nada se envía a PushLife ni a otra empresa. El resto de tu tráfico no pasa por la VPN.</td></tr>
+          <tr><td>Notificaciones</td><td>Recordatorios, avisos de tiempo y resumen semanal</td><td>No.</td></tr>
+        </tbody>
+      </table>
+      <h2>Tu cuenta</h2>
+      <ul>
+        <li>Para crear la cuenta pedimos <strong>correo, contraseña, nombre y un @</strong> (nombre de usuario).</li>
+        <li>La cuenta usa <strong>Supabase</strong> (servidores en São Paulo): el inicio de sesión está en Supabase Auth, con la contraseña guardada cifrada, y el nombre, el @ y la copia quedan en la base de datos de Supabase.</li>
+        <li>Para crear la cuenta, entrar o cambiar la contraseña, te enviamos un código de 6 dígitos al correo.</li>
+        <li>La copia es lo que la app guarda (saldo, historial de ejercicios, logros, respuestas de bienvenida, ajustes y la lista de apps bloqueadas). Se envía automáticamente cuando sales de la app.</li>
+        <li>Tu @ se guarda en una lista para que nadie más lo use. Solo tú accedes al resto de la cuenta.</li>
+        <li>Para borrar la cuenta y los datos en la nube, mira <a href="excluir-conta.html">cómo eliminar la cuenta</a>.</li>
+      </ul>
+      <h2>Tus datos en el teléfono</h2>
+      <ul>
+        <li>Saldo, historial de ejercicios, logros y ajustes quedan en el teléfono (y, con cuenta, en la copia).</li>
+        <li>La copia en archivo se guarda donde <strong>tú</strong> quieras, con el selector de archivos de Android. PushLife no tiene acceso a tu Drive.</li>
+        <li>"Borrar todos los datos", en Perfil, elimina todo del aparato. Desinstalar la app también.</li>
+      </ul>
+      <h2>Niños</h2>
+      <p>La app no está dirigida a menores de 13 años.</p>
+      <h2>Contacto</h2>
+      <p>Dudas: <a href="mailto:matheusasturofc@gmail.com">matheusasturofc@gmail.com</a></p>
+      </div>
 
-      <h2>English</h2>
-      <p>PushLife works on your phone. The only thing that leaves it is your account: email, name, @ and a backup of your progress, stored with Supabase (servers in São Paulo) so you can sign in on another phone. We do not sell or share personal data and there are no ads. The camera is used only for on-device rep counting; no image or video is stored or sent. The optional adult-site filter is a local VPN that checks site addresses on the phone; allowed ones go to your normal internet DNS, and nothing is sent to PushLife or any other company. To delete your account, see <a href="excluir-conta.html">account deletion</a>. Contact: matheusasturofc@gmail.com</p>
-
-      <h2>Español</h2>
-      <p>PushLife funciona en tu teléfono. Lo único que sale de él es tu cuenta: correo, nombre, @ y una copia de tu progreso, guardados en Supabase (servidores en São Paulo). No vendemos ni compartimos datos personales y no hay anuncios. La cámara solo se usa para contar repeticiones en el dispositivo; ninguna imagen ni video se guarda o envía. El filtro opcional de sitios para adultos es una VPN local que revisa las direcciones en el teléfono; las permitidas van al DNS normal de tu internet y nada se envía a PushLife ni a otra empresa. Para borrar tu cuenta, mira <a href="excluir-conta.html">cómo eliminar la cuenta</a>. Contacto: matheusasturofc@gmail.com</p>
     </div>
   </main>
   <footer>
     <div class="wrap">
-      <p class="made">PushLife · feito por <b>Built with Mir</b></p>
+      <p class="made">PushLife · <span data-i18n="made"></span></p>
       <nav aria-label="Rodapé">
-        <a href="index.html">Início</a>
-        <a href="privacidade.html">Privacidade</a>
-        <a href="excluir-conta.html">Apagar conta</a>
-        <a href="mailto:matheusasturofc@gmail.com">Contato</a>
+        <a href="index.html" data-i18n="f_home"></a>
+        <a href="privacidade.html" data-i18n="f_priv"></a>
+        <a href="excluir-conta.html" data-i18n="f_delete"></a>
+        <a href="mailto:matheusasturofc@gmail.com" data-i18n="f_contact"></a>
       </nav>
     </div>
   </footer>
+  <script src="assets/i18n.js"></script>
 </body>
 </html>

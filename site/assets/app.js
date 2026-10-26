@@ -1,6 +1,8 @@
 // PushLife — interações do site
 (() => {
   const $ = (s) => document.querySelector(s);
+  const t = (k, v) => window.I18N.t(k, v);
+  const locale = () => ({ pt: 'pt-BR', en: 'en-US', es: 'es-ES' })[window.I18N.lang];
 
   // ---------- barra de progresso + menu escuro ao rolar ----------
   const bar = $('.progress');
@@ -34,6 +36,17 @@
     el.style.transitionDelay = `${(i % 3) * 0.08}s`;
     io.observe(el);
   });
+
+  // ---------- título do topo, palavra por palavra ----------
+  function renderHero() {
+    const h1 = $('#heroTitle');
+    const words = [...t('hero_l1').split(' '), '\n', ...t('hero_l2').split(' ')];
+    let i = 0;
+    const span = (w, hot) => `<span class="word${hot ? ' hot' : ''}" style="animation-delay:${(0.05 + 0.12 * i++).toFixed(2)}s">${w}</span>`;
+    h1.innerHTML = words.map((w) => (w === '\n' ? '<br>' : span(w))).join(' ') + ' ' + span(t('hero_hot'), true);
+    h1.setAttribute('aria-label', `${t('hero_l1')} ${t('hero_l2')} ${t('hero_hot')}`);
+  }
+  renderHero();
 
   // ---------- brilho seguindo o mouse no topo ----------
   const hero = $('.hero');
@@ -85,13 +98,14 @@
   const stage = $('#stage');
   let depth = 0;
   let down = false;
+  let msgKey = null;
   const horizontal = () => matchMedia('(max-width: 760px)').matches;
 
   function setDepth(d) {
     depth = Math.min(1, Math.max(0, d));
     draw(depth);
     handle.textContent = horizontal() ? '↔' : '↕';
-    $('#dragHint').textContent = horizontal() ? 'Arraste → e ←' : 'Arraste ↓ e ↑';
+    $('#dragHint').textContent = t(horizontal() ? 'hint_h' : 'hint_v');
     if (horizontal()) {
       handle.style.top = '50%';
       handle.style.left = `calc(36px + (100% - 72px) * ${depth})`;
@@ -123,10 +137,10 @@
     pop.style.top = '40%';
     stage.appendChild(pop);
     setTimeout(() => pop.remove(), 1000);
-    const msg = $('#dragMsg');
-    if (reps === 1) msg.textContent = 'Isso! Mais algumas…';
-    if (reps === 5) msg.textContent = 'Boa! 5 minutos de saldo. Lá embaixo dá para usar para liberar um app. 👇';
-    if (reps === 20) msg.textContent = 'Uau, 20! Imagina isso de verdade, com a câmera contando. 💪';
+    if (reps === 1) msgKey = 'msg1';
+    if (reps === 5) msgKey = 'msg5';
+    if (reps === 20) msgKey = 'msg20';
+    $('#dragMsg').textContent = msgKey ? t(msgKey) : '';
   }
 
   function fromPointer(e) {
@@ -156,16 +170,17 @@
 
   // ---------- celular com apps bloqueados ----------
   const APPS = [
-    { name: 'Vídeos curtos', emo: '🎬', bg: '#111', locked: true },
-    { name: 'Rede social', emo: '📸', bg: 'linear-gradient(135deg,#f58529,#dd2a7b,#8134af)', locked: true },
-    { name: 'Vídeos', emo: '▶️', bg: '#e62117', locked: true },
-    { name: 'Jogo', emo: '🎮', bg: '#3b5bdb', locked: true },
-    { name: 'Mensagens', emo: '💬', bg: '#25a244', locked: false },
-    { name: 'Telefone', emo: '📞', bg: '#2f9e44', locked: false },
-    { name: 'PushLife', emo: '', bg: 'url(assets/icon.svg) center/cover', locked: false, self: true },
-    { name: 'Fotos', emo: '🖼️', bg: '#f08c00', locked: false },
-    { name: 'Notícias', emo: '📰', bg: '#495057', locked: true },
+    { key: 'app_short', emo: '🎬', bg: '#111', locked: true },
+    { key: 'app_social', emo: '📸', bg: 'linear-gradient(135deg,#f58529,#dd2a7b,#8134af)', locked: true },
+    { key: 'app_videos', emo: '▶️', bg: '#e62117', locked: true },
+    { key: 'app_game', emo: '🎮', bg: '#3b5bdb', locked: true },
+    { key: 'app_msg', emo: '💬', bg: '#25a244', locked: false },
+    { key: 'app_phone', emo: '📞', bg: '#2f9e44', locked: false },
+    { key: null, emo: '', bg: 'url(assets/icon.svg) center/cover', locked: false, self: true },
+    { key: 'app_photos', emo: '🖼️', bg: '#f08c00', locked: false },
+    { key: 'app_news', emo: '📰', bg: '#495057', locked: true },
   ];
+  const appName = (a) => (a.self ? 'PushLife' : t(a.key));
   const home = $('#home');
   const blocker = $('#blocker');
   const toast = $('#toast');
@@ -177,65 +192,70 @@
     clearTimeout(toastTimer);
     toastTimer = setTimeout(() => toast.classList.remove('show'), 2200);
   }
-  APPS.forEach((a) => {
-    const b = document.createElement('button');
-    b.className = 'app';
-    b.innerHTML = `<span class="ico" style="background:${a.bg}">${a.emo}</span>${a.locked ? '<span class="lock">🔒</span>' : ''}<span>${a.name}</span>`;
-    b.addEventListener('click', () => {
-      if (a.self) return showToast('Esse é o PushLife. Hora de treinar! 💪');
-      if (!a.locked) return showToast(`${a.name} não está bloqueado. Abriu normal.`);
-      current = a;
-      $('#blockText').textContent = `Seu saldo acabou para usar ${a.name}. Faça flexões para liberar.`;
-      $('#useBalance').textContent = balance > 0 ? `Usar meu saldo (${balance} min)` : 'Sem saldo ainda';
-      $('#useBalance').disabled = balance <= 0;
-      blocker.classList.add('open');
+  function renderBlocker() {
+    if (!current) return;
+    $('#blockText').textContent = t('blocker_text', { app: appName(current) });
+    $('#useBalance').textContent = balance > 0 ? t('use_balance', { n: balance }) : t('no_balance');
+    $('#useBalance').disabled = balance <= 0;
+  }
+  function renderApps() {
+    home.innerHTML = '';
+    APPS.forEach((a) => {
+      const b = document.createElement('button');
+      b.className = 'app';
+      b.innerHTML = `<span class="ico" style="background:${a.bg}">${a.emo}</span>${a.locked ? '<span class="lock">🔒</span>' : ''}<span>${appName(a)}</span>`;
+      b.addEventListener('click', () => {
+        if (a.self) return showToast(t('toast_self'));
+        if (!a.locked) return showToast(t('toast_open', { app: appName(a) }));
+        current = a;
+        renderBlocker();
+        blocker.classList.add('open');
+      });
+      home.appendChild(b);
     });
-    home.appendChild(b);
-  });
+  }
+  renderApps();
   $('#closeBlock').addEventListener('click', () => blocker.classList.remove('open'));
   $('#useBalance').addEventListener('click', () => {
     if (balance <= 0) return;
     const used = balance;
     setBalance(0);
     blocker.classList.remove('open');
-    showToast(`${current.name} liberado por ${used} min. ⏱️`);
+    showToast(t('toast_unlocked', { app: appName(current), n: used }));
   });
   $('#emergency').addEventListener('click', () => {
     blocker.classList.remove('open');
-    showToast('Emergência: 5 min. Você fica devendo 10 flexões. 😅');
+    showToast(t('toast_emergency'));
   });
   $('#goTrain').addEventListener('click', () => blocker.classList.remove('open'));
 
   // ---------- cartas dos exercícios ----------
-  const EX = [
-    ['💪', 'Flexão', '1 flexão = 1 min', 'Celular de lado, corpo inteiro aparecendo. Conta pelo cotovelo.'],
-    ['🏋️', 'Agachamento', '1 = 30 s', 'Conta pelo joelho, com o tronco em pé.'],
-    ['🦵', 'Afundo', '1 = 30 s', 'De lado. O joelho da frente desce até uns 90°.'],
-    ['🔥', 'Abdominal', '1 = 30 s', 'Deitado, joelhos dobrados. Conta pelo quadril.'],
-    ['⭐', 'Polichinelo', '1 = 15 s', 'De frente. Mãos para cima e pés afastados.'],
-    ['🧱', 'Prancha', '1 s = 3 s', 'Corpo reto e joelhos esticados. Conta o tempo parado.'],
-    ['🪑', 'Agachamento isométrico', '1 s = 3 s', 'Costas na parede, joelhos dobrados. Segura!'],
-    ['🧗', 'Barra fixa', '1 = 2 min', 'Mãos acima dos ombros. Sobe até o queixo passar.'],
-    ['⚡', 'Burpee', '1 = 1 min 30 s', 'Em pé, chão, em pé. O mais puxado de todos.'],
-    ['👟', 'Caminhada', '100 passos = 1 min', 'Usa o sensor de passos. Só andar.'],
-  ];
+  const EMO = ['💪', '🏋️', '🦵', '🔥', '⭐', '🧱', '🪑', '🧗', '⚡', '👟'];
   const cards = $('#cards');
-  EX.forEach(([emo, name, val, tip], i) => {
-    const c = document.createElement('button');
-    c.className = 'card';
-    c.setAttribute('data-reveal', 'zoom');
-    c.setAttribute('aria-label', `${name}: toque para ver quanto vale`);
-    c.innerHTML = `<div class="inner"><div class="face front"><span class="emo">${emo}</span><div><h3>${name}</h3><small>Toque para virar ↻</small></div></div>` +
-      `<div class="face back"><span class="val">${val}</span><p>${tip}</p></div></div>`;
-    c.addEventListener('click', () => c.classList.toggle('flipped'));
-    c.style.transitionDelay = `${(i % 5) * 0.06}s`;
-    cards.appendChild(c);
-    io.observe(c);
-  });
+  function renderCards() {
+    const shown = cards.dataset.shown === '1';
+    cards.innerHTML = '';
+    t('ex').forEach(([name, val, tip], i) => {
+      const c = document.createElement('button');
+      c.className = 'card';
+      c.setAttribute('data-reveal', 'zoom');
+      c.setAttribute('aria-label', t('flip_label', { name }));
+      c.innerHTML = `<div class="inner"><div class="face front"><span class="emo">${EMO[i]}</span><div><h3>${name}</h3><small>${t('flip_hint')}</small></div></div>` +
+        `<div class="face back"><span class="val">${val}</span><p>${tip}</p></div></div>`;
+      c.addEventListener('click', () => c.classList.toggle('flipped'));
+      c.style.transitionDelay = `${(i % 5) * 0.06}s`;
+      cards.appendChild(c);
+      if (shown) c.classList.add('shown');
+      else io.observe(c);
+    });
+  }
+  renderCards();
+  // depois que as cartas apareceram uma vez, ao trocar de idioma já vêm visíveis
+  new IntersectionObserver((e, o) => { if (e[0].isIntersecting) { cards.dataset.shown = '1'; o.disconnect(); } }).observe(cards);
 
   // ---------- calculadora ----------
   const perDay = $('#perDay');
-  const fmt = (n) => n.toLocaleString('pt-BR');
+  const fmt = (n) => n.toLocaleString(locale());
   const hm = (min) => {
     const h = Math.floor(min / 60);
     const m = min % 60;
@@ -261,7 +281,7 @@
   let timer;
   sw.addEventListener('click', () => {
     sw.setAttribute('aria-checked', 'false');
-    $('#filterLabel').textContent = 'Desligando…';
+    $('#filterLabel').textContent = t('filter_turning');
     modal.classList.add('open');
     let s = 180;
     $('#chTimer').textContent = '3:00';
@@ -277,10 +297,21 @@
     clearInterval(timer);
     modal.classList.remove('open');
     sw.setAttribute('aria-checked', 'true');
-    $('#filterLabel').textContent = 'Continua ligado 💪';
+    $('#filterLabel').textContent = t('filter_kept');
     sw.focus();
   }
   $('#chKeep').addEventListener('click', keep);
   modal.addEventListener('click', (e) => { if (e.target === modal) keep(); });
   addEventListener('keydown', (e) => { if (e.key === 'Escape' && modal.classList.contains('open')) keep(); });
+
+  // ---------- trocou de idioma: refaz o que é montado pelo script ----------
+  document.addEventListener('langchange', () => {
+    renderHero();
+    renderApps();
+    renderBlocker();
+    renderCards();
+    calc();
+    setDepth(depth);
+    $('#dragMsg').textContent = msgKey ? t(msgKey) : '';
+  });
 })();

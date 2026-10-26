@@ -68,7 +68,12 @@ p { margin: 0; }
 .nav nav { display: flex; gap: 22px; margin-left: auto; }
 .nav nav a { color: rgba(255,255,255,.8); text-decoration: none; font-weight: 600; font-size: 15px; }
 .nav nav a:hover { color: var(--white); }
-@media (max-width: 760px) { .nav nav { display: none; } .nav .btn { margin-left: auto; } }
+.lang { display: flex; gap: 2px; padding: 3px; border-radius: 999px; background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.18); }
+.lang button { border: 0; background: none; color: rgba(255,255,255,.75); font-weight: 800; font-size: 13px; padding: 7px 10px; border-radius: 999px; letter-spacing: .04em; }
+.lang button:hover { color: var(--white); }
+.lang button[aria-pressed="true"] { background: var(--white); color: var(--ink); }
+@media (max-width: 760px) { .nav nav { display: none; } .nav .lang { margin-left: auto; } .lang button { padding: 6px 8px; } }
+@media (max-width: 480px) { .brand-name { display: none; } .nav .wrap { gap: 12px; } }
 
 /* botões */
 .btn {
