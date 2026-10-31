@@ -541,7 +541,7 @@ internal fun openSpotify(context: Context, query: String) {
 // cada exercício tem um tempo mínimo (o ritmo): o app conta as repetições junto com você.
 // pular é possível, mas o que foi pulado não conta e abaixo de 60% do treino não tem bônus.
 
-private enum class Stage { GET_READY, WORK, REST }
+private enum class PlayStage { GET_READY, WORK, REST }
 
 @Composable
 private fun PackWorkout(id: PackId, onExit: () -> Unit, onDone: (Float) -> Unit, modifier: Modifier = Modifier) {
@@ -549,7 +549,7 @@ private fun PackWorkout(id: PackId, onExit: () -> Unit, onDone: (Float) -> Unit,
     val steps = remember(id) { Workouts.build(pack, AppGraph.packs.progress(id).level) }
     val totalWork = remember(steps) { steps.sumOf { it.move.secondsFor(it.amount) }.coerceAtLeast(1) }
     var index by rememberSaveable { mutableIntStateOf(0) }
-    var stage by rememberSaveable { mutableStateOf(Stage.GET_READY) }
+    var stage by rememberSaveable { mutableStateOf(PlayStage.GET_READY) }
     // segundos de exercício feitos de verdade (pra saber quanto do treino foi feito)
     var doneSeconds by rememberSaveable { mutableIntStateOf(0) }
     var paused by remember { mutableStateOf(false) }
@@ -572,9 +572,9 @@ private fun PackWorkout(id: PackId, onExit: () -> Unit, onDone: (Float) -> Unit,
     val next = steps.getOrNull(index + 1)
     // quanto dura a etapa atual (ms)
     val stageMs = when (stage) {
-        Stage.GET_READY -> 5_000L
-        Stage.WORK -> step.move.secondsFor(step.amount) * 1000L
-        Stage.REST -> (if (step.restAfter > 0) step.restAfter else 5) * 1000L
+        PlayStage.GET_READY -> 5_000L
+        PlayStage.WORK -> step.move.secondsFor(step.amount) * 1000L
+        PlayStage.REST -> (if (step.restAfter > 0) step.restAfter else 5) * 1000L
     }
     var elapsed by remember(index, stage) { mutableLongStateOf(0L) }
     var extraRest by remember(index, stage) { mutableLongStateOf(0L) }
@@ -582,14 +582,14 @@ private fun PackWorkout(id: PackId, onExit: () -> Unit, onDone: (Float) -> Unit,
     val cameraTarget = if (step.move.perSide) step.amount * 2 else step.amount
 
     fun goNext(completedWork: Boolean) {
-        if (stage == Stage.WORK && completedWork) doneSeconds += step.move.secondsFor(step.amount)
+        if (stage == PlayStage.WORK && completedWork) doneSeconds += step.move.secondsFor(step.amount)
         camera = false
         when (stage) {
-            Stage.GET_READY -> stage = Stage.WORK
-            Stage.WORK -> if (index >= steps.lastIndex) onDone(doneSeconds.toFloat() / totalWork) else stage = Stage.REST
-            Stage.REST -> {
+            PlayStage.GET_READY -> stage = PlayStage.WORK
+            PlayStage.WORK -> if (index >= steps.lastIndex) onDone(doneSeconds.toFloat() / totalWork) else stage = PlayStage.REST
+            PlayStage.REST -> {
                 index++
-                stage = Stage.WORK
+                stage = PlayStage.WORK
             }
         }
     }
@@ -597,7 +597,7 @@ private fun PackWorkout(id: PackId, onExit: () -> Unit, onDone: (Float) -> Unit,
     // relógio: anda de 100 em 100 ms; com a câmera, quem termina a etapa é a contagem
     LaunchedEffect(index, stage, paused, camera) {
         var last = SystemClock.elapsedRealtime()
-        while (!paused && !(camera && stage == Stage.WORK)) {
+        while (!paused && !(camera && stage == PlayStage.WORK)) {
             delay(100)
             val now = SystemClock.elapsedRealtime()
             val before = elapsed
@@ -605,13 +605,13 @@ private fun PackWorkout(id: PackId, onExit: () -> Unit, onDone: (Float) -> Unit,
             last = now
             val limit = stageMs + extraRest
             // bip a cada repetição no ritmo e nos 3 últimos segundos
-            if (stage == Stage.WORK && step.move.kind == MoveKind.REPS) {
+            if (stage == PlayStage.WORK && step.move.kind == MoveKind.REPS) {
                 val paceMs = (step.move.pace * 1000).toLong()
                 if (elapsed / paceMs > before / paceMs && elapsed < limit) tone?.startTone(ToneGenerator.TONE_PROP_BEEP, 80)
             }
             val left = (limit - elapsed) / 1000
-            if (left != (limit - before) / 1000 && left in 0..2 && stage != Stage.WORK) tone?.startTone(ToneGenerator.TONE_PROP_BEEP, 100)
-            if (stage == Stage.WORK && step.move.kind == MoveKind.HOLD && step.move.perSide && before < limit / 2 && elapsed >= limit / 2) {
+            if (left != (limit - before) / 1000 && left in 0..2 && stage != PlayStage.WORK) tone?.startTone(ToneGenerator.TONE_PROP_BEEP, 100)
+            if (stage == PlayStage.WORK && step.move.kind == MoveKind.HOLD && step.move.perSide && before < limit / 2 && elapsed >= limit / 2) {
                 tone?.startTone(ToneGenerator.TONE_PROP_BEEP2, 250)
             }
             if (elapsed >= limit) {
@@ -626,19 +626,19 @@ private fun PackWorkout(id: PackId, onExit: () -> Unit, onDone: (Float) -> Unit,
         Row(verticalAlignment = Alignment.CenterVertically) {
             IconButton(onClick = { confirmExit = true }) { Icon(Icons.Rounded.Close, contentDescription = stringResource(R.string.pack_exit)) }
             LinearProgressIndicator(
-                progress = { (index + if (stage == Stage.REST) 1f else 0f) / steps.size },
+                progress = { (index + if (stage == PlayStage.REST) 1f else 0f) / steps.size },
                 modifier = Modifier.weight(1f).height(8.dp),
                 strokeCap = StrokeCap.Round,
             )
             Text("${index + 1}/${steps.size}", style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(start = 10.dp))
         }
 
-        val shown = if (stage == Stage.REST) next ?: step else step
+        val shown = if (stage == PlayStage.REST) next ?: step else step
         Text(
             when (stage) {
-                Stage.GET_READY -> stringResource(R.string.pack_get_ready)
-                Stage.REST -> if (step.restAfter > 0) stringResource(R.string.pack_rest) else stringResource(R.string.pack_next_up)
-                Stage.WORK -> stringResource(step.phase.title) + if (step.sets > 1) " · " + stringResource(R.string.pack_set_of, step.set, step.sets) else ""
+                PlayStage.GET_READY -> stringResource(R.string.pack_get_ready)
+                PlayStage.REST -> if (step.restAfter > 0) stringResource(R.string.pack_rest) else stringResource(R.string.pack_next_up)
+                PlayStage.WORK -> stringResource(step.phase.title) + if (step.sets > 1) " · " + stringResource(R.string.pack_set_of, step.set, step.sets) else ""
             },
             style = MaterialTheme.typography.labelLarge,
             color = MaterialTheme.colorScheme.primary,
@@ -653,7 +653,7 @@ private fun PackWorkout(id: PackId, onExit: () -> Unit, onDone: (Float) -> Unit,
         )
 
         Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
-            if (camera && stage == Stage.WORK) {
+            if (camera && stage == PlayStage.WORK) {
                 CameraCounter(
                     step.move,
                     onCount = {
@@ -676,7 +676,7 @@ private fun PackWorkout(id: PackId, onExit: () -> Unit, onDone: (Float) -> Unit,
                 )
             }
         }
-        if (stage != Stage.REST || step.restAfter > 0) {
+        if (stage != PlayStage.REST || step.restAfter > 0) {
             Text(
                 stringResource(shown.move.cueRes),
                 style = MaterialTheme.typography.bodyMedium,
@@ -688,10 +688,10 @@ private fun PackWorkout(id: PackId, onExit: () -> Unit, onDone: (Float) -> Unit,
         }
 
         // anel com o número grande no meio
-        if (!(camera && stage == Stage.WORK)) {
+        if (!(camera && stage == PlayStage.WORK)) {
             val limit = stageMs + extraRest
             val (big, small) = when {
-                stage != Stage.WORK -> "${((limit - elapsed + 999) / 1000).coerceAtLeast(0)}" to stringResource(R.string.unit_seconds)
+                stage != PlayStage.WORK -> "${((limit - elapsed + 999) / 1000).coerceAtLeast(0)}" to stringResource(R.string.unit_seconds)
                 step.move.kind == MoveKind.HOLD -> "${((limit - elapsed + 999) / 1000).coerceAtLeast(0)}" to
                     stringResource(if (step.move.perSide && elapsed >= limit / 2) R.string.pack_side_two else R.string.unit_seconds)
                 else -> {
@@ -710,14 +710,14 @@ private fun PackWorkout(id: PackId, onExit: () -> Unit, onDone: (Float) -> Unit,
 
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
             TextButton(onClick = { goNext(completedWork = false) }) {
-                Text(stringResource(if (stage == Stage.WORK) R.string.pack_skip else R.string.pack_rest_skip))
+                Text(stringResource(if (stage == PlayStage.WORK) R.string.pack_skip else R.string.pack_rest_skip))
             }
             FilledTonalIconButton(onClick = { paused = !paused }, modifier = Modifier.size(64.dp)) {
                 Icon(if (paused) Icons.Rounded.PlayArrow else Icons.Rounded.Pause, contentDescription = stringResource(if (paused) R.string.pack_resume else R.string.pack_pause), modifier = Modifier.size(32.dp))
             }
             when {
-                stage == Stage.REST && step.restAfter > 0 -> TextButton(onClick = { extraRest += 15_000 }) { Text(stringResource(R.string.pack_rest_more)) }
-                stage == Stage.WORK && step.move.camera != null && step.move.kind == MoveKind.REPS -> IconButton(onClick = {
+                stage == PlayStage.REST && step.restAfter > 0 -> TextButton(onClick = { extraRest += 15_000 }) { Text(stringResource(R.string.pack_rest_more)) }
+                stage == PlayStage.WORK && step.move.camera != null && step.move.kind == MoveKind.REPS -> IconButton(onClick = {
                     if (camera) {
                         camera = false
                     } else if (ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
