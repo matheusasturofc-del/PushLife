@@ -873,4 +873,15 @@
     <string name="ach_hours_50">50 hours earned</string>
     <string name="ach_hours_50_desc">Earn 50 hours of screen time with exercise.</string>
     <string name="ach_count">%1$d of %2$d unlocked</string>
+    <string name="lock_title">PushLife is locked</string>
+    <string name="lock_subtitle">Use your fingerprint or your phone\'s passcode to get in.</string>
+    <string name="lock_button">Unlock</string>
+    <string name="settings_lock">Lock the app with fingerprint or passcode</string>
+    <string name="settings_lock_hint">Asks for your fingerprint (or phone passcode) when opening PushLife.</string>
+    <string name="settings_lock_no_secure">First set a passcode, PIN or fingerprint in your phone\'s settings.</string>
+    <string name="settings_lock_confirm">Confirm to change the lock</string>
+    <string name="profile_tab_settings">Settings</string>
+    <string name="profile_tab_account">Account</string>
+    <string name="profile_security">Security</string>
+    <string name="profile_danger">Danger zone</string>
 </resources>

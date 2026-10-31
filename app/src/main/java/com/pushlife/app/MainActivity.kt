@@ -4,7 +4,10 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
-import androidx.activity.ComponentActivity
+import android.os.SystemClock
+import androidx.fragment.app.FragmentActivity
+import com.pushlife.app.security.AppLock
+import com.pushlife.app.ui.LockScreen
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.background
@@ -49,7 +52,12 @@ import com.pushlife.app.ui.onboarding.OnboardingScreen
 import com.pushlife.app.ui.theme.PushLifeTheme
 import kotlinx.coroutines.launch
 
-class MainActivity : ComponentActivity() {
+// FragmentActivity (e não ComponentActivity) porque a tela da digital precisa dela
+class MainActivity : FragmentActivity() {
+    // trava com digital/senha: ligada no Perfil; trava ao abrir e ao voltar depois de 30 s fora
+    private var locked by mutableStateOf(false)
+    private var stoppedAt = 0L
+
     // cada pedido pra abrir o treino soma 1 (fim das boas-vindas ou tela de bloqueio)
     private var trainRequests by mutableIntStateOf(0)
 
@@ -62,6 +70,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        locked = savedInstanceState?.getBoolean(STATE_LOCKED) ?: AppLock.isEnabled(this)
         enableEdgeToEdge()
         if (savedInstanceState == null) handleIntent(intent)
         DailyCheck.schedule(this)
@@ -74,7 +83,9 @@ class MainActivity : ComponentActivity() {
                 var showIntro by rememberSaveable { mutableStateOf(savedInstanceState == null) }
                 var needsPrepare by rememberSaveable { mutableStateOf(Legal.needsPrepare(this@MainActivity)) }
                 var needsTerms by rememberSaveable { mutableStateOf(!Legal.termsAccepted(this@MainActivity)) }
-                if (showIntro) {
+                if (locked) {
+                    LockScreen(onUnlock = { unlock() })
+                } else if (showIntro) {
                     IntroAnimation(onDone = { showIntro = false })
                 } else if (needsPrepare) {
                     PreparingScreen(onDone = { needsPrepare = false })
@@ -99,7 +110,7 @@ class MainActivity : ComponentActivity() {
                         },
                     )
                 }
-                if (!showIntro && !needsPrepare && !needsTerms) OAuthOverlay()
+                if (!locked && !showIntro && !needsPrepare && !needsTerms) OAuthOverlay()
               }
             }
         }
@@ -119,8 +130,29 @@ class MainActivity : ComponentActivity() {
         lifecycleScope.launch { UpdateChecker.refresh(this@MainActivity) }
     }
 
+    override fun onStart() {
+        super.onStart()
+        if (AppLock.isEnabled(this) && stoppedAt > 0 && SystemClock.elapsedRealtime() - stoppedAt > AppLock.GRACE_MS) locked = true
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putBoolean(STATE_LOCKED, locked)
+    }
+
+    private fun unlock() {
+        AppLock.authenticate(this, getString(R.string.lock_title), getString(R.string.lock_subtitle)) { locked = false }
+    }
+
+    @Deprecated("tela de senha do Android 8")
+    @Suppress("DEPRECATION")
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        if (!AppLock.onActivityResult(requestCode, resultCode)) super.onActivityResult(requestCode, resultCode, data)
+    }
+
     override fun onStop() {
         super.onStop()
+        stoppedAt = SystemClock.elapsedRealtime()
         // com conta, sobe o progresso pra nuvem ao sair do app
         Accounts.backup(this)
     }
@@ -140,6 +172,7 @@ class MainActivity : ComponentActivity() {
 
     companion object {
         const val EXTRA_OPEN_TRAIN = "open_train"
+        private const val STATE_LOCKED = "locked"
     }
 }
 

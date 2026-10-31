@@ -14,6 +14,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -23,10 +24,19 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.AccountCircle
 import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.CloudUpload
 import androidx.compose.material.icons.rounded.Edit
+import androidx.compose.material.icons.rounded.Fingerprint
+import androidx.compose.material.icons.rounded.Flag
+import androidx.compose.material.icons.rounded.Info
+import androidx.compose.material.icons.rounded.Language
+import androidx.compose.material.icons.rounded.Notifications
 import androidx.compose.material.icons.rounded.Remove
+import androidx.compose.material.icons.rounded.Warning
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
@@ -45,24 +55,28 @@ import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.core.content.pm.PackageInfoCompat
+import androidx.fragment.app.FragmentActivity
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.pushlife.app.AppGraph
 import com.pushlife.app.R
 import com.pushlife.app.core.Profile
@@ -74,14 +88,15 @@ import com.pushlife.app.data.Backup
 import com.pushlife.app.data.Legal
 import com.pushlife.app.data.ProgressCenter
 import com.pushlife.app.reminder.Reminders
+import com.pushlife.app.security.AppLock
 import com.pushlife.app.ui.theme.Ink
 import com.pushlife.app.ui.theme.Orange
 import com.pushlife.app.ui.theme.Yellow
-import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
+import kotlinx.coroutines.launch
 
 
 // cores do avatar (todas legíveis com texto escuro)
@@ -106,6 +121,7 @@ fun ProfileScreen(modifier: Modifier = Modifier) {
     var deletingAccount by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     val account by Accounts.current.collectAsStateWithLifecycle()
+    var tab by rememberSaveable { mutableIntStateOf(0) }
 
     fun save(change: (Profile) -> Profile) = AppGraph.profile.save(change(AppGraph.profile.state.value))
 
@@ -167,189 +183,236 @@ fun ProfileScreen(modifier: Modifier = Modifier) {
             }
         }
 
-        item { Section(R.string.profile_goals) }
-        // meta de tela: o grátis do dia é a metade dela
         item {
-            SettingRow(
-                stringResource(R.string.profile_screen_target),
-                stringResource(R.string.profile_screen_target_value, hoursText(profile.targetHours), formatDuration(Rules.freeSecondsFor(profile.targetHours))),
+            // duas abas: Config (como o app funciona) e Conta (login, backup, apagar)
+            Row(
+                Modifier.fillMaxWidth().clip(RoundedCornerShape(50)).background(MaterialTheme.colorScheme.surfaceContainer).padding(4.dp),
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
             ) {
-                FilledTonalIconButton(onClick = { save { it.copy(targetHours = (it.targetHours - 0.5f).coerceAtLeast(0.5f)) } }) {
-                    Icon(Icons.Rounded.Remove, contentDescription = "−30 min")
-                }
-                FilledTonalIconButton(onClick = { save { it.copy(targetHours = (it.targetHours + 0.5f).coerceAtMost(12f)) } }) {
-                    Icon(Icons.Rounded.Add, contentDescription = "+30 min")
-                }
-            }
-        }
-        item {
-            SettingRow(stringResource(R.string.profile_screen_now), stringResource(R.string.profile_screen_now_value, hoursText(profile.phoneHours))) {
-                FilledTonalIconButton(onClick = { save { it.copy(phoneHours = (it.phoneHours - 0.5f).coerceAtLeast(0.5f)) } }) {
-                    Icon(Icons.Rounded.Remove, contentDescription = "−30 min")
-                }
-                FilledTonalIconButton(onClick = { save { it.copy(phoneHours = (it.phoneHours + 0.5f).coerceAtMost(16f)) } }) {
-                    Icon(Icons.Rounded.Add, contentDescription = "+30 min")
-                }
-            }
-        }
-        item {
-            Text(
-                stringResource(R.string.profile_free_hint),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(horizontal = 4.dp),
-            )
-        }
-        item {
-            SettingRow(stringResource(R.string.profile_daily_goal), stringResource(R.string.profile_daily_goal_value, profile.dailyGoal)) {
-                FilledTonalIconButton(onClick = { save { it.copy(dailyGoal = (it.dailyGoal - 5).coerceAtLeast(10)) } }) {
-                    Icon(Icons.Rounded.Remove, contentDescription = "−5")
-                }
-                FilledTonalIconButton(onClick = { save { it.copy(dailyGoal = (it.dailyGoal + 5).coerceAtMost(300)) } }) {
-                    Icon(Icons.Rounded.Add, contentDescription = "+5")
+                listOf(R.string.profile_tab_settings, R.string.profile_tab_account).forEachIndexed { i, label ->
+                    val selected = tab == i
+                    Text(
+                        stringResource(label),
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center,
+                        color = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier
+                            .weight(1f)
+                            .clip(RoundedCornerShape(50))
+                            .background(if (selected) MaterialTheme.colorScheme.primary else Color.Transparent)
+                            .clickable { tab = i }
+                            .padding(vertical = 10.dp),
+                    )
                 }
             }
         }
-        item {
-            val time = profile.reminder
-            SettingRow(
-                stringResource(R.string.profile_reminder),
-                time?.format(DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT)) ?: stringResource(R.string.profile_reminder_off),
-            ) {
-                if (time != null) TextButton(onClick = { pickTime = true }) { Text(stringResource(R.string.profile_change)) }
-                Switch(
-                    checked = time != null,
-                    onCheckedChange = { on ->
-                        if (on) {
-                            pickTime = true
-                        } else {
-                            Reminders.cancel(context)
-                            save { it.copy(reminder = null) }
+
+        if (tab == 0) {
+            item {
+                Group(R.string.profile_goals, Icons.Rounded.Flag) {
+                    SettingRow(
+                        stringResource(R.string.profile_screen_target),
+                        stringResource(R.string.profile_screen_target_value, hoursText(profile.targetHours), formatDuration(Rules.freeSecondsFor(profile.targetHours))),
+                    ) {
+                        FilledTonalIconButton(onClick = { save { it.copy(targetHours = (it.targetHours - 0.5f).coerceAtLeast(0.5f)) } }) {
+                            Icon(Icons.Rounded.Remove, contentDescription = "−30 min")
                         }
-                    },
-                )
+                        FilledTonalIconButton(onClick = { save { it.copy(targetHours = (it.targetHours + 0.5f).coerceAtMost(12f)) } }) {
+                            Icon(Icons.Rounded.Add, contentDescription = "+30 min")
+                        }
+                    }
+                    SettingRow(stringResource(R.string.profile_screen_now), stringResource(R.string.profile_screen_now_value, hoursText(profile.phoneHours))) {
+                        FilledTonalIconButton(onClick = { save { it.copy(phoneHours = (it.phoneHours - 0.5f).coerceAtLeast(0.5f)) } }) {
+                            Icon(Icons.Rounded.Remove, contentDescription = "−30 min")
+                        }
+                        FilledTonalIconButton(onClick = { save { it.copy(phoneHours = (it.phoneHours + 0.5f).coerceAtMost(16f)) } }) {
+                            Icon(Icons.Rounded.Add, contentDescription = "+30 min")
+                        }
+                    }
+                    Text(
+                        stringResource(R.string.profile_free_hint),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                    )
+                    SettingRow(stringResource(R.string.profile_daily_goal), stringResource(R.string.profile_daily_goal_value, profile.dailyGoal)) {
+                        FilledTonalIconButton(onClick = { save { it.copy(dailyGoal = (it.dailyGoal - 5).coerceAtLeast(10)) } }) {
+                            Icon(Icons.Rounded.Remove, contentDescription = "−5")
+                        }
+                        FilledTonalIconButton(onClick = { save { it.copy(dailyGoal = (it.dailyGoal + 5).coerceAtMost(300)) } }) {
+                            Icon(Icons.Rounded.Add, contentDescription = "+5")
+                        }
+                    }
+                    val time = profile.reminder
+                    SettingRow(
+                        stringResource(R.string.profile_reminder),
+                        time?.format(DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT)) ?: stringResource(R.string.profile_reminder_off),
+                    ) {
+                        if (time != null) TextButton(onClick = { pickTime = true }) { Text(stringResource(R.string.profile_change)) }
+                        Switch(
+                            checked = time != null,
+                            onCheckedChange = { on ->
+                                if (on) {
+                                    pickTime = true
+                                } else {
+                                    Reminders.cancel(context)
+                                    save { it.copy(reminder = null) }
+                                }
+                            },
+                        )
+                    }
+                }
             }
-        }
-
-        item { Section(R.string.profile_notifications) }
-        item { ToggleRow(R.string.profile_notify_streak, profile.notifyStreak) { v -> save { it.copy(notifyStreak = v) } } }
-        item { ToggleRow(R.string.profile_notify_weekly, profile.notifyWeekly) { v -> save { it.copy(notifyWeekly = v) } } }
-        item { ToggleRow(R.string.profile_notify_low, profile.notifyLowTime) { v -> save { it.copy(notifyLowTime = v) } } }
-
-        item { Section(R.string.profile_language) }
-        item {
-            // segue o celular, ou fixa um idioma e o app reabre traduzido
-            val current = remember { AppLanguage.get(context) }
-            Column(
-                Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surfaceContainer, RoundedCornerShape(16.dp)).padding(vertical = 8.dp),
-            ) {
-                Text(
-                    stringResource(R.string.profile_language_hint),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
-                )
-                AppLanguage.TAGS.forEach { tag ->
+            item {
+                Group(R.string.profile_security, Icons.Rounded.Fingerprint) {
+                    var lockOn by remember { mutableStateOf(AppLock.isEnabled(context)) }
                     Row(
-                        Modifier
-                            .fillMaxWidth()
-                            .clickable(enabled = tag != current) { (context as? Activity)?.let { AppLanguage.set(it, tag) } }
-                            .padding(horizontal = 8.dp),
+                        Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        RadioButton(selected = tag == current, onClick = null, modifier = Modifier.padding(12.dp))
-                        Text(languageName(tag), style = MaterialTheme.typography.titleMedium)
-                    }
-                }
-            }
-        }
-
-        item { Section(R.string.profile_backup) }
-        item {
-            Column(
-                Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surfaceContainer, RoundedCornerShape(16.dp)).padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp),
-            ) {
-                if (profile.guest) {
-                    // convidado não tem backup (nem em arquivo), precisa criar conta
-                    Text(stringResource(R.string.guest_no_backup), style = MaterialTheme.typography.bodyMedium)
-                } else {
-                    Text(stringResource(R.string.backup_body), style = MaterialTheme.typography.bodyMedium)
-                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        FilledTonalButton(onClick = { exportLauncher.launch("pushlife-backup-${LocalDate.now()}.json") }, modifier = Modifier.weight(1f)) {
-                            Text(stringResource(R.string.backup_export))
+                        Column(Modifier.weight(1f)) {
+                            Text(stringResource(R.string.settings_lock), style = MaterialTheme.typography.bodyLarge)
+                            Text(stringResource(R.string.settings_lock_hint), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
-                        OutlinedButton(onClick = { importLauncher.launch(arrayOf("application/json", "text/plain", "application/octet-stream")) }, modifier = Modifier.weight(1f)) {
-                            Text(stringResource(R.string.backup_import))
-                        }
-                    }
-                }
-            }
-        }
-
-        item { Section(R.string.account_title) }
-        item {
-            Column(
-                Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surfaceContainer, RoundedCornerShape(16.dp)).padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp),
-            ) {
-                val current = account
-                when {
-                    !Accounts.available -> Text(stringResource(R.string.account_soon), style = MaterialTheme.typography.bodyMedium)
-                    current != null -> {
-                        Text(
-                            stringResource(R.string.account_signed_in, profile.username.ifEmpty { current.email }),
-                            style = MaterialTheme.typography.titleMedium,
+                        val confirm = stringResource(R.string.settings_lock_confirm)
+                        val title = stringResource(R.string.settings_lock)
+                        Switch(
+                            checked = lockOn,
+                            onCheckedChange = { on ->
+                                val activity = context as? FragmentActivity ?: return@Switch
+                                if (on && !AppLock.deviceSecure(context)) {
+                                    context.toast(R.string.settings_lock_no_secure)
+                                } else {
+                                    // ligar e desligar pedem a digital, pra ninguém mexer no seu celular
+                                    AppLock.authenticate(activity, title, confirm) {
+                                        AppLock.setEnabled(context, on)
+                                        lockOn = on
+                                    }
+                                }
+                            },
                         )
-                        Text(current.email, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        Text(stringResource(R.string.account_cloud_backup), style = MaterialTheme.typography.bodyMedium)
-                        OutlinedButton(onClick = {
-                            Accounts.backup(context, force = true)
-                            Accounts.signOut()
-                            save { it.copy(username = "") }
-                        }) { Text(stringResource(R.string.account_sign_out)) }
-                        TextButton(onClick = { confirmDeleteAccount = true }) {
-                            Text(stringResource(R.string.account_delete), color = MaterialTheme.colorScheme.error)
-                        }
-                    }
-                    else -> {
-                        Text(stringResource(R.string.account_none), style = MaterialTheme.typography.bodyMedium)
-                        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                            FilledTonalButton(onClick = { showSignUp = true }, modifier = Modifier.weight(1f)) {
-                                Text(stringResource(R.string.account_create))
-                            }
-                            OutlinedButton(onClick = { showLogin = true }, modifier = Modifier.weight(1f)) {
-                                Text(stringResource(R.string.login_button))
-                            }
-                        }
                     }
                 }
             }
-        }
-
-        item { Section(R.string.profile_about) }
-        item {
-            val version = remember {
-                // nome e versão (o número é o mesmo do update.json)
-                runCatching {
-                    val info = context.packageManager.getPackageInfo(context.packageName, 0)
-                    "${info.versionName} (${PackageInfoCompat.getLongVersionCode(info)})"
-                }.getOrNull().orEmpty()
+            item {
+                Group(R.string.profile_notifications, Icons.Rounded.Notifications) {
+                    ToggleRow(R.string.profile_notify_streak, profile.notifyStreak) { v -> save { it.copy(notifyStreak = v) } }
+                    ToggleRow(R.string.profile_notify_weekly, profile.notifyWeekly) { v -> save { it.copy(notifyWeekly = v) } }
+                    ToggleRow(R.string.profile_notify_low, profile.notifyLowTime) { v -> save { it.copy(notifyLowTime = v) } }
+                }
             }
-            SettingRow(stringResource(R.string.app_name), stringResource(R.string.profile_version, version)) {
-                Column(horizontalAlignment = Alignment.End) {
-                    TextButton(onClick = { context.startSafely(Intent(Intent.ACTION_VIEW, Uri.parse(Legal.TERMS_URL))) }) {
-                        Text(stringResource(R.string.profile_terms))
-                    }
-                    TextButton(onClick = { context.startSafely(Intent(Intent.ACTION_VIEW, Uri.parse(Legal.PRIVACY_URL))) }) {
-                        Text(stringResource(R.string.profile_privacy))
+            item {
+                Group(R.string.profile_language, Icons.Rounded.Language) {
+                        // segue o celular, ou fixa um idioma e o app reabre traduzido
+                        val current = remember { AppLanguage.get(context) }
+                        Column {
+                            Text(
+                                stringResource(R.string.profile_language_hint),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+                            )
+                            AppLanguage.TAGS.forEach { tag ->
+                                Row(
+                                    Modifier
+                                        .fillMaxWidth()
+                                        .clickable(enabled = tag != current) { (context as? Activity)?.let { AppLanguage.set(it, tag) } }
+                                        .padding(horizontal = 8.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                ) {
+                                    RadioButton(selected = tag == current, onClick = null, modifier = Modifier.padding(12.dp))
+                                    Text(languageName(tag), style = MaterialTheme.typography.titleMedium)
+                                }
+                            }
+                        }
+                }
+            }
+            item {
+                Group(R.string.profile_about, Icons.Rounded.Info) {
+                        val version = remember {
+                            // nome e versão (o número é o mesmo do update.json)
+                            runCatching {
+                                val info = context.packageManager.getPackageInfo(context.packageName, 0)
+                                "${info.versionName} (${PackageInfoCompat.getLongVersionCode(info)})"
+                            }.getOrNull().orEmpty()
+                        }
+                        SettingRow(stringResource(R.string.app_name), stringResource(R.string.profile_version, version)) {
+                            Column(horizontalAlignment = Alignment.End) {
+                                TextButton(onClick = { context.startSafely(Intent(Intent.ACTION_VIEW, Uri.parse(Legal.TERMS_URL))) }) {
+                                    Text(stringResource(R.string.profile_terms))
+                                }
+                                TextButton(onClick = { context.startSafely(Intent(Intent.ACTION_VIEW, Uri.parse(Legal.PRIVACY_URL))) }) {
+                                    Text(stringResource(R.string.profile_privacy))
+                                }
+                            }
+                        }
+                }
+            }
+        } else {
+            item {
+                Group(R.string.account_title, Icons.Rounded.AccountCircle) {
+                    Column(Modifier.padding(horizontal = 16.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                            val current = account
+                            when {
+                                !Accounts.available -> Text(stringResource(R.string.account_soon), style = MaterialTheme.typography.bodyMedium)
+                                current != null -> {
+                                    Text(
+                                        stringResource(R.string.account_signed_in, profile.username.ifEmpty { current.email }),
+                                        style = MaterialTheme.typography.titleMedium,
+                                    )
+                                    Text(current.email, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    Text(stringResource(R.string.account_cloud_backup), style = MaterialTheme.typography.bodyMedium)
+                                    OutlinedButton(onClick = {
+                                        Accounts.backup(context, force = true)
+                                        Accounts.signOut()
+                                        save { it.copy(username = "") }
+                                    }) { Text(stringResource(R.string.account_sign_out)) }
+                                    TextButton(onClick = { confirmDeleteAccount = true }) {
+                                        Text(stringResource(R.string.account_delete), color = MaterialTheme.colorScheme.error)
+                                    }
+                                }
+                                else -> {
+                                    Text(stringResource(R.string.account_none), style = MaterialTheme.typography.bodyMedium)
+                                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                                        FilledTonalButton(onClick = { showSignUp = true }, modifier = Modifier.weight(1f)) {
+                                            Text(stringResource(R.string.account_create))
+                                        }
+                                        OutlinedButton(onClick = { showLogin = true }, modifier = Modifier.weight(1f)) {
+                                            Text(stringResource(R.string.login_button))
+                                        }
+                                    }
+                                }
+                            }
                     }
                 }
             }
-        }
-        item {
-            TextButton(onClick = { confirmWipe = true }) {
-                Text(stringResource(R.string.profile_wipe), color = MaterialTheme.colorScheme.error)
+            item {
+                Group(R.string.profile_backup, Icons.Rounded.CloudUpload) {
+                        Column(Modifier.padding(horizontal = 16.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                            if (profile.guest) {
+                                // convidado não tem backup (nem em arquivo), precisa criar conta
+                                Text(stringResource(R.string.guest_no_backup), style = MaterialTheme.typography.bodyMedium)
+                            } else {
+                                Text(stringResource(R.string.backup_body), style = MaterialTheme.typography.bodyMedium)
+                                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                                    FilledTonalButton(onClick = { exportLauncher.launch("pushlife-backup-${LocalDate.now()}.json") }, modifier = Modifier.weight(1f)) {
+                                        Text(stringResource(R.string.backup_export))
+                                    }
+                                    OutlinedButton(onClick = { importLauncher.launch(arrayOf("application/json", "text/plain", "application/octet-stream")) }, modifier = Modifier.weight(1f)) {
+                                        Text(stringResource(R.string.backup_import))
+                                    }
+                                }
+                            }
+                        }
+                }
+            }
+            item {
+                Group(R.string.profile_danger, Icons.Rounded.Warning) {
+                    TextButton(onClick = { confirmWipe = true }, modifier = Modifier.padding(horizontal = 8.dp)) {
+                        Text(stringResource(R.string.profile_wipe), color = MaterialTheme.colorScheme.error)
+                    }
+                }
             }
         }
     }
@@ -595,14 +658,27 @@ private fun Context.startSafely(intent: Intent) {
     runCatching { startActivity(intent) }
 }
 
+// cartão de um grupo de ajustes: ícone + título e as linhas dentro
 @Composable
-private fun Section(@StringRes title: Int) {
-    Text(
-        stringResource(title).uppercase(),
-        style = MaterialTheme.typography.labelMedium,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = Modifier.padding(top = 12.dp),
-    )
+private fun Group(@StringRes title: Int, icon: ImageVector, content: @Composable ColumnScope.() -> Unit) {
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(22.dp))
+            .background(MaterialTheme.colorScheme.surfaceContainer)
+            .padding(vertical = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(2.dp),
+    ) {
+        Row(
+            Modifier.padding(horizontal = 16.dp, vertical = 6.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
+            Text(stringResource(title), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+        }
+        content()
+    }
 }
 
 @Composable
@@ -610,8 +686,7 @@ private fun SettingRow(title: String, value: String, actions: @Composable () -> 
     Row(
         Modifier
             .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.surfaceContainer, RoundedCornerShape(16.dp))
-            .padding(horizontal = 16.dp, vertical = 12.dp),
+            .padding(horizontal = 16.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
@@ -628,9 +703,8 @@ private fun ToggleRow(@StringRes title: Int, checked: Boolean, onChange: (Boolea
     Row(
         Modifier
             .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.surfaceContainer, RoundedCornerShape(16.dp))
             .clickable { onChange(!checked) }
-            .padding(horizontal = 16.dp, vertical = 12.dp),
+            .padding(horizontal = 16.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(stringResource(title), style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))

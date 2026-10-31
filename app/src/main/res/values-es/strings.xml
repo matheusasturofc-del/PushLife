@@ -866,4 +866,15 @@
     <string name="ach_hours_50">50 horas ganadas</string>
     <string name="ach_hours_50_desc">Gana 50 horas de pantalla con ejercicio.</string>
     <string name="ach_count">%1$d de %2$d conseguidos</string>
+    <string name="lock_title">PushLife bloqueado</string>
+    <string name="lock_subtitle">Usa tu huella o la contraseña del celular para entrar.</string>
+    <string name="lock_button">Desbloquear</string>
+    <string name="settings_lock">Bloquear la app con huella o contraseña</string>
+    <string name="settings_lock_hint">Pide la huella (o la contraseña del celular) al abrir PushLife.</string>
+    <string name="settings_lock_no_secure">Primero pon una contraseña, PIN o huella en los ajustes del celular.</string>
+    <string name="settings_lock_confirm">Confirma para cambiar el bloqueo</string>
+    <string name="profile_tab_settings">Ajustes</string>
+    <string name="profile_tab_account">Cuenta</string>
+    <string name="profile_security">Seguridad</string>
+    <string name="profile_danger">Zona de peligro</string>
 </resources>
