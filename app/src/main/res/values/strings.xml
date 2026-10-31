@@ -298,7 +298,7 @@
 
     <!-- Filtro de sites (fase 6) e perfil (fase 7) -->
     <string name="filter_title">Adult sites</string>
-    <string name="filter_on">On: adult sites are blocked in every browser and app, and Google, Bing, DuckDuckGo and YouTube searches stay in safe mode.</string>
+    <string name="filter_on">On: adult sites are blocked in every browser and app, and Google, Bing and DuckDuckGo searches stay in safe mode.</string>
     <string name="filter_paused">Turning on… If it stays like this, open the app again.</string>
     <string name="filter_off">Off. Uses a local VPN that only filters site addresses (DNS). The rest of your internet does not go through it.</string>
     <string name="filter_tips">For extra protection: Settings > Connections > More connection settings > VPN > PushLife > Always-on VPN. If you use Private DNS, keep it on Automatic.</string>

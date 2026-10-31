@@ -13,7 +13,7 @@ class SafeSearchTest {
         assertEquals("forcesafesearch.google.com", SafeSearch.target("google.co.uk"))
         assertEquals("strict.bing.com", SafeSearch.target("www.bing.com"))
         assertEquals("safe.duckduckgo.com", SafeSearch.target("duckduckgo.com"))
-        assertEquals("restrictmoderate.youtube.com", SafeSearch.target("m.youtube.com"))
+        assertNull(SafeSearch.target("m.youtube.com")) // sem modo restrito, pra poder comentar
         // o resto do Google segue normal
         assertNull(SafeSearch.target("mail.google.com"))
         assertNull(SafeSearch.target("drive.google.com"))

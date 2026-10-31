@@ -291,7 +291,7 @@
 
     <!-- Filtro de sites (fase 6) e perfil (fase 7) -->
     <string name="filter_title">Sites adultos</string>
-    <string name="filter_on">Ligado: sites adultos ficam bloqueados em qualquer navegador e app, e as buscas do Google, Bing, DuckDuckGo e YouTube ficam no modo seguro.</string>
+    <string name="filter_on">Ligado: sites adultos ficam bloqueados em qualquer navegador e app, e as buscas do Google, Bing e DuckDuckGo ficam no modo seguro.</string>
     <string name="filter_paused">Ligando… Se ficar assim, abra o app de novo.</string>
     <string name="filter_off">Desligado. Usa uma VPN local que só filtra os endereços dos sites (DNS). O resto da sua internet não passa por ela.</string>
     <string name="filter_tips">Para mais proteção: Configurações > Conexões > Mais configurações de conexão > VPN > PushLife > VPN sempre ativa. Se você usa DNS privado, deixe em Automático.</string>
