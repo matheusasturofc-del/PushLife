@@ -1,10 +1,10 @@
 {
-  "minVersionCode": 154,
+  "minVersionCode": 159,
   "latestVersionName": "1.16.0",
-  "url": "https://github.com/matheusasturofc-del/PushLife/releases/download/build-54/PushLife.apk",
+  "url": "https://github.com/matheusasturofc-del/PushLife/releases/download/build-59/PushLife.apk",
   "notes": {
-    "pt": "Programas de treino no ritmo (o app conta junto com você), tempo grátis igual à metade da sua meta, filtro que não desliga ao apagar os dados e mais sites bloqueados.",
-    "en": "Guided workout programs (the app counts along with you), free time equal to half your goal, a filter that stays on when you erase data, and more blocked sites.",
-    "es": "Programas de entrenamiento guiados (la app cuenta contigo), tiempo gratis igual a la mitad de tu meta, filtro que no se apaga al borrar los datos y más sitios bloqueados."
+    "pt": "Perfil com abas Config e Conta, trava com digital ou senha, câmera conferindo os exercícios dos packs, conquistas organizadas e YouTube sem modo restrito.",
+    "en": "Profile with Settings and Account tabs, fingerprint or passcode lock, the camera checking pack exercises, organized achievements and YouTube without restricted mode.",
+    "es": "Perfil con pestañas Ajustes y Cuenta, bloqueo con huella o contraseña, la cámara revisando los ejercicios de los packs, logros organizados y YouTube sin modo restringido."
   }
 }
