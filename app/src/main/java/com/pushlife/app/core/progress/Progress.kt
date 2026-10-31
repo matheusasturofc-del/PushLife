@@ -132,22 +132,36 @@ data class Stats(
 }
 
 // conquistas, cada uma checa as Stats
-enum class Achievement(val isUnlocked: (Stats) -> Boolean) {
-    FIRST_WORKOUT({ it.totalMinutes > 0 }),
-    PUSHUPS_100({ (it.totals[Exercise.PUSHUP] ?: 0) >= 100 }),
-    PUSHUPS_1000({ (it.totals[Exercise.PUSHUP] ?: 0) >= 1000 }),
-    DAY_50_PUSHUPS({ it.bestDayPushups >= 50 }),
-    STREAK_3({ it.bestStreak >= 3 }),
-    STREAK_7({ it.bestStreak >= 7 }),
-    STREAK_30({ it.bestStreak >= 30 }),
-    GOAL_7_DAYS({ it.goalDays >= 7 }),
-    ALL_EXERCISES({ it.totals.filterValues { n -> n > 0 }.size == Exercise.entries.size }),
-    PLANK_60({ it.bestDayPlankSeconds >= 60 }),
-    STEPS_10K({ it.bestDaySteps >= 10_000 }),
-    LEVEL_5({ it.level >= 5 }),
-    LEVEL_10({ it.level >= 10 }),
-    HOURS_10({ it.totalMinutes >= 600 }),
+// grupos das conquistas (a tela mostra cada um como uma seção)
+enum class AchievementGroup { START, STRENGTH, CONSISTENCY, MILESTONES }
+
+// conquista: quanto já tem (value) até o alvo; desbloqueia quando chega
+enum class Achievement(val group: AchievementGroup, val target: Int, val value: (Stats) -> Int) {
+    FIRST_WORKOUT(AchievementGroup.START, 1, { minOf(it.totalMinutes, 1) }),
+    ALL_EXERCISES(AchievementGroup.START, Exercise.entries.size, { it.totals.filterValues { n -> n > 0 }.size }),
+    PUSHUPS_100(AchievementGroup.STRENGTH, 100, { it.totals[Exercise.PUSHUP] ?: 0 }),
+    PUSHUPS_1000(AchievementGroup.STRENGTH, 1000, { it.totals[Exercise.PUSHUP] ?: 0 }),
+    PUSHUPS_5000(AchievementGroup.STRENGTH, 5000, { it.totals[Exercise.PUSHUP] ?: 0 }),
+    DAY_50_PUSHUPS(AchievementGroup.STRENGTH, 50, { it.bestDayPushups }),
+    PLANK_60(AchievementGroup.STRENGTH, 60, { it.bestDayPlankSeconds }),
+    STEPS_10K(AchievementGroup.STRENGTH, 10_000, { it.bestDaySteps }),
+    STREAK_3(AchievementGroup.CONSISTENCY, 3, { it.bestStreak }),
+    STREAK_7(AchievementGroup.CONSISTENCY, 7, { it.bestStreak }),
+    STREAK_14(AchievementGroup.CONSISTENCY, 14, { it.bestStreak }),
+    STREAK_30(AchievementGroup.CONSISTENCY, 30, { it.bestStreak }),
+    GOAL_7_DAYS(AchievementGroup.CONSISTENCY, 7, { it.goalDays }),
+    GOAL_30_DAYS(AchievementGroup.CONSISTENCY, 30, { it.goalDays }),
+    LEVEL_5(AchievementGroup.MILESTONES, 5, { it.level }),
+    LEVEL_10(AchievementGroup.MILESTONES, 10, { it.level }),
+    LEVEL_20(AchievementGroup.MILESTONES, 20, { it.level }),
+    HOURS_10(AchievementGroup.MILESTONES, 600, { it.totalMinutes }),
+    HOURS_50(AchievementGroup.MILESTONES, 3000, { it.totalMinutes }),
     ;
+
+    fun isUnlocked(stats: Stats): Boolean = value(stats) >= target
+
+    // 0..1 pra barra
+    fun progress(stats: Stats): Float = (value(stats).toFloat() / target).coerceIn(0f, 1f)
 
     companion object {
         fun unlocked(stats: Stats): Set<Achievement> = entries.filter { it.isUnlocked(stats) }.toSet()

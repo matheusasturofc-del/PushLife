@@ -846,4 +846,24 @@
     <string name="pack_incomplete_title">Entrenamiento incompleto</string>
     <string name="pack_incomplete_body">Para que cuente y ganar el bonus, haz al menos el 60% del entrenamiento. Puedes saltar, pero lo saltado no cuenta.</string>
     <string name="pack_retry">Hacerlo de nuevo</string>
+    <string name="ach_folder_title">Logros</string>
+    <string name="ach_next">Más cerca de conseguir</string>
+    <string name="ach_filter_all">Todos</string>
+    <string name="ach_filter_done">Conseguidos</string>
+    <string name="ach_filter_todo">Pendientes</string>
+    <string name="ach_group_start">Primeros pasos</string>
+    <string name="ach_group_strength">Fuerza y ejercicio</string>
+    <string name="ach_group_consistency">Constancia</string>
+    <string name="ach_group_milestones">Hitos</string>
+    <string name="ach_pushups_5000">Leyenda de las flexiones</string>
+    <string name="ach_pushups_5000_desc">5.000 flexiones en total.</string>
+    <string name="ach_streak_14">Dos semanas</string>
+    <string name="ach_streak_14_desc">Entrena 14 días seguidos.</string>
+    <string name="ach_goal_30">Mes de metas</string>
+    <string name="ach_goal_30_desc">Cumple la meta diaria en 30 días.</string>
+    <string name="ach_level_20">Nivel 20</string>
+    <string name="ach_level_20_desc">Llega al nivel 20.</string>
+    <string name="ach_hours_50">50 horas ganadas</string>
+    <string name="ach_hours_50_desc">Gana 50 horas de pantalla con ejercicio.</string>
+    <string name="ach_count">%1$d de %2$d conseguidos</string>
 </resources>

@@ -28,6 +28,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -69,8 +70,13 @@ fun ProgressScreen(modifier: Modifier = Modifier) {
     val profile by AppGraph.profile.state.collectAsStateWithLifecycle()
     val today = LocalDate.now()
     val stats = remember(bank, progress) { ProgressCenter.stats(today) }
-    val unlocked = remember(stats) { Achievement.unlocked(stats) }
     var range by rememberSaveable { mutableIntStateOf(7) }
+    // as conquistas ficam numa "pasta": o cartão abre a tela com todas
+    var showAchievements by rememberSaveable { mutableStateOf(false) }
+    if (showAchievements) {
+        AchievementsScreen(stats, onBack = { showAchievements = false }, modifier = modifier)
+        return
+    }
 
     LazyColumn(
         modifier = modifier.fillMaxSize(),
@@ -127,21 +133,7 @@ fun ProgressScreen(modifier: Modifier = Modifier) {
                 Exercise.entries.forEach { ex -> TotalRow(ex, stats.totals[ex] ?: 0) }
             }
         }
-        item {
-            Text(
-                stringResource(R.string.progress_achievements, unlocked.size, Achievement.entries.size),
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.padding(top = 8.dp),
-            )
-        }
-        Achievement.entries.chunked(2).forEach { pair ->
-            item {
-                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    pair.forEach { AchievementCard(it, it in unlocked, Modifier.weight(1f)) }
-                    if (pair.size == 1) Box(Modifier.weight(1f))
-                }
-            }
-        }
+        item { AchievementsFolder(stats, onOpen = { showAchievements = true }) }
     }
 }
 
@@ -371,6 +363,11 @@ val Achievement.title: Int
         Achievement.LEVEL_5 -> R.string.ach_level_5
         Achievement.LEVEL_10 -> R.string.ach_level_10
         Achievement.HOURS_10 -> R.string.ach_hours_10
+        Achievement.PUSHUPS_5000 -> R.string.ach_pushups_5000
+        Achievement.STREAK_14 -> R.string.ach_streak_14
+        Achievement.GOAL_30_DAYS -> R.string.ach_goal_30
+        Achievement.LEVEL_20 -> R.string.ach_level_20
+        Achievement.HOURS_50 -> R.string.ach_hours_50
     }
 
 @get:StringRes
@@ -390,4 +387,9 @@ val Achievement.description: Int
         Achievement.LEVEL_5 -> R.string.ach_level_5_desc
         Achievement.LEVEL_10 -> R.string.ach_level_10_desc
         Achievement.HOURS_10 -> R.string.ach_hours_10_desc
+        Achievement.PUSHUPS_5000 -> R.string.ach_pushups_5000_desc
+        Achievement.STREAK_14 -> R.string.ach_streak_14_desc
+        Achievement.GOAL_30_DAYS -> R.string.ach_goal_30_desc
+        Achievement.LEVEL_20 -> R.string.ach_level_20_desc
+        Achievement.HOURS_50 -> R.string.ach_hours_50_desc
     }

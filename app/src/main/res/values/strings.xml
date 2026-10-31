@@ -853,4 +853,24 @@
     <string name="pack_incomplete_title">Workout incomplete</string>
     <string name="pack_incomplete_body">To count and earn the bonus, do at least 60% of the workout. You can skip, but skipped parts don\'t count.</string>
     <string name="pack_retry">Try again</string>
+    <string name="ach_folder_title">Achievements</string>
+    <string name="ach_next">Closest to unlocking</string>
+    <string name="ach_filter_all">All</string>
+    <string name="ach_filter_done">Unlocked</string>
+    <string name="ach_filter_todo">Locked</string>
+    <string name="ach_group_start">First steps</string>
+    <string name="ach_group_strength">Strength and exercise</string>
+    <string name="ach_group_consistency">Consistency</string>
+    <string name="ach_group_milestones">Milestones</string>
+    <string name="ach_pushups_5000">Push-up legend</string>
+    <string name="ach_pushups_5000_desc">5,000 push-ups in total.</string>
+    <string name="ach_streak_14">Two weeks</string>
+    <string name="ach_streak_14_desc">Train 14 days in a row.</string>
+    <string name="ach_goal_30">Month of goals</string>
+    <string name="ach_goal_30_desc">Hit your daily goal on 30 days.</string>
+    <string name="ach_level_20">Level 20</string>
+    <string name="ach_level_20_desc">Reach level 20.</string>
+    <string name="ach_hours_50">50 hours earned</string>
+    <string name="ach_hours_50_desc">Earn 50 hours of screen time with exercise.</string>
+    <string name="ach_count">%1$d of %2$d unlocked</string>
 </resources>

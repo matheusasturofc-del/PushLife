@@ -134,4 +134,18 @@ class AdaptiveGoalTest {
     fun ficaIgualNoMeioTermo() {
         assertEquals(50, AdaptiveGoal.adjust(50, listOf(50, 50, 50, 0, 0, 0, 0)))
     }
+
+    @Test
+    fun conquistasTemProgressoEGrupo() {
+        val today = java.time.LocalDate.of(2026, 10, 13)
+        var bank = com.pushlife.app.core.BankState()
+        bank = com.pushlife.app.core.TimeBank.addExercise(bank, com.pushlife.app.core.Exercise.PUSHUP, 40, today).state
+        val stats = Stats.from(bank, emptySet(), 0, today)
+        assertEquals(0.4f, Achievement.PUSHUPS_100.progress(stats), 0.001f)
+        assertEquals(40, Achievement.PUSHUPS_1000.value(stats))
+        assertTrue(Achievement.FIRST_WORKOUT.isUnlocked(stats))
+        // todo grupo tem conquista e toda conquista tem alvo
+        AchievementGroup.entries.forEach { g -> assertTrue(Achievement.entries.any { it.group == g }) }
+        assertTrue(Achievement.entries.all { it.target > 0 })
+    }
 }

@@ -846,4 +846,24 @@
     <string name="pack_incomplete_title">Treino incompleto</string>
     <string name="pack_incomplete_body">Para contar e ganhar o bônus, faça pelo menos 60% do treino. Pular é permitido, mas o que foi pulado não conta.</string>
     <string name="pack_retry">Fazer de novo</string>
+    <string name="ach_folder_title">Conquistas</string>
+    <string name="ach_next">Mais perto de conseguir</string>
+    <string name="ach_filter_all">Todas</string>
+    <string name="ach_filter_done">Conquistadas</string>
+    <string name="ach_filter_todo">Faltando</string>
+    <string name="ach_group_start">Primeiros passos</string>
+    <string name="ach_group_strength">Força e exercícios</string>
+    <string name="ach_group_consistency">Constância</string>
+    <string name="ach_group_milestones">Marcos</string>
+    <string name="ach_pushups_5000">Lenda das flexões</string>
+    <string name="ach_pushups_5000_desc">5.000 flexões no total.</string>
+    <string name="ach_streak_14">Duas semanas</string>
+    <string name="ach_streak_14_desc">Treine 14 dias seguidos.</string>
+    <string name="ach_goal_30">Mês de metas</string>
+    <string name="ach_goal_30_desc">Bata a meta diária em 30 dias.</string>
+    <string name="ach_level_20">Nível 20</string>
+    <string name="ach_level_20_desc">Chegue ao nível 20.</string>
+    <string name="ach_hours_50">50 horas ganhas</string>
+    <string name="ach_hours_50_desc">Ganhe 50 horas de tela com exercício.</string>
+    <string name="ach_count">%1$d de %2$d conquistadas</string>
 </resources>
