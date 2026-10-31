@@ -415,7 +415,10 @@ fun ProfileScreen(modifier: Modifier = Modifier) {
         AlertDialog(
             onDismissRequest = { confirmWipe = false },
             title = { Text(stringResource(R.string.profile_wipe)) },
-            text = { Text(stringResource(R.string.profile_wipe_confirm)) },
+            text = {
+                val filterOn = AppGraph.blocking.state.value.adultFilter
+                Text(stringResource(R.string.profile_wipe_confirm) + if (filterOn) "\n\n" + stringResource(R.string.profile_wipe_filter_note) else "")
+            },
             confirmButton = {
                 TextButton(onClick = {
                     confirmWipe = false

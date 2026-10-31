@@ -39,10 +39,17 @@ object Backup {
     }
 
     // troca os dados pelos do backup; false se não for backup do PushLife
+    // o filtro de sites adultos ligado continua ligado, mesmo que o backup seja de antes dele
     fun import(context: Context, text: String): Boolean {
         val root = runCatching { JSONObject(text) }.getOrNull() ?: return false
         if (root.optString("app") != APP) return false
         val prefs = root.optJSONObject("prefs") ?: return false
+        keepingAdultFilter(context) { restore(context, prefs) }
+        AppGraph.load(context)
+        return true
+    }
+
+    private fun restore(context: Context, prefs: JSONObject) {
         for (file in FILES) {
             val values = prefs.optJSONObject(file) ?: JSONObject()
             context.getSharedPreferences(file, Context.MODE_PRIVATE).edit(commit = true) {
@@ -63,13 +70,23 @@ object Backup {
                 }
             }
         }
-        AppGraph.load(context)
-        return true
     }
 
-    // apaga tudo e volta pras boas-vindas
+    // apaga tudo e volta pras boas-vindas; o filtro de sites adultos só sai desinstalando o app
     fun wipe(context: Context) {
-        for (file in FILES) context.getSharedPreferences(file, Context.MODE_PRIVATE).edit(commit = true) { clear() }
+        keepingAdultFilter(context) {
+            for (file in FILES) context.getSharedPreferences(file, Context.MODE_PRIVATE).edit(commit = true) { clear() }
+        }
         AppGraph.load(context)
     }
+
+    // se o filtro tava ligado antes, liga de novo depois (desligar só pelo desafio da tela de bloqueio)
+    private fun keepingAdultFilter(context: Context, change: () -> Unit) {
+        val blocking = context.getSharedPreferences("blocking", Context.MODE_PRIVATE)
+        val wasOn = blocking.getBoolean(KEY_ADULT_FILTER, false)
+        change()
+        if (wasOn) blocking.edit(commit = true) { putBoolean(KEY_ADULT_FILTER, true) }
+    }
+
+    private const val KEY_ADULT_FILTER = "adult_filter" // mesmo nome do BlockSettingsRepository
 }

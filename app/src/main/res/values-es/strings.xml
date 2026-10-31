@@ -829,4 +829,5 @@
     <string name="rec_progress_title">Reto de la semana y logros</string>
     <string name="rec_progress_body">Mira tu racha, tu nivel y el premio de la semana.</string>
     <string name="quick_exercises">Ejercicios rápidos</string>
+    <string name="profile_wipe_filter_note">El filtro de sitios para adultos sigue activo: solo se quita desinstalando la app.</string>
 </resources>
