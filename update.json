@@ -1,10 +1,10 @@
 {
-  "minVersionCode": 0,
+  "minVersionCode": 154,
   "latestVersionName": "1.16.0",
-  "url": "https://pushlife.br.uptodown.com/android",
+  "url": "https://github.com/matheusasturofc-del/PushLife/releases/download/build-54/PushLife.apk",
   "notes": {
-    "pt": "Novos programas de treino (força, desafios e alongamentos para qualquer idade), tempo grátis igual à metade da sua meta de tela e recomendados na tela inicial.",
-    "en": "New workout programs (strength, challenges and stretches for any age), free time equal to half your screen goal and recommendations on the home screen.",
-    "es": "Nuevos programas de entrenamiento (fuerza, retos y estiramientos para cualquier edad), tiempo gratis igual a la mitad de tu meta de pantalla y recomendados en la pantalla de inicio."
+    "pt": "Programas de treino no ritmo (o app conta junto com você), tempo grátis igual à metade da sua meta, filtro que não desliga ao apagar os dados e mais sites bloqueados.",
+    "en": "Guided workout programs (the app counts along with you), free time equal to half your goal, a filter that stays on when you erase data, and more blocked sites.",
+    "es": "Programas de entrenamiento guiados (la app cuenta contigo), tiempo gratis igual a la mitad de tu meta, filtro que no se apaga al borrar los datos y más sitios bloqueados."
   }
 }
