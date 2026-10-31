@@ -53,6 +53,7 @@ object PackRules {
     const val WORKOUT_BONUS = 15 * 60L // treino de força completo
     const val STRETCH_BONUS = 10 * 60L // alongamento completo
     const val WEEK_BONUS = 30 * 60L // semana do programa completa
+    const val MIN_COMPLETION = 0.6f // pulou mais que isso: treino não conta
 }
 
 // as variações de flexão, da parede até a diamante

@@ -62,7 +62,8 @@ data class PackProgress(
 }
 
 // resultado de terminar um treino: novo progresso e quanto ganhou de bônus
-data class Finish(val progress: PackProgress, val workoutBonus: Long, val weekBonus: Long)
+// counted = false quando pulou demais (nada muda)
+data class Finish(val progress: PackProgress, val workoutBonus: Long, val weekBonus: Long, val counted: Boolean = true)
 
 object PackPlanner {
     // dias padrão pra quantidade de treinos na semana (sempre com folga entre os de força)
@@ -97,9 +98,18 @@ object PackPlanner {
         )
 
     // terminou o treino: ajusta o nível, marca o dia e vê se ganhou bônus
-    // bônus do treino só 1 vez por dia por pack; bônus da semana quando bate os dias combinados
-    fun finish(pack: Pack, progress: PackProgress, feedback: Feedback, today: LocalDate): Finish {
-        val firstToday = !progress.doneOn(today)
+    // completion = parte do treino feita de verdade (0..1); abaixo de 60% não conta
+    // bônus do treino: proporcional ao que fez e só no 1º pack do dia (bonusAvailable vem de todos os packs)
+    // bônus da semana quando bate os dias combinados
+    fun finish(
+        pack: Pack,
+        progress: PackProgress,
+        feedback: Feedback,
+        today: LocalDate,
+        completion: Float = 1f,
+        bonusAvailable: Boolean = !progress.doneOn(today),
+    ): Finish {
+        if (completion < PackRules.MIN_COMPLETION) return Finish(progress, 0L, 0L, counted = false)
         val level = (progress.level + feedback.levelDelta).coerceIn(PackRules.MIN_LEVEL, PackRules.MAX_LEVEL)
         var next = progress.copy(level = level, sessions = progress.sessions + Session(today, feedback))
         val week = next.week(today)
@@ -109,7 +119,9 @@ object PackPlanner {
             next = next.copy(claimedWeeks = next.claimedWeeks + week)
             weekBonus = PackRules.WEEK_BONUS
         }
-        return Finish(next, if (firstToday) pack.bonusSeconds else 0L, weekBonus)
+        // arredonda pro minuto
+        val workout = if (bonusAvailable) Math.round(pack.bonusSeconds * completion.coerceAtMost(1f) / 60f) * 60L else 0L
+        return Finish(next, workout, weekBonus)
     }
 
     // score do teste: repetições × dificuldade da variação, ou segundos, ou alcance

@@ -19,13 +19,10 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -45,7 +42,6 @@ import androidx.compose.material.icons.rounded.Bedtime
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.EmojiEvents
 import androidx.compose.material.icons.rounded.FitnessCenter
-import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.LocalDrink
 import androidx.compose.material.icons.rounded.MusicNote
 import androidx.compose.material.icons.rounded.PhotoCamera
@@ -110,10 +106,19 @@ import com.pushlife.app.core.packs.PackPlanner
 import com.pushlife.app.core.packs.PackProgress
 import com.pushlife.app.core.packs.Phase
 import com.pushlife.app.core.packs.TestType
-import com.pushlife.app.core.packs.WorkoutStep
 import com.pushlife.app.core.packs.Workouts
 import com.pushlife.app.core.pose.PoseTracker
 import kotlinx.coroutines.delay
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material.icons.rounded.Pause
+import androidx.compose.material.icons.rounded.PlayArrow
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.drawscope.Stroke
+import com.pushlife.app.ui.theme.Ink
+import com.pushlife.app.ui.theme.Orange
+import com.pushlife.app.ui.theme.Yellow
+import com.pushlife.app.core.packs.PackRules
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.format.TextStyle
@@ -135,8 +140,9 @@ fun PacksFlow(
             onRouteOpened()
         }
     }
-    val screen = route.substringBefore(':')
-    val id = route.substringAfter(':', "").takeIf { it.isNotEmpty() }?.let { runCatching { PackId.valueOf(it) }.getOrNull() }
+    val parts = route.split(':')
+    val screen = parts[0]
+    val id = parts.getOrNull(1)?.let { runCatching { PackId.valueOf(it) }.getOrNull() }
 
     // voltar: do treino pergunta antes (o player cuida disso), o resto volta pro detalhe/lista
     BackHandler(enabled = screen in setOf("detalhe", "fim", "teste", "corpo")) {
@@ -158,10 +164,17 @@ fun PacksFlow(
         screen == "treino" && id != null -> PackWorkout(
             id,
             onExit = { route = "detalhe:${id.name}" },
-            onDone = { route = "fim:${id.name}" },
+            onDone = { completion -> route = "fim:${id.name}:$completion" },
             modifier = modifier,
         )
-        screen == "fim" && id != null -> PackFinish(id, onDone = { route = "detalhe:${id.name}" }, onTest = { route = "teste:${id.name}" }, modifier = modifier)
+        screen == "fim" && id != null -> PackFinish(
+            id,
+            completion = parts.getOrNull(2)?.toFloatOrNull() ?: 0f,
+            onDone = { route = "detalhe:${id.name}" },
+            onTest = { route = "teste:${id.name}" },
+            onRetry = { route = "treino:${id.name}" },
+            modifier = modifier,
+        )
         screen == "teste" && id != null -> PackTest(id, onDone = { route = "detalhe:${id.name}" }, modifier = modifier)
         else -> PacksList(
             header = header,
@@ -210,39 +223,45 @@ private fun PacksList(
     val due = remember(all, today) { PackPlanner.dueToday(all, today) }
     LazyColumn(
         modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(horizontal = 20.dp, vertical = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+        contentPadding = PaddingValues(vertical = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
-        item { header() }
-        item {
-            // explicação curta + atalho pra "Como o corpo muda"
-            Row(
-                Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(20.dp))
-                    .background(MaterialTheme.colorScheme.primaryContainer)
-                    .clickable(onClick = onLearn)
-                    .padding(16.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                Icon(Icons.AutoMirrored.Rounded.TrendingUp, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimaryContainer)
-                Column(Modifier.weight(1f)) {
-                    Text(stringResource(R.string.learn_title), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onPrimaryContainer)
-                    Text(stringResource(R.string.packs_intro), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onPrimaryContainer)
+        item { Box(Modifier.padding(horizontal = 20.dp)) { header() } }
+        items(due) { id -> TodayCard(id, onTrain = { onTrain(id) }, onOpen = { onOpen(id) }, modifier = Modifier.padding(horizontal = 20.dp)) }
+        PackCategory.entries.forEach { category ->
+            item {
+                Text(
+                    stringResource(category.title),
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(start = 20.dp, top = 6.dp),
+                )
+            }
+            item {
+                // carrossel: cada programa é um cartão alto com o bonequinho
+                LazyRow(contentPadding = PaddingValues(horizontal = 20.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    items(PackCatalog.byCategory(category)) { pack ->
+                        PackTile(pack, all[pack.id] ?: PackProgress(), today, onClick = { onOpen(pack.id) })
+                    }
                 }
-                Icon(Icons.Rounded.Info, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimaryContainer)
             }
         }
-        if (due.isNotEmpty()) {
-            item { Text(stringResource(R.string.packs_today), style = MaterialTheme.typography.titleLarge) }
-            items(due) { id -> TodayCard(id, onTrain = { onTrain(id) }, onOpen = { onOpen(id) }) }
-        }
-        PackCategory.entries.forEach { category ->
-            item { Text(stringResource(category.title), style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(top = 8.dp)) }
-            items(PackCatalog.byCategory(category)) { pack -> PackCard(pack, all[pack.id] ?: PackProgress(), today, onClick = { onOpen(pack.id) }) }
+        item {
+            TextButton(onClick = onLearn, modifier = Modifier.padding(horizontal = 12.dp)) {
+                Icon(Icons.AutoMirrored.Rounded.TrendingUp, contentDescription = null)
+                Spacer(Modifier.width(8.dp))
+                Text(stringResource(R.string.learn_title))
+            }
         }
     }
+}
+
+// fundo do bonequinho de cada categoria
+@Composable
+private fun categoryBrush(category: PackCategory): Brush = when (category) {
+    PackCategory.STRENGTH -> Brush.linearGradient(listOf(Orange.copy(alpha = 0.22f), Yellow.copy(alpha = 0.18f)))
+    PackCategory.CHALLENGE -> Brush.linearGradient(listOf(Yellow.copy(alpha = 0.30f), Orange.copy(alpha = 0.14f)))
+    PackCategory.STRETCH -> Brush.linearGradient(listOf(MaterialTheme.colorScheme.surfaceVariant, Yellow.copy(alpha = 0.14f)))
 }
 
 // cartão "treino de hoje" (também usado na tela inicial)
@@ -250,68 +269,64 @@ private fun PacksList(
 internal fun TodayCard(id: PackId, onTrain: () -> Unit, onOpen: () -> Unit, modifier: Modifier = Modifier) {
     val pack = PackCatalog.get(id)
     val progress = AppGraph.packs.progress(id)
+    val steps = remember(progress.level) { Workouts.build(pack, progress.level) }
     Row(
         modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(20.dp))
-            .background(MaterialTheme.colorScheme.primary)
+            .clip(RoundedCornerShape(24.dp))
+            .background(Brush.linearGradient(listOf(Orange, Yellow)))
             .clickable(onClick = onOpen)
-            .padding(16.dp),
+            .padding(12.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Icon(pack.category.icon, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(32.dp))
+        MoveAnimation(
+            steps.first { it.phase == Phase.MAIN }.move,
+            Modifier.size(64.dp).clip(RoundedCornerShape(16.dp)).background(Color.White.copy(alpha = 0.85f)),
+        )
         Column(Modifier.weight(1f)) {
-            Text(stringResource(id.nameRes), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onPrimary)
-            Text(
-                stringResource(R.string.pack_week_of, progress.week(LocalDate.now()), pack.weeks) + " · " + packMeta(pack, progress.level),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onPrimary,
-            )
+            Text(stringResource(R.string.packs_today).uppercase(), style = MaterialTheme.typography.labelSmall, color = Ink.copy(alpha = 0.7f))
+            Text(stringResource(id.nameRes), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = Ink)
+            Text(stringResource(R.string.pack_minutes, Workouts.minutes(steps)), style = MaterialTheme.typography.bodySmall, color = Ink)
         }
-        FilledTonalButton(onClick = onTrain) { Text(stringResource(R.string.pack_train_now)) }
+        Button(
+            onClick = onTrain,
+            colors = ButtonDefaults.buttonColors(containerColor = Ink, contentColor = Color.White),
+        ) { Text(stringResource(R.string.pack_go)) }
     }
 }
 
 @Composable
-private fun PackCard(pack: Pack, progress: PackProgress, today: LocalDate, onClick: () -> Unit) {
-    Row(
+private fun PackTile(pack: Pack, progress: PackProgress, today: LocalDate, onClick: () -> Unit) {
+    val steps = remember(progress.level) { Workouts.build(pack, progress.level) }
+    Column(
         Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(20.dp))
+            .width(158.dp)
+            .clip(RoundedCornerShape(24.dp))
             .background(MaterialTheme.colorScheme.surfaceContainer)
-            .clickable(onClick = onClick)
-            .padding(14.dp),
-        horizontalArrangement = Arrangement.spacedBy(14.dp),
-        verticalAlignment = Alignment.CenterVertically,
+            .clickable(onClick = onClick),
     ) {
-        // primeiro movimento do treino principal, animado
         MoveAnimation(
-            Workouts.build(pack, progress.level).first { it.phase == Phase.MAIN }.move,
-            Modifier
-                .size(76.dp)
-                .clip(RoundedCornerShape(16.dp))
-                .background(MaterialTheme.colorScheme.surface),
+            steps.first { it.phase == Phase.MAIN }.move,
+            Modifier.fillMaxWidth().height(112.dp).background(categoryBrush(pack.category)).padding(6.dp),
         )
-        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Text(stringResource(pack.id.nameRes), style = MaterialTheme.typography.titleMedium)
-            Text(stringResource(pack.id.descRes), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2)
+        Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text(stringResource(pack.id.nameRes), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, maxLines = 2, minLines = 2)
             if (progress.started && !PackPlanner.finishedProgram(pack, progress, today)) {
                 val week = progress.week(today)
-                Text(stringResource(R.string.pack_week_of, week, pack.weeks), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
+                Text(stringResource(R.string.pack_week_short, week, pack.weeks), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
                 LinearProgressIndicator(
-                    progress = { (week - 1 + progress.sessionsInWeek(week).toFloat() / pack.daysPerWeek.coerceAtMost(progress.days.size.coerceAtLeast(1))) / pack.weeks },
-                    modifier = Modifier.fillMaxWidth().height(6.dp),
+                    progress = { week.toFloat() / pack.weeks },
+                    modifier = Modifier.fillMaxWidth().height(5.dp),
                     strokeCap = StrokeCap.Round,
                 )
             } else {
-                Text(packMeta(pack, progress.level), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
+                Text(stringResource(R.string.pack_minutes, Workouts.minutes(steps)), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun PackDetail(id: PackId, onBack: () -> Unit, onTrain: () -> Unit, onTest: () -> Unit, modifier: Modifier = Modifier) {
     val context = LocalContext.current
@@ -322,6 +337,7 @@ private fun PackDetail(id: PackId, onBack: () -> Unit, onTrain: () -> Unit, onTe
     val steps = remember(progress.level) { Workouts.build(pack, progress.level) }
     val finished = PackPlanner.finishedProgram(pack, progress, today)
     var confirmStop by remember { mutableStateOf(false) }
+    var showMoves by rememberSaveable { mutableStateOf(false) }
     val spotifyQuery = stringResource(id.spotifyRes)
 
     Column(
@@ -336,60 +352,23 @@ private fun PackDetail(id: PackId, onBack: () -> Unit, onTrain: () -> Unit, onTe
             steps.first { it.phase == Phase.MAIN }.move,
             Modifier
                 .fillMaxWidth()
-                .height(180.dp)
-                .clip(RoundedCornerShape(20.dp))
-                .background(MaterialTheme.colorScheme.surfaceContainer)
-                .padding(8.dp),
+                .height(190.dp)
+                .clip(RoundedCornerShape(28.dp))
+                .background(categoryBrush(pack.category))
+                .padding(10.dp),
         )
         Text(stringResource(id.nameRes), style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
         Text(stringResource(id.descRes), style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        Text(packMeta(pack, progress.level), style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
 
-        if (progress.started) {
-            InfoCard {
-                Text(
-                    if (finished) stringResource(R.string.pack_finished) else stringResource(R.string.pack_week_of, progress.week(today), pack.weeks),
-                    style = MaterialTheme.typography.titleMedium,
-                )
-                Text(stringResource(R.string.pack_level, progress.level.toInt()), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                progress.evolutionPercent()?.let { pct ->
-                    Text(
-                        stringResource(if (pack.category == PackCategory.STRETCH) R.string.pack_evolution_flex else R.string.pack_evolution, if (pct >= 0) "+$pct" else "$pct"),
-                        style = MaterialTheme.typography.headlineSmall,
-                        color = MaterialTheme.colorScheme.primary,
-                        fontWeight = FontWeight.Bold,
-                    )
-                }
-                if (progress.assessments.size >= 2) EvolutionChart(progress, Modifier.fillMaxWidth().height(90.dp))
-                if (progress.testDue(today)) {
-                    Text(stringResource(R.string.pack_test_due), style = MaterialTheme.typography.bodyMedium)
-                    OutlinedButton(onClick = onTest) { Text(stringResource(R.string.pack_do_test)) }
-                }
+        // 3 números do programa
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            val week = progress.week(today)
+            Pill(if (progress.started && !finished) stringResource(R.string.pack_week_short, week, pack.weeks) else stringResource(R.string.pack_weeks, pack.weeks))
+            Pill(stringResource(R.string.pack_minutes, Workouts.minutes(steps)))
+            progress.evolutionPercent()?.let { pct ->
+                Pill(stringResource(if (pack.category == PackCategory.STRETCH) R.string.pack_evolution_flex else R.string.pack_evolution, if (pct >= 0) "+$pct" else "$pct"), highlight = true)
             }
         }
-
-        // agenda: em quais dias treina
-        Text(stringResource(R.string.pack_days_title), style = MaterialTheme.typography.titleMedium)
-        val days = progress.days.ifEmpty { PackPlanner.defaultDays(pack.daysPerWeek) }
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            DayOfWeek.entries.forEach { day ->
-                FilterChip(
-                    selected = day in days,
-                    onClick = {
-                        val next = if (day in days) days - day else days + day
-                        if (next.isNotEmpty()) AppGraph.packs.setDays(id, next)
-                    },
-                    label = { Text(day.getDisplayName(TextStyle.SHORT, Locale.getDefault()).replaceFirstChar { it.uppercase() }) },
-                )
-            }
-        }
-        val sorted = days.map { it.value }.sorted()
-        val backToBack = pack.category != PackCategory.STRETCH && sorted.zipWithNext().any { (a, b) -> b - a == 1 }
-        Text(
-            stringResource(if (backToBack) R.string.pack_days_rest_warning else R.string.pack_days_hint, pack.daysPerWeek),
-            style = MaterialTheme.typography.bodySmall,
-            color = if (backToBack) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
-        )
 
         Button(
             onClick = {
@@ -409,35 +388,78 @@ private fun PackDetail(id: PackId, onBack: () -> Unit, onTrain: () -> Unit, onTe
                 style = MaterialTheme.typography.titleLarge,
             )
         }
-        OutlinedButton(onClick = { openSpotify(context, spotifyQuery) }, modifier = Modifier.fillMaxWidth()) {
-            Icon(Icons.Rounded.MusicNote, contentDescription = null)
-            Spacer(Modifier.width(8.dp))
-            Text(stringResource(R.string.pack_spotify))
+
+        if (progress.testDue(today) && progress.sessions.isNotEmpty()) {
+            Row(
+                Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)).background(MaterialTheme.colorScheme.secondaryContainer).padding(14.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                Text(stringResource(R.string.pack_test_due), style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
+                FilledTonalButton(onClick = onTest) { Text(stringResource(R.string.pack_test_short)) }
+            }
+        }
+        if (progress.assessments.size >= 2) EvolutionChart(progress, Modifier.fillMaxWidth().height(80.dp))
+
+        // dias da semana: bolinhas com a letra do dia
+        Text(stringResource(R.string.pack_days_title), style = MaterialTheme.typography.titleMedium)
+        val days = progress.days.ifEmpty { PackPlanner.defaultDays(pack.daysPerWeek) }
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            DayOfWeek.entries.forEach { day ->
+                val on = day in days
+                Box(
+                    Modifier
+                        .size(40.dp)
+                        .clip(CircleShape)
+                        .background(if (on) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceContainer)
+                        .clickable {
+                            val next = if (on) days - day else days + day
+                            if (next.isNotEmpty()) AppGraph.packs.setDays(id, next)
+                        },
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(
+                        day.getDisplayName(TextStyle.NARROW, Locale.getDefault()).uppercase(),
+                        fontWeight = FontWeight.Bold,
+                        color = if (on) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+        }
+        val sorted = days.map { it.value }.sorted()
+        if (pack.category != PackCategory.STRETCH && sorted.zipWithNext().any { (a, b) -> b - a == 1 }) {
+            Text(stringResource(R.string.pack_days_rest_warning, pack.daysPerWeek), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
         }
 
-        // o que tem no treino de hoje
-        Text(stringResource(R.string.pack_workout_title), style = MaterialTheme.typography.titleMedium)
-        Phase.entries.forEach { phase ->
-            val inPhase = steps.filter { it.phase == phase }
-            if (inPhase.isNotEmpty()) {
-                Text(stringResource(phase.title), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
-                // agrupa séries iguais: "Flexão na parede · 3 × 9"
-                inPhase.groupBy { it.move to it.amount }.forEach { (key, list) ->
-                    val (move, amount) = key
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        MoveAnimation(move, Modifier.size(48.dp).clip(RoundedCornerShape(12.dp)).background(MaterialTheme.colorScheme.surfaceContainer))
-                        Column(Modifier.weight(1f)) {
-                            Text(stringResource(move.nameRes), style = MaterialTheme.typography.bodyLarge)
-                            Text(amountText(move, amount, list.size), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        }
+        // lista dos exercícios: fechada por padrão pra tela ficar limpa
+        TextButton(onClick = { showMoves = !showMoves }) {
+            Text(stringResource(if (showMoves) R.string.pack_hide_moves else R.string.pack_show_moves, steps.distinctBy { it.move }.size))
+        }
+        if (showMoves) {
+            steps.groupBy { it.move to it.amount }.forEach { (key, list) ->
+                val (move, amount) = key
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    MoveAnimation(move, Modifier.size(48.dp).clip(RoundedCornerShape(12.dp)).background(MaterialTheme.colorScheme.surfaceContainer))
+                    Column(Modifier.weight(1f)) {
+                        Text(stringResource(move.nameRes), style = MaterialTheme.typography.bodyLarge)
+                        Text(amountText(move, amount, list.size), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
             }
         }
-        Text(stringResource(R.string.pack_safety), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        if (progress.started) {
-            TextButton(onClick = { confirmStop = true }) { Text(stringResource(R.string.pack_stop), color = MaterialTheme.colorScheme.error) }
+
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            OutlinedButton(onClick = { openSpotify(context, spotifyQuery) }) {
+                Icon(Icons.Rounded.MusicNote, contentDescription = null)
+                Spacer(Modifier.width(6.dp))
+                Text(stringResource(R.string.pack_spotify))
+            }
+            Spacer(Modifier.weight(1f))
+            if (progress.started) {
+                TextButton(onClick = { confirmStop = true }) { Text(stringResource(R.string.pack_stop), color = MaterialTheme.colorScheme.error) }
+            }
         }
+        Text(stringResource(R.string.pack_safety), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Spacer(Modifier.height(12.dp))
     }
 
@@ -457,6 +479,20 @@ private fun PackDetail(id: PackId, onBack: () -> Unit, onTrain: () -> Unit, onTe
     }
 }
 
+@Composable
+private fun Pill(text: String, highlight: Boolean = false) {
+    Text(
+        text,
+        style = MaterialTheme.typography.labelLarge,
+        fontWeight = FontWeight.Bold,
+        color = if (highlight) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
+        modifier = Modifier
+            .clip(RoundedCornerShape(50))
+            .background(if (highlight) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceContainer)
+            .padding(horizontal = 12.dp, vertical = 6.dp),
+    )
+}
+
 private val Phase.title: Int
     @StringRes get() = when (this) {
         Phase.WARMUP -> R.string.phase_warmup
@@ -470,18 +506,6 @@ private fun amountText(move: Move, amount: Int, sets: Int): String {
     val one = if (move.kind == MoveKind.HOLD) stringResource(R.string.amount_seconds, amount) else stringResource(R.string.amount_reps, amount)
     val withSets = if (sets > 1) "$sets × $one" else one
     return if (move.perSide) withSets + " " + stringResource(R.string.amount_per_side) else withSets
-}
-
-@Composable
-private fun InfoCard(content: @Composable () -> Unit) {
-    Column(
-        Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(20.dp))
-            .background(MaterialTheme.colorScheme.surfaceContainer)
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(6.dp),
-    ) { content() }
 }
 
 // linha dos testes: cada ponto é um teste
@@ -514,15 +538,25 @@ internal fun openSpotify(context: Context, query: String) {
 }
 
 // ---------- treino guiado ----------
+// cada exercício tem um tempo mínimo (o ritmo): o app conta as repetições junto com você.
+// pular é possível, mas o que foi pulado não conta e abaixo de 60% do treino não tem bônus.
+
+private enum class Stage { GET_READY, WORK, REST }
 
 @Composable
-private fun PackWorkout(id: PackId, onExit: () -> Unit, onDone: () -> Unit, modifier: Modifier = Modifier) {
+private fun PackWorkout(id: PackId, onExit: () -> Unit, onDone: (Float) -> Unit, modifier: Modifier = Modifier) {
     val pack = PackCatalog.get(id)
     val steps = remember(id) { Workouts.build(pack, AppGraph.packs.progress(id).level) }
+    val totalWork = remember(steps) { steps.sumOf { it.move.secondsFor(it.amount) }.coerceAtLeast(1) }
     var index by rememberSaveable { mutableIntStateOf(0) }
-    var resting by rememberSaveable { mutableStateOf(false) }
-    var restLeft by rememberSaveable { mutableIntStateOf(0) }
+    var stage by rememberSaveable { mutableStateOf(Stage.GET_READY) }
+    // segundos de exercício feitos de verdade (pra saber quanto do treino foi feito)
+    var doneSeconds by rememberSaveable { mutableIntStateOf(0) }
+    var paused by remember { mutableStateOf(false) }
+    var camera by remember { mutableStateOf(false) }
     var confirmExit by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    val askCamera = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { ok -> camera = ok }
     val tone = remember { runCatching { ToneGenerator(AudioManager.STREAM_MUSIC, 80) }.getOrNull() }
     val view = LocalView.current
     DisposableEffect(Unit) {
@@ -535,43 +569,167 @@ private fun PackWorkout(id: PackId, onExit: () -> Unit, onDone: () -> Unit, modi
     BackHandler { confirmExit = true }
 
     val step = steps[index.coerceIn(0, steps.lastIndex)]
-    fun advance() {
-        resting = false
-        if (index >= steps.lastIndex) onDone() else index++
+    val next = steps.getOrNull(index + 1)
+    // quanto dura a etapa atual (ms)
+    val stageMs = when (stage) {
+        Stage.GET_READY -> 5_000L
+        Stage.WORK -> step.move.secondsFor(step.amount) * 1000L
+        Stage.REST -> (if (step.restAfter > 0) step.restAfter else 5) * 1000L
     }
-    fun next() {
-        tone?.startTone(ToneGenerator.TONE_PROP_ACK, 150)
-        if (step.restAfter > 0) {
-            restLeft = step.restAfter
-            resting = true
-        } else {
-            advance()
+    var elapsed by remember(index, stage) { mutableLongStateOf(0L) }
+    var extraRest by remember(index, stage) { mutableLongStateOf(0L) }
+    var cameraCount by remember(index) { mutableIntStateOf(0) }
+    val cameraTarget = if (step.move.perSide) step.amount * 2 else step.amount
+
+    fun goNext(completedWork: Boolean) {
+        if (stage == Stage.WORK && completedWork) doneSeconds += step.move.secondsFor(step.amount)
+        camera = false
+        when (stage) {
+            Stage.GET_READY -> stage = Stage.WORK
+            Stage.WORK -> if (index >= steps.lastIndex) onDone(doneSeconds.toFloat() / totalWork) else stage = Stage.REST
+            Stage.REST -> {
+                index++
+                stage = Stage.WORK
+            }
         }
     }
-    // contagem do descanso
-    LaunchedEffect(resting, index) {
-        while (resting && restLeft > 0) {
-            delay(1000)
-            restLeft--
-            if (restLeft in 1..3) tone?.startTone(ToneGenerator.TONE_PROP_BEEP, 100)
+
+    // relógio: anda de 100 em 100 ms; com a câmera, quem termina a etapa é a contagem
+    LaunchedEffect(index, stage, paused, camera) {
+        var last = SystemClock.elapsedRealtime()
+        while (!paused && !(camera && stage == Stage.WORK)) {
+            delay(100)
+            val now = SystemClock.elapsedRealtime()
+            val before = elapsed
+            elapsed += now - last
+            last = now
+            val limit = stageMs + extraRest
+            // bip a cada repetição no ritmo e nos 3 últimos segundos
+            if (stage == Stage.WORK && step.move.kind == MoveKind.REPS) {
+                val paceMs = (step.move.pace * 1000).toLong()
+                if (elapsed / paceMs > before / paceMs && elapsed < limit) tone?.startTone(ToneGenerator.TONE_PROP_BEEP, 80)
+            }
+            val left = (limit - elapsed) / 1000
+            if (left != (limit - before) / 1000 && left in 0..2 && stage != Stage.WORK) tone?.startTone(ToneGenerator.TONE_PROP_BEEP, 100)
+            if (stage == Stage.WORK && step.move.kind == MoveKind.HOLD && step.move.perSide && before < limit / 2 && elapsed >= limit / 2) {
+                tone?.startTone(ToneGenerator.TONE_PROP_BEEP2, 250)
+            }
+            if (elapsed >= limit) {
+                tone?.startTone(ToneGenerator.TONE_PROP_ACK, 150)
+                goNext(completedWork = true)
+                break
+            }
         }
-        if (resting) advance()
     }
 
     Column(modifier.fillMaxSize().padding(horizontal = 20.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             IconButton(onClick = { confirmExit = true }) { Icon(Icons.Rounded.Close, contentDescription = stringResource(R.string.pack_exit)) }
             LinearProgressIndicator(
-                progress = { (index + if (resting) 1f else 0f) / steps.size },
+                progress = { (index + if (stage == Stage.REST) 1f else 0f) / steps.size },
                 modifier = Modifier.weight(1f).height(8.dp),
                 strokeCap = StrokeCap.Round,
             )
             Text("${index + 1}/${steps.size}", style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(start = 10.dp))
         }
-        if (resting) {
-            RestView(restLeft, steps[(index + 1).coerceAtMost(steps.lastIndex)], onMore = { restLeft += 15 }, onSkip = { advance() }, modifier = Modifier.weight(1f))
-        } else {
-            StepView(step, onDone = { next() }, tone = tone, modifier = Modifier.weight(1f))
+
+        val shown = if (stage == Stage.REST) next ?: step else step
+        Text(
+            when (stage) {
+                Stage.GET_READY -> stringResource(R.string.pack_get_ready)
+                Stage.REST -> if (step.restAfter > 0) stringResource(R.string.pack_rest) else stringResource(R.string.pack_next_up)
+                Stage.WORK -> stringResource(step.phase.title) + if (step.sets > 1) " · " + stringResource(R.string.pack_set_of, step.set, step.sets) else ""
+            },
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.align(Alignment.CenterHorizontally),
+        )
+        Text(
+            stringResource(shown.move.nameRes),
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.Bold,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.fillMaxWidth(),
+        )
+
+        Box(Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
+            if (camera && stage == Stage.WORK) {
+                CameraCounter(
+                    step.move,
+                    onCount = {
+                        cameraCount += it
+                        tone?.startTone(ToneGenerator.TONE_PROP_BEEP, 100)
+                        if (cameraCount >= cameraTarget) goNext(completedWork = true)
+                    },
+                    count = cameraCount,
+                    target = cameraTarget,
+                    modifier = Modifier.fillMaxSize(),
+                )
+            } else {
+                MoveAnimation(
+                    shown.move,
+                    Modifier
+                        .fillMaxSize()
+                        .clip(RoundedCornerShape(28.dp))
+                        .background(Brush.linearGradient(listOf(Orange.copy(alpha = 0.16f), Yellow.copy(alpha = 0.14f))))
+                        .padding(10.dp),
+                )
+            }
+        }
+        if (stage != Stage.REST || step.restAfter > 0) {
+            Text(
+                stringResource(shown.move.cueRes),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+                maxLines = 3,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
+
+        // anel com o número grande no meio
+        if (!(camera && stage == Stage.WORK)) {
+            val limit = stageMs + extraRest
+            val (big, small) = when {
+                stage != Stage.WORK -> "${((limit - elapsed + 999) / 1000).coerceAtLeast(0)}" to stringResource(R.string.unit_seconds)
+                step.move.kind == MoveKind.HOLD -> "${((limit - elapsed + 999) / 1000).coerceAtLeast(0)}" to
+                    stringResource(if (step.move.perSide && elapsed >= limit / 2) R.string.pack_side_two else R.string.unit_seconds)
+                else -> {
+                    // repetição atual no ritmo; "cada lado" conta de novo na 2ª metade
+                    val rep = (elapsed / (step.move.pace * 1000)).toInt() % step.amount + 1
+                    "$rep" to stringResource(R.string.pack_of_reps, step.amount) + if (step.move.perSide) " " + stringResource(R.string.amount_per_side) else ""
+                }
+            }
+            Ring(
+                progress = (elapsed.toFloat() / limit).coerceIn(0f, 1f),
+                big = big,
+                small = small,
+                modifier = Modifier.align(Alignment.CenterHorizontally).size(150.dp),
+            )
+        }
+
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
+            TextButton(onClick = { goNext(completedWork = false) }) {
+                Text(stringResource(if (stage == Stage.WORK) R.string.pack_skip else R.string.pack_rest_skip))
+            }
+            FilledTonalIconButton(onClick = { paused = !paused }, modifier = Modifier.size(64.dp)) {
+                Icon(if (paused) Icons.Rounded.PlayArrow else Icons.Rounded.Pause, contentDescription = stringResource(if (paused) R.string.pack_resume else R.string.pack_pause), modifier = Modifier.size(32.dp))
+            }
+            when {
+                stage == Stage.REST && step.restAfter > 0 -> TextButton(onClick = { extraRest += 15_000 }) { Text(stringResource(R.string.pack_rest_more)) }
+                stage == Stage.WORK && step.move.camera != null && step.move.kind == MoveKind.REPS -> IconButton(onClick = {
+                    if (camera) {
+                        camera = false
+                    } else if (ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
+                        camera = true
+                    } else {
+                        askCamera.launch(Manifest.permission.CAMERA)
+                    }
+                }) {
+                    Icon(Icons.Rounded.PhotoCamera, contentDescription = stringResource(R.string.pack_use_camera), tint = if (camera) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                else -> Spacer(Modifier.size(48.dp))
+            }
         }
     }
 
@@ -586,116 +744,43 @@ private fun PackWorkout(id: PackId, onExit: () -> Unit, onDone: () -> Unit, modi
     }
 }
 
+// anel de progresso com o número no meio
 @Composable
-private fun StepView(step: WorkoutStep, onDone: () -> Unit, tone: ToneGenerator?, modifier: Modifier = Modifier) {
-    val move = step.move
-    val context = LocalContext.current
-    // segurar: conta os dois lados seguidos quando é "cada lado"
-    val holdTotal = if (move.perSide) step.amount * 2 else step.amount
-    var holdLeft by remember(step) { mutableIntStateOf(holdTotal) }
-    var running by remember(step) { mutableStateOf(false) }
-    var camera by remember(step) { mutableStateOf(false) }
-    var counted by remember(step) { mutableIntStateOf(0) }
-    val canCamera = move.camera != null && move.kind == MoveKind.REPS
-    val askCamera = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { ok -> camera = ok }
-
-    LaunchedEffect(running, step) {
-        while (running && holdLeft > 0) {
-            delay(1000)
-            holdLeft--
-            if (move.perSide && holdLeft == step.amount) tone?.startTone(ToneGenerator.TONE_PROP_BEEP2, 200)
-            if (holdLeft in 1..3) tone?.startTone(ToneGenerator.TONE_PROP_BEEP, 100)
-        }
-        if (running && holdLeft == 0) onDone()
-    }
-
-    Column(modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        Text(
-            stringResource(step.phase.title) + if (step.sets > 1) " · " + stringResource(R.string.pack_set_of, step.set, step.sets) else "",
-            style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.primary,
-        )
-        Text(stringResource(move.nameRes), style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
-        if (camera && move.camera != null) {
-            CameraCounter(move, onCount = {
-                counted += it
-                tone?.startTone(ToneGenerator.TONE_PROP_BEEP, 100)
-                if (counted >= step.amount) onDone()
-            }, count = counted, target = step.amount)
-        } else {
-            MoveAnimation(
-                move,
-                Modifier
-                    .fillMaxWidth()
-                    .height(220.dp)
-                    .clip(RoundedCornerShape(20.dp))
-                    .background(MaterialTheme.colorScheme.surfaceContainer)
-                    .padding(8.dp),
+private fun Ring(progress: Float, big: String, small: String, modifier: Modifier = Modifier) {
+    val track = MaterialTheme.colorScheme.surfaceContainerHighest
+    Box(modifier, contentAlignment = Alignment.Center) {
+        Canvas(Modifier.fillMaxSize()) {
+            val stroke = 12.dp.toPx()
+            val inset = stroke / 2
+            val arcSize = androidx.compose.ui.geometry.Size(size.width - stroke, size.height - stroke)
+            drawArc(color = track, startAngle = -90f, sweepAngle = 360f, useCenter = false, topLeft = Offset(inset, inset), size = arcSize, style = Stroke(stroke))
+            drawArc(
+                brush = Brush.sweepGradient(listOf(Yellow, Orange, Yellow)),
+                startAngle = -90f,
+                sweepAngle = 360f * progress,
+                useCenter = false,
+                topLeft = Offset(inset, inset),
+                size = arcSize,
+                style = Stroke(stroke, cap = StrokeCap.Round),
             )
         }
-        Text(stringResource(move.cueRes), style = MaterialTheme.typography.bodyLarge)
-        // número grande: repetições ou segundos que faltam
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.Bottom) {
-            Text(
-                if (move.kind == MoveKind.HOLD) "$holdLeft" else "${step.amount}",
-                fontSize = 72.sp,
-                fontWeight = FontWeight.Black,
-                fontStyle = FontStyle.Italic,
-                color = MaterialTheme.colorScheme.primary,
-            )
-            Text(
-                stringResource(if (move.kind == MoveKind.HOLD) R.string.unit_seconds else R.string.unit_reps) +
-                    if (move.perSide) " " + stringResource(R.string.amount_per_side) else "",
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.padding(start = 8.dp, bottom = 16.dp),
-            )
-        }
-        if (move.kind == MoveKind.HOLD && move.perSide && running) {
-            Text(
-                stringResource(if (holdLeft > step.amount) R.string.pack_side_one else R.string.pack_side_two),
-                style = MaterialTheme.typography.titleMedium,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth(),
-            )
-        }
-        when {
-            move.kind == MoveKind.HOLD && !running -> Button(onClick = { running = true }, modifier = Modifier.fillMaxWidth().height(60.dp)) {
-                Icon(Icons.Rounded.Timer, contentDescription = null)
-                Spacer(Modifier.width(8.dp))
-                Text(stringResource(R.string.pack_start_timer), style = MaterialTheme.typography.titleLarge)
-            }
-            move.kind == MoveKind.REPS -> Button(onClick = onDone, modifier = Modifier.fillMaxWidth().height(60.dp)) {
-                Text(stringResource(R.string.pack_done_set), style = MaterialTheme.typography.titleLarge)
-            }
-        }
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            if (canCamera && !camera) {
-                OutlinedButton(onClick = {
-                    if (ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) camera = true
-                    else askCamera.launch(Manifest.permission.CAMERA)
-                }) {
-                    Icon(Icons.Rounded.PhotoCamera, contentDescription = null)
-                    Spacer(Modifier.width(6.dp))
-                    Text(stringResource(R.string.pack_use_camera))
-                }
-            }
-            TextButton(onClick = onDone) { Text(stringResource(R.string.pack_skip)) }
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(big, fontSize = 48.sp, fontWeight = FontWeight.Black, fontStyle = FontStyle.Italic, color = MaterialTheme.colorScheme.primary)
+            Text(small, style = MaterialTheme.typography.labelMedium, textAlign = TextAlign.Center)
         }
     }
 }
 
 // câmera contando as reps do movimento (soma no saldo como no treino livre)
 @Composable
-private fun CameraCounter(move: Move, onCount: (Int) -> Unit, count: Int, target: Int) {
+private fun CameraCounter(move: Move, onCount: (Int) -> Unit, count: Int, target: Int, modifier: Modifier = Modifier) {
     val exercise = move.camera ?: return
     val tracker = remember(move) { PoseTracker.forExercise(exercise) }
     var rig by remember { mutableStateOf<Rig?>(null) }
     var cue by remember { mutableStateOf(com.pushlife.app.core.pose.Cue.GET_READY) }
     val shape = RoundedCornerShape(24.dp)
     Box(
-        Modifier
-            .fillMaxWidth()
-            .aspectRatio(1f)
+        modifier
             .clip(shape)
             .background(Color.Black)
             .border(3.dp, MaterialTheme.colorScheme.primary, shape),
@@ -734,72 +819,73 @@ private fun CameraCounter(move: Move, onCount: (Int) -> Unit, count: Int, target
 }
 
 @Composable
-private fun RestView(left: Int, next: WorkoutStep, onMore: () -> Unit, onSkip: () -> Unit, modifier: Modifier = Modifier) {
-    Column(modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterVertically)) {
-        Text(stringResource(R.string.pack_rest), style = MaterialTheme.typography.headlineMedium)
-        Text("$left", fontSize = 96.sp, fontWeight = FontWeight.Black, fontStyle = FontStyle.Italic, color = MaterialTheme.colorScheme.primary)
-        Text(stringResource(R.string.pack_rest_why), style = MaterialTheme.typography.bodyMedium, textAlign = TextAlign.Center, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        Text(
-            stringResource(R.string.pack_next, stringResource(next.move.nameRes)),
-            style = MaterialTheme.typography.titleMedium,
-            textAlign = TextAlign.Center,
-        )
-        MoveAnimation(next.move, Modifier.size(140.dp).clip(RoundedCornerShape(20.dp)).background(MaterialTheme.colorScheme.surfaceContainer))
-        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            OutlinedButton(onClick = onMore) { Text(stringResource(R.string.pack_rest_more)) }
-            Button(onClick = onSkip) { Text(stringResource(R.string.pack_rest_skip)) }
-        }
-    }
-}
-
-// ---------- fim do treino ----------
-
-@Composable
-private fun PackFinish(id: PackId, onDone: () -> Unit, onTest: () -> Unit, modifier: Modifier = Modifier) {
+private fun PackFinish(id: PackId, completion: Float, onDone: () -> Unit, onTest: () -> Unit, onRetry: () -> Unit, modifier: Modifier = Modifier) {
     var result by remember { mutableStateOf<Finish?>(null) }
     var feedback by remember { mutableStateOf<Feedback?>(null) }
-    BackHandler(enabled = result == null) {}
+    val percent = (completion * 100).toInt().coerceIn(0, 100)
+    val counts = completion >= PackRules.MIN_COMPLETION
+    BackHandler(enabled = counts && result == null) {}
     Column(
         modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterVertically),
     ) {
-        Icon(Icons.Rounded.EmojiEvents, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(72.dp))
+        Ring(progress = completion.coerceIn(0f, 1f), big = "$percent%", small = stringResource(R.string.pack_done_part), modifier = Modifier.size(150.dp))
+        if (!counts) {
+            // pulou demais: não conta, sem bônus
+            Text(stringResource(R.string.pack_incomplete_title), style = MaterialTheme.typography.headlineSmall, textAlign = TextAlign.Center)
+            Text(stringResource(R.string.pack_incomplete_body), style = MaterialTheme.typography.bodyLarge, textAlign = TextAlign.Center, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Button(onClick = onRetry, modifier = Modifier.fillMaxWidth().height(56.dp)) { Text(stringResource(R.string.pack_retry)) }
+            OutlinedButton(onClick = onDone, modifier = Modifier.fillMaxWidth().height(56.dp)) { Text(stringResource(R.string.pack_done)) }
+        } else {
+            FinishFeedback(id, completion, result, feedback, onPick = { fb, r -> feedback = fb; result = r }, onDone = onDone, onTest = onTest)
+        }
+    }
+}
+
+@Composable
+private fun FinishFeedback(
+    id: PackId,
+    completion: Float,
+    result: Finish?,
+    feedback: Feedback?,
+    onPick: (Feedback, Finish) -> Unit,
+    onDone: () -> Unit,
+    onTest: () -> Unit,
+) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(16.dp)) {
         Text(stringResource(R.string.pack_finish_title), style = MaterialTheme.typography.headlineLarge, textAlign = TextAlign.Center)
         val done = result
         if (done == null) {
             Text(stringResource(R.string.pack_feedback_question), style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.Center)
-            listOf(
-                Triple(Feedback.EASY, R.string.feedback_easy, R.string.feedback_easy_hint),
-                Triple(Feedback.OK, R.string.feedback_ok, R.string.feedback_ok_hint),
-                Triple(Feedback.HARD, R.string.feedback_hard, R.string.feedback_hard_hint),
-            ).forEach { (fb, title, hint) ->
-                Column(
-                    Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(20.dp))
-                        .background(MaterialTheme.colorScheme.surfaceContainer)
-                        .clickable {
-                            feedback = fb
-                            result = AppGraph.packs.finish(id, fb)
-                        }
-                        .padding(16.dp),
-                ) {
-                    Text(stringResource(title), style = MaterialTheme.typography.titleMedium)
-                    Text(stringResource(hint), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                listOf(
+                    Triple(Feedback.HARD, "😮‍💨", R.string.feedback_hard),
+                    Triple(Feedback.OK, "💪", R.string.feedback_ok),
+                    Triple(Feedback.EASY, "😎", R.string.feedback_easy),
+                ).forEach { (fb, emoji, title) ->
+                    Column(
+                        Modifier
+                            .weight(1f)
+                            .clip(RoundedCornerShape(20.dp))
+                            .background(MaterialTheme.colorScheme.surfaceContainer)
+                            .clickable { onPick(fb, AppGraph.packs.finish(id, fb, completion)) }
+                            .padding(vertical = 18.dp, horizontal = 8.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(6.dp),
+                    ) {
+                        Text(emoji, fontSize = 32.sp)
+                        Text(stringResource(title), style = MaterialTheme.typography.labelLarge, textAlign = TextAlign.Center)
+                    }
                 }
             }
         } else {
-            if (done.workoutBonus > 0) {
-                Text(
-                    stringResource(R.string.pack_bonus, formatDuration(done.workoutBonus)),
-                    style = MaterialTheme.typography.headlineSmall,
-                    color = MaterialTheme.colorScheme.primary,
-                    textAlign = TextAlign.Center,
-                )
-            } else {
-                Text(stringResource(R.string.pack_bonus_already), style = MaterialTheme.typography.bodyMedium, textAlign = TextAlign.Center)
-            }
+            Text(
+                if (done.workoutBonus > 0) stringResource(R.string.pack_bonus, formatDuration(done.workoutBonus)) else stringResource(R.string.pack_bonus_already),
+                style = if (done.workoutBonus > 0) MaterialTheme.typography.headlineSmall else MaterialTheme.typography.bodyMedium,
+                color = if (done.workoutBonus > 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+            )
             if (done.weekBonus > 0) {
                 Text(
                     stringResource(R.string.pack_week_bonus, formatDuration(done.weekBonus)),

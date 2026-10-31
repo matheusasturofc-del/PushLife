@@ -136,4 +136,26 @@ class PacksTest {
         assertEquals(listOf(PackId.ARMS, PackId.STRETCH_NIGHT), PackPlanner.suggest(ExerciseFrequency.THREE_TO_FIVE, setOf(com.pushlife.app.core.Goal.NIGHT_SCROLL)))
         assertEquals(PackId.STRETCH_NECK, PackPlanner.suggest(ExerciseFrequency.DAILY, setOf(com.pushlife.app.core.Goal.STUDY))[1])
     }
+
+    @Test
+    fun pularDemaisNaoContaEBonusEhProporcional() {
+        val p = PackPlanner.start(arms, null, monday)
+        val skipped = PackPlanner.finish(arms, p, Feedback.EASY, monday, completion = 0.5f)
+        assertFalse(skipped.counted)
+        assertEquals(0L, skipped.workoutBonus)
+        assertEquals(p, skipped.progress) // nem o nível muda
+        val most = PackPlanner.finish(arms, p, Feedback.OK, monday, completion = 0.8f)
+        assertTrue(most.counted)
+        assertEquals(12 * 60L, most.workoutBonus) // 80% de 15 min
+        // outro pack já deu bônus hoje
+        assertEquals(0L, PackPlanner.finish(arms, p, Feedback.OK, monday, bonusAvailable = false).workoutBonus)
+    }
+
+    @Test
+    fun ritmoDasRepeticoes() {
+        assertEquals(30, Move.PUSHUP.secondsFor(10))
+        assertEquals(15, Move.JUMPING_JACK.secondsFor(10))
+        assertEquals(80, Move.BIRD_DOG.secondsFor(10)) // 4 s × 10 × 2 lados
+        assertEquals(40, Move.SIDE_PLANK.secondsFor(20))
+    }
 }

@@ -723,7 +723,7 @@
     <string name="feedback_hard">Difícil demais</string>
     <string name="feedback_hard_hint">Não consegui fazer tudo direito. Vamos com calma.</string>
     <string name="pack_bonus">+%1$s de tela pelo treino!</string>
-    <string name="pack_bonus_already">Você já ganhou o bônus deste pack hoje. O treino conta para sua evolução!</string>
+    <string name="pack_bonus_already">O bônus de treino é um por dia e você já ganhou o de hoje. O treino conta para sua evolução!</string>
     <string name="pack_week_bonus">Semana completa! +%1$s de bônus</string>
     <string name="pack_days_title">Seus dias de treino</string>
     <string name="pack_days_hint">Recomendado: %1$d dias por semana. Toque para trocar os dias.</string>
@@ -809,7 +809,7 @@
     <string name="learn_water_title">Beba água</string>
     <string name="learn_water_body">Beba água ao longo do dia e um pouco antes e depois do treino. Um bom sinal: xixi clarinho.</string>
     <string name="learn_free_title">Seu tempo grátis</string>
-    <string name="learn_free_body">Todo dia você ganha metade da sua meta de tela de graça (meta 1 h → 30 min). O resto você conquista treinando: cada programa concluído dá bônus, e semana completa dá mais.</string>
+    <string name="learn_free_body">Todo dia você ganha metade da sua meta de tela de graça (meta 1 h → 30 min). O resto você conquista treinando: o primeiro programa feito no dia dá bônus (proporcional ao que você fez) e semana completa dá mais.</string>
     <string name="learn_safety_title">Segurança</string>
     <string name="learn_safety_body">Sempre aqueça antes. Pare se sentir dor aguda, tontura ou falta de ar. Se tiver problema de saúde, lesão ou estiver grávida, fale com um médico antes de começar.</string>
     <string name="learn_sources">Fontes: Diretrizes da OMS sobre atividade física (2020), recomendações do American College of Sports Medicine (ACSM) e da International Society of Sports Nutrition (ISSN). O app não é certificado por especialistas.</string>
@@ -830,4 +830,20 @@
     <string name="rec_progress_body">Veja sua sequência, seu nível e o prêmio da semana.</string>
     <string name="quick_exercises">Exercícios rápidos</string>
     <string name="profile_wipe_filter_note">O filtro de sites adultos continua ligado: ele só sai desinstalando o app.</string>
+    <string name="pack_minutes">~%1$d min</string>
+    <string name="pack_go">Treinar</string>
+    <string name="pack_week_short">Semana %1$d/%2$d</string>
+    <string name="pack_weeks">%1$d semanas</string>
+    <string name="pack_test_short">Fazer teste</string>
+    <string name="pack_show_moves">Ver os %1$d exercícios</string>
+    <string name="pack_hide_moves">Esconder exercícios</string>
+    <string name="pack_get_ready">Prepare-se</string>
+    <string name="pack_next_up">Próximo</string>
+    <string name="pack_of_reps">de %1$d</string>
+    <string name="pack_pause">Pausar</string>
+    <string name="pack_resume">Continuar</string>
+    <string name="pack_done_part">do treino</string>
+    <string name="pack_incomplete_title">Treino incompleto</string>
+    <string name="pack_incomplete_body">Para contar e ganhar o bônus, faça pelo menos 60% do treino. Pular é permitido, mas o que foi pulado não conta.</string>
+    <string name="pack_retry">Fazer de novo</string>
 </resources>

@@ -13,11 +13,13 @@ enum class Move(
     val perSide: Boolean = false,
     val difficulty: Float = 1f,
     val stretch: Boolean = false,
+    // segundos por repetição no ritmo guiado (o app conta junto, não dá pra "pular" mais rápido)
+    val pace: Float = 3f,
 ) {
     // aquecimento
     MARCH(MoveKind.HOLD),
     ARM_CIRCLES(MoveKind.HOLD),
-    JUMPING_JACK(MoveKind.REPS, camera = Exercise.JUMPING_JACK),
+    JUMPING_JACK(MoveKind.REPS, camera = Exercise.JUMPING_JACK, pace = 1.5f),
 
     // braço e peito
     WALL_PUSHUP(MoveKind.REPS, difficulty = 0.4f),
@@ -29,29 +31,29 @@ enum class Move(
     PLANK(MoveKind.HOLD, camera = Exercise.PLANK),
 
     // pernas e glúteos
-    CHAIR_SQUAT(MoveKind.REPS, difficulty = 0.6f),
+    CHAIR_SQUAT(MoveKind.REPS, difficulty = 0.6f, pace = 3.5f),
     SQUAT(MoveKind.REPS, camera = Exercise.SQUAT),
-    JUMP_SQUAT(MoveKind.REPS, difficulty = 1.4f),
-    LUNGE(MoveKind.REPS, camera = Exercise.LUNGE, perSide = true),
+    JUMP_SQUAT(MoveKind.REPS, difficulty = 1.4f, pace = 3f),
+    LUNGE(MoveKind.REPS, camera = Exercise.LUNGE, perSide = true, pace = 3.5f),
     WALL_SIT(MoveKind.HOLD, camera = Exercise.WALL_SIT),
     GLUTE_BRIDGE(MoveKind.REPS),
-    CALF_RAISE(MoveKind.REPS),
+    CALF_RAISE(MoveKind.REPS, pace = 2.5f),
 
     // abdômen e core
     CRUNCH(MoveKind.REPS, difficulty = 0.7f),
     SITUP(MoveKind.REPS, camera = Exercise.SITUP),
-    DEAD_BUG(MoveKind.REPS, perSide = true),
-    BIRD_DOG(MoveKind.REPS, perSide = true),
+    DEAD_BUG(MoveKind.REPS, perSide = true, pace = 4f),
+    BIRD_DOG(MoveKind.REPS, perSide = true, pace = 4f),
     SIDE_PLANK(MoveKind.HOLD, perSide = true),
     MOUNTAIN_CLIMBER(MoveKind.HOLD),
-    BURPEE(MoveKind.REPS, camera = Exercise.BURPEE),
+    BURPEE(MoveKind.REPS, camera = Exercise.BURPEE, pace = 5f),
 
     // alongamentos
     NECK_TILT(MoveKind.HOLD, perSide = true, stretch = true),
     CHIN_TUCK(MoveKind.REPS, stretch = true),
     SHOULDER_ROLL(MoveKind.REPS, stretch = true),
     CHEST_OPENER(MoveKind.HOLD, stretch = true),
-    CAT_COW(MoveKind.REPS, stretch = true),
+    CAT_COW(MoveKind.REPS, stretch = true, pace = 5f),
     CHILD_POSE(MoveKind.HOLD, stretch = true),
     FORWARD_FOLD(MoveKind.HOLD, stretch = true),
     HAMSTRING_STRETCH(MoveKind.HOLD, perSide = true, stretch = true),
@@ -64,7 +66,7 @@ enum class Move(
     BUTTERFLY(MoveKind.HOLD, stretch = true),
 
     // na cadeira (qualquer idade)
-    SEATED_MARCH(MoveKind.REPS, stretch = true),
+    SEATED_MARCH(MoveKind.REPS, stretch = true, pace = 1.5f),
     SEATED_TWIST(MoveKind.HOLD, perSide = true, stretch = true),
     SEATED_FORWARD(MoveKind.HOLD, stretch = true),
     SEATED_REACH(MoveKind.HOLD, stretch = true),
@@ -72,7 +74,7 @@ enum class Move(
 
     // segundos estimados pra fazer essa quantidade (pra mostrar a duração do treino)
     fun secondsFor(amount: Int): Int {
-        val one = if (kind == MoveKind.HOLD) amount else amount * 3
-        return if (perSide) one * 2 else one
+        val one = if (kind == MoveKind.HOLD) amount.toFloat() else amount * pace
+        return Math.round(if (perSide) one * 2 else one)
     }
 }

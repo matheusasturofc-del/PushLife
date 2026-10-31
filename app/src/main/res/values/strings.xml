@@ -730,7 +730,7 @@
     <string name="feedback_hard">Too hard</string>
     <string name="feedback_hard_hint">I couldn\'t do it all properly. Let\'s ease off.</string>
     <string name="pack_bonus">+%1$s of screen time for this workout!</string>
-    <string name="pack_bonus_already">You already got this pack\'s bonus today. The workout still counts toward your progress!</string>
+    <string name="pack_bonus_already">The workout bonus is once a day and you already got today\'s. The workout still counts toward your progress!</string>
     <string name="pack_week_bonus">Week complete! +%1$s bonus</string>
     <string name="pack_days_title">Your workout days</string>
     <string name="pack_days_hint">Recommended: %1$d days a week. Tap to change the days.</string>
@@ -816,7 +816,7 @@
     <string name="learn_water_title">Drink water</string>
     <string name="learn_water_body">Drink water throughout the day and a little before and after training. A good sign: light-colored pee.</string>
     <string name="learn_free_title">Your free time</string>
-    <string name="learn_free_body">Every day you get half of your screen goal for free (1 h goal → 30 min). The rest you earn by training: each completed workout gives a bonus, and a full week gives more.</string>
+    <string name="learn_free_body">Every day you get half of your screen goal for free (1 h goal → 30 min). The rest you earn by training: the first program you do each day gives a bonus (based on how much you did), and a full week gives more.</string>
     <string name="learn_safety_title">Safety</string>
     <string name="learn_safety_body">Always warm up first. Stop if you feel sharp pain, dizziness or shortness of breath. If you have a health condition, an injury or are pregnant, talk to a doctor before starting.</string>
     <string name="learn_sources">Sources: WHO guidelines on physical activity (2020), American College of Sports Medicine (ACSM) and International Society of Sports Nutrition (ISSN) recommendations. The app is not certified by experts.</string>
@@ -837,4 +837,20 @@
     <string name="rec_progress_body">See your streak, your level and this week\'s reward.</string>
     <string name="quick_exercises">Quick exercises</string>
     <string name="profile_wipe_filter_note">The adult site filter stays on: it only goes away if you uninstall the app.</string>
+    <string name="pack_minutes">~%1$d min</string>
+    <string name="pack_go">Train</string>
+    <string name="pack_week_short">Week %1$d/%2$d</string>
+    <string name="pack_weeks">%1$d weeks</string>
+    <string name="pack_test_short">Take test</string>
+    <string name="pack_show_moves">See the %1$d exercises</string>
+    <string name="pack_hide_moves">Hide exercises</string>
+    <string name="pack_get_ready">Get ready</string>
+    <string name="pack_next_up">Next up</string>
+    <string name="pack_of_reps">of %1$d</string>
+    <string name="pack_pause">Pause</string>
+    <string name="pack_resume">Resume</string>
+    <string name="pack_done_part">of the workout</string>
+    <string name="pack_incomplete_title">Workout incomplete</string>
+    <string name="pack_incomplete_body">To count and earn the bonus, do at least 60% of the workout. You can skip, but skipped parts don\'t count.</string>
+    <string name="pack_retry">Try again</string>
 </resources>

@@ -42,9 +42,12 @@ class PackRepository(context: Context, private val bank: BankRepository, private
     fun stop(id: PackId) = save(id, progress(id).copy(startedOn = null))
 
     // terminou o treino: ajusta o nível e já põe os bônus no saldo
+    // bônus de treino: um por dia, somando todos os packs (senão dava pra fazer 10 packs e ganhar 10 vezes)
     @Synchronized
-    fun finish(id: PackId, feedback: Feedback, today: LocalDate = LocalDate.now()): Finish {
-        val result = PackPlanner.finish(PackCatalog.get(id), progress(id), feedback, today)
+    fun finish(id: PackId, feedback: Feedback, completion: Float, today: LocalDate = LocalDate.now()): Finish {
+        val bonusAvailable = _state.value.values.none { it.doneOn(today) }
+        val result = PackPlanner.finish(PackCatalog.get(id), progress(id), feedback, today, completion, bonusAvailable)
+        if (!result.counted) return result
         save(id, result.progress)
         val bonus = result.workoutBonus + result.weekBonus
         if (bonus > 0) bank.addBonus(bonus)
