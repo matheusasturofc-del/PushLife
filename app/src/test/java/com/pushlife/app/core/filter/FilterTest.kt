@@ -21,6 +21,10 @@ class DomainBlocklistTest {
     fun palavrasChavePegamEspelhos() {
         assertTrue(list.isBlocked("novo-site-porn.biz"))
         assertTrue(list.isBlocked("hentaiworld.example"))
+        // pedido: sushianimes e espelhos
+        assertTrue(list.isBlocked("sushianimes.com.br"))
+        assertTrue(list.isBlocked("www.sushianimes.com.br"))
+        assertTrue(list.isBlocked("sushianimes.net"))
     }
 
     @Test

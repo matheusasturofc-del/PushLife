@@ -34,7 +34,7 @@ class DomainBlocklist(
 
     companion object {
         // pedaços de nome quase só de site adulto ("sex" ficou de fora por causa de "essex")
-        val ADULT_KEYWORDS = listOf("porn", "xxx", "hentai", "xvideo", "xnxx", "xhamster", "redtube", "rule34")
+        val ADULT_KEYWORDS = listOf("porn", "xxx", "hentai", "xvideo", "xnxx", "xhamster", "redtube", "rule34", "sushianime")
 
         // os mais acessados, sempre bloqueados (o resto vem de assets/filter)
         val ADULT_DOMAINS = listOf(
@@ -48,6 +48,8 @@ class DomainBlocklist(
             "bangbros.com", "mofos.com", "digitalplayground.com", "erome.com", "redgifs.com",
             "imagefap.com", "rule34.xxx", "nhentai.net", "e-hentai.org", "exhentai.org", "hanime.tv",
             "hentaihaven.xxx", "hentai2read.com", "hitomi.la", "tsumino.com", "luscious.net", "f95zone.to",
+            // pedidos pelo dono do app
+            "sushianimes.com.br",
         )
 
         // gore / violência explícita: lista nossa (não achei uma pública com licença livre)
