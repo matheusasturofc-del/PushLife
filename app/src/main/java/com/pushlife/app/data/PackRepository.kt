@@ -26,6 +26,11 @@ class PackRepository(context: Context, private val bank: BankRepository, private
         get() = prefs.getBoolean(KEY_LEARN, false)
         set(value) = prefs.edit { putBoolean(KEY_LEARN, value) }
 
+    // contar com a câmera nos packs (liga sozinha nos movimentos que ela confere)
+    var useCamera: Boolean
+        get() = prefs.getBoolean(KEY_CAMERA, true)
+        set(value) = prefs.edit { putBoolean(KEY_CAMERA, value) }
+
     fun progress(id: PackId): PackProgress = _state.value[id] ?: PackProgress()
 
     @Synchronized
@@ -69,5 +74,6 @@ class PackRepository(context: Context, private val bank: BankRepository, private
 
     private companion object {
         const val KEY_LEARN = "learn_seen"
+        const val KEY_CAMERA = "use_camera"
     }
 }

@@ -58,6 +58,13 @@ class PoseFrame(
             ?.first
     }
 
+    // um lado específico (esquerdo ou direito), se as partes pedidas estiverem visíveis
+    fun side(left: Boolean, vararg needed: SidePart): Side? {
+        val (side, visibilityOf) = sideOf(left)
+        val score = needed.minOfOrNull { visibilityOf(it) } ?: 1f
+        return side?.takeIf { score >= minVisibility }
+    }
+
     private fun sideOf(left: Boolean): Pair<Side?, (SidePart) -> Float> {
         fun j(l: Joint, r: Joint) = points[if (left) l else r]
         val parts = mapOf(

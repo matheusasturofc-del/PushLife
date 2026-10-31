@@ -117,7 +117,7 @@ fun smoothFactor(elapsedMs: Long, smoothMs: Long = SMOOTH_MS): Float =
 private fun PoseFrame.isLeft(side: Side) = this[Joint.LEFT_SHOULDER] == side.shoulder || this[Joint.LEFT_HIP] == side.hip
 
 // segura o aviso na tela um tempinho (1,5 s)
-private class StickyCue(private val durationMs: Long = 1_500) {
+internal class StickyCue(private val durationMs: Long = 1_500) {
     private var cue: Cue? = null
     private var until = 0L
     fun set(c: Cue, now: Long) {

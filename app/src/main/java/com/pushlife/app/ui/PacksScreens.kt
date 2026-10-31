@@ -107,7 +107,7 @@ import com.pushlife.app.core.packs.PackProgress
 import com.pushlife.app.core.packs.Phase
 import com.pushlife.app.core.packs.TestType
 import com.pushlife.app.core.packs.Workouts
-import com.pushlife.app.core.pose.PoseTracker
+import com.pushlife.app.core.pose.PackTrackers
 import kotlinx.coroutines.delay
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.material3.ButtonDefaults
@@ -553,10 +553,20 @@ private fun PackWorkout(id: PackId, onExit: () -> Unit, onDone: (Float) -> Unit,
     // segundos de exercício feitos de verdade (pra saber quanto do treino foi feito)
     var doneSeconds by rememberSaveable { mutableIntStateOf(0) }
     var paused by remember { mutableStateOf(false) }
-    var camera by remember { mutableStateOf(false) }
     var confirmExit by remember { mutableStateOf(false) }
     val context = LocalContext.current
-    val askCamera = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { ok -> camera = ok }
+    // câmera: escolha guardada (padrão ligada) + permissão; só liga nos movimentos que ela confere
+    var cameraWanted by remember { mutableStateOf(AppGraph.packs.useCamera) }
+    var cameraAllowed by remember {
+        mutableStateOf(ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED)
+    }
+    val askCamera = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { ok ->
+        cameraAllowed = ok
+        if (ok) {
+            cameraWanted = true
+            AppGraph.packs.useCamera = true
+        }
+    }
     val tone = remember { runCatching { ToneGenerator(AudioManager.STREAM_MUSIC, 80) }.getOrNull() }
     val view = LocalView.current
     DisposableEffect(Unit) {
@@ -579,11 +589,17 @@ private fun PackWorkout(id: PackId, onExit: () -> Unit, onDone: (Float) -> Unit,
     var elapsed by remember(index, stage) { mutableLongStateOf(0L) }
     var extraRest by remember(index, stage) { mutableLongStateOf(0L) }
     var cameraCount by remember(index) { mutableIntStateOf(0) }
-    val cameraTarget = if (step.move.perSide) step.amount * 2 else step.amount
+    val canCamera = remember(step.move) { PackTrackers.forMove(step.move) != null }
+    val camera = stage == PlayStage.WORK && canCamera && cameraWanted && cameraAllowed
+    // segurar: segundos (os dois lados somados); repetição: reps (cada lado conta)
+    val cameraTarget = when {
+        step.move.kind == MoveKind.HOLD -> step.move.secondsFor(step.amount)
+        step.move.perSide -> step.amount * 2
+        else -> step.amount
+    }
 
     fun goNext(completedWork: Boolean) {
         if (stage == PlayStage.WORK && completedWork) doneSeconds += step.move.secondsFor(step.amount)
-        camera = false
         when (stage) {
             PlayStage.GET_READY -> stage = PlayStage.WORK
             PlayStage.WORK -> if (index >= steps.lastIndex) onDone(doneSeconds.toFloat() / totalWork) else stage = PlayStage.REST
@@ -717,11 +733,13 @@ private fun PackWorkout(id: PackId, onExit: () -> Unit, onDone: (Float) -> Unit,
             }
             when {
                 stage == PlayStage.REST && step.restAfter > 0 -> TextButton(onClick = { extraRest += 15_000 }) { Text(stringResource(R.string.pack_rest_more)) }
-                stage == PlayStage.WORK && step.move.camera != null && step.move.kind == MoveKind.REPS -> IconButton(onClick = {
+                stage == PlayStage.WORK && canCamera -> IconButton(onClick = {
                     if (camera) {
-                        camera = false
-                    } else if (ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
-                        camera = true
+                        cameraWanted = false
+                        AppGraph.packs.useCamera = false
+                    } else if (cameraAllowed) {
+                        cameraWanted = true
+                        AppGraph.packs.useCamera = true
                     } else {
                         askCamera.launch(Manifest.permission.CAMERA)
                     }
@@ -771,11 +789,12 @@ private fun Ring(progress: Float, big: String, small: String, modifier: Modifier
     }
 }
 
-// câmera contando as reps do movimento (soma no saldo como no treino livre)
+// câmera contando o movimento: reps ou segundos segurando a pose
+// os que também existem no treino livre somam no saldo como lá
 @Composable
 private fun CameraCounter(move: Move, onCount: (Int) -> Unit, count: Int, target: Int, modifier: Modifier = Modifier) {
-    val exercise = move.camera ?: return
-    val tracker = remember(move) { PoseTracker.forExercise(exercise) }
+    val tracker = remember(move) { PackTrackers.forMove(move) } ?: return
+    val exercise = move.camera
     var rig by remember { mutableStateOf<Rig?>(null) }
     var cue by remember { mutableStateOf(com.pushlife.app.core.pose.Cue.GET_READY) }
     val shape = RoundedCornerShape(24.dp)
@@ -791,7 +810,7 @@ private fun CameraCounter(move: Move, onCount: (Int) -> Unit, count: Int, target
                 rig = reading?.rig
                 cue = update.cue
                 if (update.counted > 0) {
-                    AppGraph.bank.addExercise(exercise, update.counted, LocalDate.now())
+                    exercise?.let { AppGraph.bank.addExercise(it, update.counted, LocalDate.now()) }
                     onCount(update.counted)
                 }
             },
