@@ -79,6 +79,7 @@ import androidx.core.content.pm.PackageInfoCompat
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.pushlife.app.AppGraph
+import com.pushlife.app.MainActivity
 import com.pushlife.app.R
 import com.pushlife.app.core.Profile
 import com.pushlife.app.core.Rules
@@ -368,6 +369,8 @@ fun ProfileScreen(modifier: Modifier = Modifier) {
                                         Accounts.backup(context, force = true)
                                         Accounts.signOut()
                                         save { it.copy(username = "") }
+                                        // volta pra casinha com a animação de saída
+                                        (context as? MainActivity)?.newSession()
                                     }) { Text(stringResource(R.string.account_sign_out)) }
                                     TextButton(onClick = { confirmDeleteAccount = true }) {
                                         Text(stringResource(R.string.account_delete), color = MaterialTheme.colorScheme.error)

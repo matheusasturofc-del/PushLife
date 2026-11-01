@@ -5,11 +5,15 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.os.SystemClock
-import androidx.fragment.app.FragmentActivity
-import com.pushlife.app.security.AppLock
-import com.pushlife.app.ui.LockScreen
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -30,6 +34,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import com.pushlife.app.blocking.BlockerService
@@ -41,8 +46,10 @@ import com.pushlife.app.data.ProgressCenter
 import com.pushlife.app.data.UpdateChecker
 import com.pushlife.app.filter.DnsFilterService
 import com.pushlife.app.reminder.DailyCheck
+import com.pushlife.app.security.AppLock
 import com.pushlife.app.ui.ChooseUsernameScreen
 import com.pushlife.app.ui.IntroAnimation
+import com.pushlife.app.ui.LockScreen
 import com.pushlife.app.ui.PreparingScreen
 import com.pushlife.app.ui.PushLifeApp
 import com.pushlife.app.ui.TermsScreen
@@ -57,6 +64,20 @@ class MainActivity : FragmentActivity() {
     // trava com digital/senha: ligada no Perfil; trava ao abrir e ao voltar depois de 30 s fora
     private var locked by mutableStateOf(false)
     private var stoppedAt = 0L
+
+    // muda a cada login/logout/restauração: a tela do app começa de novo, na casinha
+    private var session by mutableIntStateOf(0)
+
+    private enum class Screen { LOCK, INTRO, PREPARE, TERMS, UPDATE, APP, WELCOME }
+
+    // chamado depois de entrar/sair da conta ou trocar os dados (no lugar de recriar a activity,
+    // que piscava a tela e voltava na aba onde a pessoa estava)
+    fun newSession() {
+        // sem pedido de treino pendente, senão a sessão nova abriria na aba Treinar
+        trainRequests = 0
+        pendingExercise = null
+        session++
+    }
 
     // cada pedido pra abrir o treino soma 1 (fim das boas-vindas ou tela de bloqueio)
     private var trainRequests by mutableIntStateOf(0)
@@ -83,32 +104,53 @@ class MainActivity : FragmentActivity() {
                 var showIntro by rememberSaveable { mutableStateOf(savedInstanceState == null) }
                 var needsPrepare by rememberSaveable { mutableStateOf(Legal.needsPrepare(this@MainActivity)) }
                 var needsTerms by rememberSaveable { mutableStateOf(!Legal.termsAccepted(this@MainActivity)) }
-                if (locked) {
-                    LockScreen(onUnlock = { unlock() })
-                } else if (showIntro) {
-                    IntroAnimation(onDone = { showIntro = false })
-                } else if (needsPrepare) {
-                    PreparingScreen(onDone = { needsPrepare = false })
-                } else if (needsTerms) {
-                    TermsScreen(onAccept = { needsTerms = false })
-                } else if (update != null) {
-                    // versão velha demais: trava tudo até atualizar
-                    UpdateRequiredScreen(update!!)
-                } else if (profile.onboardingDone) {
-                    PushLifeApp(
-                        trainRequests = trainRequests,
-                        pendingExercise = pendingExercise,
-                        onExerciseOpened = { pendingExercise = null },
-                    )
-                } else {
-                    OnboardingScreen(
-                        onFinished = { exercise ->
-                            if (exercise != null) {
-                                pendingExercise = exercise
-                                trainRequests++
-                            }
-                        },
-                    )
+                val screen = when {
+                    locked -> Screen.LOCK
+                    showIntro -> Screen.INTRO
+                    needsPrepare -> Screen.PREPARE
+                    needsTerms -> Screen.TERMS
+                    update != null -> Screen.UPDATE
+                    profile.onboardingDone -> Screen.APP
+                    else -> Screen.WELCOME
+                }
+                // cada login/logout é uma "sessão" nova: o app remonta do zero (volta pra casinha)
+                // e entra com animação; trocar de tela também anima
+                AnimatedContent(
+                    targetState = screen to session,
+                    transitionSpec = {
+                        val (from, oldSession) = initialState
+                        val (to, newSession) = targetState
+                        if (newSession != oldSession || (from == Screen.APP) != (to == Screen.APP)) {
+                            // entrou ou saiu da conta: a tela velha encolhe e some, a nova cresce
+                            (fadeIn(tween(420, delayMillis = 120)) + scaleIn(tween(420, delayMillis = 120), initialScale = 0.9f)) togetherWith
+                                (fadeOut(tween(220)) + scaleOut(tween(220), targetScale = 1.06f))
+                        } else {
+                            fadeIn(tween(300)) togetherWith fadeOut(tween(200))
+                        }
+                    },
+                    label = "screen",
+                ) { (current, _) ->
+                    when (current) {
+                        Screen.LOCK -> LockScreen(onUnlock = { unlock() })
+                        Screen.INTRO -> IntroAnimation(onDone = { showIntro = false })
+                        Screen.PREPARE -> PreparingScreen(onDone = { needsPrepare = false })
+                        Screen.TERMS -> TermsScreen(onAccept = { needsTerms = false })
+                        // versão velha demais: trava tudo até atualizar
+                        Screen.UPDATE -> update?.let { UpdateRequiredScreen(it) }
+                        Screen.APP -> PushLifeApp(
+                            trainRequests = trainRequests,
+                            pendingExercise = pendingExercise,
+                            onExerciseOpened = { pendingExercise = null },
+                        )
+                        Screen.WELCOME -> OnboardingScreen(
+                            onFinished = { exercise ->
+                                if (exercise != null) {
+                                    pendingExercise = exercise
+                                    trainRequests++
+                                }
+                            },
+                        )
+                    }
                 }
                 if (!locked && !showIntro && !needsPrepare && !needsTerms) OAuthOverlay()
               }

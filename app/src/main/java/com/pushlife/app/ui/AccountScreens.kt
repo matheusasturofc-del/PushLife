@@ -62,6 +62,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.pushlife.app.AppGraph
+import com.pushlife.app.MainActivity
 import com.pushlife.app.R
 import com.pushlife.app.blocking.BlockerService
 import com.pushlife.app.core.Username
@@ -574,10 +575,11 @@ fun ChooseUsernameScreen(initialName: String, onCancel: () -> Unit) {
     }
 }
 
-// depois de mexer nos dados da conta: reajusta serviços/lembretes e recria a tela
+// depois de mexer nos dados da conta: reajusta serviços/lembretes e começa uma sessão nova
+// (a tela principal remonta na casinha, com animação)
 fun reloadAfterDataChange(context: Context) {
     BlockerService.syncWithSettings(context)
     DnsFilterService.syncWithSettings(context)
     AppGraph.profile.state.value.reminder?.let { Reminders.schedule(context, it) } ?: Reminders.cancel(context)
-    (context as? Activity)?.recreate()
+    (context as? MainActivity)?.newSession() ?: (context as? Activity)?.recreate()
 }
