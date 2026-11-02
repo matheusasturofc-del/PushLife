@@ -46,8 +46,10 @@ import com.pushlife.app.data.ProgressCenter
 import com.pushlife.app.data.UpdateChecker
 import com.pushlife.app.filter.DnsFilterService
 import com.pushlife.app.reminder.DailyCheck
+import com.pushlife.app.reminder.PackReminder
 import com.pushlife.app.security.AppLock
 import com.pushlife.app.ui.ChooseUsernameScreen
+import com.pushlife.app.ui.CrashReportDialog
 import com.pushlife.app.ui.IntroAnimation
 import com.pushlife.app.ui.LockScreen
 import com.pushlife.app.ui.PreparingScreen
@@ -95,6 +97,7 @@ class MainActivity : FragmentActivity() {
         enableEdgeToEdge()
         if (savedInstanceState == null) handleIntent(intent)
         DailyCheck.schedule(this)
+        PackReminder.schedule(this)
         UpdateChecker.loadCached(this)
         setContent {
             PushLifeTheme {
@@ -153,6 +156,7 @@ class MainActivity : FragmentActivity() {
                     }
                 }
                 if (!locked && !showIntro && !needsPrepare && !needsTerms) OAuthOverlay()
+                if (!locked && !showIntro) CrashReportDialog()
               }
             }
         }

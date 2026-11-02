@@ -24,6 +24,7 @@ object Notifier {
     const val ID_STREAK = 4
     const val ID_WEEKLY = 5
     const val ID_GOAL = 6
+    const val ID_PACKS = 7
 
     fun notify(context: Context, channel: String, id: Int, title: String, text: String) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&

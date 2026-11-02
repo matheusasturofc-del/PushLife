@@ -884,4 +884,24 @@
     <string name="profile_tab_account">Account</string>
     <string name="profile_security">Security</string>
     <string name="profile_danger">Danger zone</string>
+    <string name="notif_pack_title">It\'s workout day 💪</string>
+    <string name="notif_pack_body">Today: %1$s (~%2$d min). Let\'s go?</string>
+    <string name="notif_pack_body_many">Today: %1$s</string>
+    <string name="profile_notify_packs">Remind me on program workout days</string>
+    <string name="filter_always_on_ok">✓ Maximum protection: always-on VPN is on. Android restarts the filter by itself, even after a reboot.</string>
+    <string name="filter_max_title">Maximum protection (recommended)</string>
+    <string name="filter_max_steps">1. Tap the button below.
+2. Tap the gear next to PushLife.
+3. Turn on \"Always-on VPN\".
+This way the filter starts by itself after a reboot and comes back if someone disconnects it.</string>
+    <string name="filter_max_warning">Don\'t turn on \"Block connections without VPN\": PushLife only checks site addresses, and that option would leave your phone without internet.</string>
+    <string name="filter_max_open">Open VPN settings</string>
+    <string name="crash_title">The app closed unexpectedly</string>
+    <string name="crash_body">Last time PushLife closed because of an error. Want to send the report by email? It only has the app version, the phone model and where the error happened, nothing personal.</string>
+    <string name="crash_send">Send</string>
+    <string name="crash_skip">Not now</string>
+    <string name="crash_subject">PushLife: the app crashed</string>
+    <string name="problem_report">Report a problem</string>
+    <string name="problem_subject">PushLife: problem</string>
+    <string name="problem_body_hint">What happened? (if you can, say which screen and attach a screenshot)</string>
 </resources>

@@ -877,4 +877,24 @@
     <string name="profile_tab_account">Cuenta</string>
     <string name="profile_security">Seguridad</string>
     <string name="profile_danger">Zona de peligro</string>
+    <string name="notif_pack_title">Hoy toca entrenar 💪</string>
+    <string name="notif_pack_body">Hoy toca %1$s (~%2$d min). ¿Vamos?</string>
+    <string name="notif_pack_body_many">Hoy toca: %1$s</string>
+    <string name="profile_notify_packs">Avisar los días de entrenamiento de los programas</string>
+    <string name="filter_always_on_ok">✓ Protección máxima: VPN siempre activa encendida. Android reactiva el filtro solo, incluso tras reiniciar.</string>
+    <string name="filter_max_title">Protección máxima (recomendado)</string>
+    <string name="filter_max_steps">1. Toca el botón de abajo.
+2. Toca el engranaje junto a PushLife.
+3. Activa \"VPN siempre activa\".
+Así el filtro se enciende solo al reiniciar el celular y vuelve si alguien lo desconecta.</string>
+    <string name="filter_max_warning">No actives \"Bloquear conexiones sin VPN\": PushLife solo revisa las direcciones de los sitios, y esa opción dejaría el celular sin internet.</string>
+    <string name="filter_max_open">Abrir ajustes de VPN</string>
+    <string name="crash_title">La app se cerró sola</string>
+    <string name="crash_body">La última vez PushLife se cerró por un error. ¿Quieres enviar el informe por correo? Solo tiene la versión de la app, el modelo del celular y dónde ocurrió el error, nada personal.</string>
+    <string name="crash_send">Enviar</string>
+    <string name="crash_skip">Ahora no</string>
+    <string name="crash_subject">PushLife: la app se cerró</string>
+    <string name="problem_report">Informar un problema</string>
+    <string name="problem_subject">PushLife: problema</string>
+    <string name="problem_body_hint">¿Qué pasó? (si puedes, di en qué pantalla y adjunta una captura)</string>
 </resources>

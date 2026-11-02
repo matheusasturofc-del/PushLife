@@ -91,6 +91,10 @@
             android:exported="false" />
 
         <receiver
+            android:name=".reminder.PackReminderReceiver"
+            android:exported="false" />
+
+        <receiver
             android:name=".reminder.DailyCheckReceiver"
             android:exported="false" />
 

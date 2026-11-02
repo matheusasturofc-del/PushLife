@@ -6,6 +6,7 @@ import com.pushlife.app.data.Accounts
 import com.pushlife.app.data.AppLanguage
 import com.pushlife.app.data.BankRepository
 import com.pushlife.app.data.BlockSettingsRepository
+import com.pushlife.app.data.CrashLog
 import com.pushlife.app.data.PackRepository
 import com.pushlife.app.data.ProfileRepository
 import com.pushlife.app.data.ProgressRepository
@@ -18,6 +19,7 @@ class PushLifeApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        CrashLog.install(this)
         // na versão das capturas, datas também em inglês
         if (resources.getBoolean(R.bool.english_only)) Locale.setDefault(Locale.US)
         AppGraph.load(this)

@@ -57,6 +57,7 @@ class BootReceiver : BroadcastReceiver() {
         if (intent.action != Intent.ACTION_BOOT_COMPLETED) return
         AppGraph.profile.state.value.reminder?.let { Reminders.schedule(context, it) }
         DailyCheck.schedule(context)
+        PackReminder.schedule(context)
         BlockerService.syncWithSettings(context)
         DnsFilterService.syncWithSettings(context)
     }

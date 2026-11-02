@@ -5,6 +5,9 @@ import android.content.Intent
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.net.VpnService
+import android.os.Build
+import android.os.Handler
+import android.os.Looper
 import android.os.ParcelFileDescriptor
 import com.pushlife.app.AppGraph
 import com.pushlife.app.core.filter.Dns
@@ -51,8 +54,16 @@ class DnsFilterService : VpnService() {
         return START_STICKY
     }
 
+    // alguém desconectou a VPN nas configurações do Android: se o filtro continua ligado no app,
+    // ele volta sozinho (desligar de verdade só pelo desafio do app ou desinstalando)
     override fun onRevoke() {
         shutdown()
+        if (AppGraph.blocking.state.value.adultFilter && prepare(this) == null) {
+            Handler(Looper.getMainLooper()).postDelayed({
+                if (tun == null && AppGraph.blocking.state.value.adultFilter) startFilter()
+            }, 1_500)
+            return
+        }
         super.onRevoke()
     }
 
@@ -69,6 +80,8 @@ class DnsFilterService : VpnService() {
             .addRoute(FAKE_DNS, 32) // só o tráfego para o "DNS falso" entra na VPN
             .establish() ?: return
         tun = fd
+        // Android 10+: dá pra saber se a pessoa ligou "VPN sempre ativa" pro PushLife
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) _alwaysOn.value = isAlwaysOn
         Thread({ loadBigList() }, "pushlife-blocklist").start()
         workers = Executors.newFixedThreadPool(4)
         reader = Thread({ readLoop(fd) }, "pushlife-dns").also { it.start() }
@@ -188,6 +201,10 @@ class DnsFilterService : VpnService() {
 
         private val _running = MutableStateFlow(false)
         val running: StateFlow<Boolean> = _running.asStateFlow()
+
+        // null = Android antigo, não dá pra saber
+        private val _alwaysOn = MutableStateFlow<Boolean?>(null)
+        val alwaysOn: StateFlow<Boolean?> = _alwaysOn.asStateFlow()
 
         // liga/desliga conforme o ajuste (só liga se a VPN já foi autorizada)
         fun syncWithSettings(context: Context) {

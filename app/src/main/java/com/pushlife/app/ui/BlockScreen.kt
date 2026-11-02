@@ -2,10 +2,11 @@ package com.pushlife.app.ui
 
 import android.Manifest
 import android.app.Activity
-import android.net.VpnService
 import android.content.Context
 import android.content.Intent
+import android.net.VpnService
 import android.os.Build
+import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.StringRes
@@ -33,6 +34,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -59,10 +61,10 @@ import com.pushlife.app.blocking.InstalledApps
 import com.pushlife.app.blocking.Permissions
 import com.pushlife.app.core.Rules
 import com.pushlife.app.filter.DnsFilterService
+import java.time.LocalDate
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
-import java.time.LocalDate
 
 private const val DISABLE_WAIT_SECONDS = 30
 
@@ -94,6 +96,7 @@ fun BlockScreen(modifier: Modifier = Modifier) {
     var askDisable by remember { mutableStateOf(false) }
     var askDisableFilter by remember { mutableStateOf(false) }
     val filterRunning by DnsFilterService.running.collectAsStateWithLifecycle()
+    val filterAlwaysOn by DnsFilterService.alwaysOn.collectAsStateWithLifecycle()
     // o Android pede autorização uma vez só pra criar a VPN do filtro
     val vpnConsent = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
@@ -150,6 +153,8 @@ fun BlockScreen(modifier: Modifier = Modifier) {
             AdultFilterCard(
                 enabled = settings.adultFilter,
                 running = filterRunning,
+                alwaysOn = filterAlwaysOn,
+                onOpenVpnSettings = { context.startSafely(Intent(Settings.ACTION_VPN_SETTINGS)) },
                 onToggle = { on ->
                     if (on) {
                         val consent = VpnService.prepare(context)
@@ -258,7 +263,13 @@ fun BlockScreen(modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun AdultFilterCard(enabled: Boolean, running: Boolean, onToggle: (Boolean) -> Unit) {
+private fun AdultFilterCard(
+    enabled: Boolean,
+    running: Boolean,
+    alwaysOn: Boolean?,
+    onOpenVpnSettings: () -> Unit,
+    onToggle: (Boolean) -> Unit,
+) {
     val colors = MaterialTheme.colorScheme
     Column(
         Modifier
@@ -285,6 +296,20 @@ private fun AdultFilterCard(enabled: Boolean, running: Boolean, onToggle: (Boole
         )
         if (enabled) {
             Text(stringResource(R.string.filter_tips), style = MaterialTheme.typography.bodySmall, color = colors.onSurfaceVariant)
+            // proteção máxima: "VPN sempre ativa" faz o Android religar o filtro sozinho (até depois de reiniciar)
+            if (alwaysOn == true) {
+                Text(stringResource(R.string.filter_always_on_ok), style = MaterialTheme.typography.bodyMedium, color = colors.primary)
+            } else {
+                Column(
+                    Modifier.fillMaxWidth().background(colors.surface, RoundedCornerShape(16.dp)).padding(14.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
+                    Text(stringResource(R.string.filter_max_title), style = MaterialTheme.typography.titleSmall)
+                    Text(stringResource(R.string.filter_max_steps), style = MaterialTheme.typography.bodySmall)
+                    Text(stringResource(R.string.filter_max_warning), style = MaterialTheme.typography.bodySmall, color = colors.error)
+                    OutlinedButton(onClick = onOpenVpnSettings) { Text(stringResource(R.string.filter_max_open)) }
+                }
+            }
         }
     }
 }

@@ -302,6 +302,11 @@ fun ProfileScreen(modifier: Modifier = Modifier) {
                     ToggleRow(R.string.profile_notify_streak, profile.notifyStreak) { v -> save { it.copy(notifyStreak = v) } }
                     ToggleRow(R.string.profile_notify_weekly, profile.notifyWeekly) { v -> save { it.copy(notifyWeekly = v) } }
                     ToggleRow(R.string.profile_notify_low, profile.notifyLowTime) { v -> save { it.copy(notifyLowTime = v) } }
+                    var packNotify by remember { mutableStateOf(AppGraph.packs.notifyToday) }
+                    ToggleRow(R.string.profile_notify_packs, packNotify) { v ->
+                        AppGraph.packs.notifyToday = v
+                        packNotify = v
+                    }
                 }
             }
             item {
@@ -349,6 +354,9 @@ fun ProfileScreen(modifier: Modifier = Modifier) {
                                 }
                             }
                         }
+                    TextButton(onClick = { sendProblemReport(context) }, modifier = Modifier.padding(horizontal = 8.dp)) {
+                        Text(stringResource(R.string.problem_report))
+                    }
                 }
             }
         } else {
