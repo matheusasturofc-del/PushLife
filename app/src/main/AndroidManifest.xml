@@ -30,6 +30,11 @@
 
     <!-- Caminhada (fase 4): contador de passos do celular -->
     <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION" />
+    <!-- caminhada: GPS opcional pra confirmar que andou (só durante a caminhada, não sai do celular) -->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <!-- mantém os sensores da caminhada funcionando com a tela apagada -->
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-feature android:name="android.hardware.sensor.stepcounter" android:required="false" />
 
     <application

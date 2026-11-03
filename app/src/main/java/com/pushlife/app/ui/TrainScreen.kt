@@ -82,7 +82,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.pushlife.app.AppGraph
 import com.pushlife.app.R
 import com.pushlife.app.camera.PoseCamera
-import com.pushlife.app.camera.StepCounterEffect
+import com.pushlife.app.camera.WalkSensorsEffect
 import com.pushlife.app.camera.StepSensor
 import com.pushlife.app.core.Exercise
 import com.pushlife.app.core.ExerciseUnit
@@ -92,6 +92,10 @@ import com.pushlife.app.core.pose.PoseTracker
 import com.pushlife.app.core.progress.Achievement
 import com.pushlife.app.core.progress.Levels
 import com.pushlife.app.data.ProgressCenter
+import com.pushlife.app.core.steps.StepReject
+import com.pushlife.app.core.steps.StepValidator
+import com.pushlife.app.data.WalkSettings
+import androidx.compose.material3.Switch
 import java.time.LocalDate
 
 private enum class Stage { Pick, Intro, Active, Summary }
@@ -276,6 +280,7 @@ private fun IntroStage(exercise: Exercise, onBack: () -> Unit, onStart: () -> Un
         if (sensorMissing) {
             Text(stringResource(R.string.walk_no_sensor), color = MaterialTheme.colorScheme.error)
         }
+        if (exercise.tracking == Tracking.STEPS && !sensorMissing) WalkGpsOption()
         if (denied) {
             Text(
                 stringResource(if (exercise.tracking == Tracking.STEPS) R.string.activity_permission_denied else R.string.camera_permission_denied),
@@ -346,6 +351,10 @@ private class Session(val exercise: Exercise) {
 @Composable
 private fun ActiveStage(exercise: Exercise, onFinish: (SessionResult) -> Unit, modifier: Modifier = Modifier) {
     val session = remember(exercise) { Session(exercise) }
+    val context = LocalContext.current
+    val walk = remember(exercise) { StepValidator() }
+    var walkRejected by remember { mutableIntStateOf(0) }
+    var walkReason by remember { mutableStateOf<StepReject?>(null) }
     val phrases = stringArrayResource(R.array.motivation)
     var phrase by remember { mutableStateOf("") }
 
@@ -384,9 +393,12 @@ private fun ActiveStage(exercise: Exercise, onFinish: (SessionResult) -> Unit, m
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         if (exercise.tracking == Tracking.STEPS) {
-            StepCounterEffect { steps ->
+            // passos conferidos (ritmo, giro do celular e GPS); entram no saldo de uma vez ao finalizar
+            WalkSensorsEffect(walk, useGps = remember { WalkSettings.useGps(context) }) {
                 session.tracking = true
-                session.amount = steps // passos são creditados de uma vez ao finalizar
+                session.amount = walk.validSteps
+                walkRejected = walk.totalRejected
+                walkReason = walk.lastReject
             }
             Text(cueLabel, style = MaterialTheme.typography.headlineSmall, textAlign = TextAlign.Center)
             Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
@@ -399,6 +411,22 @@ private fun ActiveStage(exercise: Exercise, onFinish: (SessionResult) -> Unit, m
                         color = MaterialTheme.colorScheme.primary,
                     )
                     Text(stringResource(unitLabel(exercise)), style = MaterialTheme.typography.titleMedium)
+                    Text(
+                        stringResource(R.string.walk_rules),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(top = 8.dp, start = 16.dp, end = 16.dp),
+                    )
+                    if (walkRejected > 0) {
+                        Text(
+                            stringResource(R.string.walk_rejected, walkRejected, stringResource(walkReason.text)),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.error,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.padding(top = 8.dp, start = 16.dp, end = 16.dp),
+                        )
+                    }
                 }
             }
         } else {
@@ -487,7 +515,12 @@ private fun ActiveStage(exercise: Exercise, onFinish: (SessionResult) -> Unit, m
         if (exercise.tracking != Tracking.STEPS) Spacer(Modifier.weight(1f))
         Button(
             onClick = {
-                if (exercise.tracking == Tracking.STEPS) session.credit(session.amount)
+                if (exercise.tracking == Tracking.STEPS) {
+                    // fecha o último trecho antes de creditar
+                    walk.finish(SystemClock.elapsedRealtime())
+                    session.amount = walk.validSteps
+                    session.credit(session.amount)
+                }
                 onFinish(SessionResult(exercise, session.amount, session.earned, session.hitCap))
             },
             modifier = Modifier.fillMaxWidth().height(60.dp),
@@ -577,5 +610,53 @@ private fun SummaryStage(
         Button(onClick = onAgain, modifier = Modifier.fillMaxWidth().height(56.dp)) { Text(stringResource(R.string.train_again)) }
         OutlinedButton(onClick = onOther, modifier = Modifier.fillMaxWidth().height(56.dp)) { Text(stringResource(R.string.train_other)) }
         OutlinedButton(onClick = onBackHome, modifier = Modifier.fillMaxWidth().height(56.dp)) { Text(stringResource(R.string.back_home)) }
+    }
+}
+
+// motivo de passos não contarem
+@get:StringRes
+private val StepReject?.text: Int
+    get() = when (this) {
+        StepReject.ARM_SWING -> R.string.walk_reject_arm
+        StepReject.TOO_FAST -> R.string.walk_reject_fast
+        StepReject.VEHICLE -> R.string.walk_reject_vehicle
+        StepReject.NOT_MOVING -> R.string.walk_reject_still
+        StepReject.TOO_SHORT, null -> R.string.walk_reject_short
+    }
+
+// opção de confirmar a caminhada com o GPS (pede a localização só quando liga)
+@Composable
+private fun WalkGpsOption() {
+    val context = LocalContext.current
+    fun allowed() = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+    var on by remember { mutableStateOf(WalkSettings.useGps(context) && allowed()) }
+    val ask = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { ok ->
+        on = ok
+        WalkSettings.setUseGps(context, ok)
+    }
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(20.dp))
+            .background(MaterialTheme.colorScheme.surfaceContainer)
+            .padding(16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text(stringResource(R.string.walk_gps_title), style = MaterialTheme.typography.titleMedium)
+            Text(stringResource(R.string.walk_gps_body), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        Switch(
+            checked = on,
+            onCheckedChange = { want ->
+                if (want && !allowed()) {
+                    ask.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+                } else {
+                    on = want
+                    WalkSettings.setUseGps(context, want)
+                }
+            },
+        )
     }
 }

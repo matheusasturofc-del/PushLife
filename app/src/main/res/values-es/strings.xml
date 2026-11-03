@@ -897,4 +897,13 @@ Así el filtro se enciende solo al reiniciar el celular y vuelve si alguien lo d
     <string name="problem_report">Informar un problema</string>
     <string name="problem_subject">PushLife: problema</string>
     <string name="problem_body_hint">¿Qué pasó? (si puedes, di en qué pantalla y adjunta una captura)</string>
+    <string name="walk_rules">Solo cuentan pasos de caminata de verdad: 20 s seguidos, sin balancear el celular.</string>
+    <string name="walk_rejected">%1$d pasos no contaron (%2$s)</string>
+    <string name="walk_reject_arm">pareció balanceo de brazo</string>
+    <string name="walk_reject_fast">demasiado rápido para pasos</string>
+    <string name="walk_reject_vehicle">el GPS mostró que ibas en un vehículo</string>
+    <string name="walk_reject_still">el GPS mostró que estabas quieto</string>
+    <string name="walk_reject_short">tramo corto, menos de 20 s caminando</string>
+    <string name="walk_gps_title">Confirmar con GPS</string>
+    <string name="walk_gps_body">Más difícil de engañar: no cuentan pasos en auto ni quieto en el lugar. La ubicación solo se usa durante la caminata y no sale del celular. Dentro de casa el GPS es débil y no molesta.</string>
 </resources>

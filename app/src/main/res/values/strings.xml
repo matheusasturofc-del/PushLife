@@ -904,4 +904,13 @@ This way the filter starts by itself after a reboot and comes back if someone di
     <string name="problem_report">Report a problem</string>
     <string name="problem_subject">PushLife: problem</string>
     <string name="problem_body_hint">What happened? (if you can, say which screen and attach a screenshot)</string>
+    <string name="walk_rules">Only real walking counts: 20 s in a row, without swinging the phone.</string>
+    <string name="walk_rejected">%1$d steps didn\'t count (%2$s)</string>
+    <string name="walk_reject_arm">looked like arm swinging</string>
+    <string name="walk_reject_fast">too fast for steps</string>
+    <string name="walk_reject_vehicle">GPS showed you were in a vehicle</string>
+    <string name="walk_reject_still">GPS showed you were standing still</string>
+    <string name="walk_reject_short">too short, under 20 s of walking</string>
+    <string name="walk_gps_title">Confirm with GPS</string>
+    <string name="walk_gps_body">Harder to cheat: steps in a car or standing still don\'t count. Location is only used during the walk and never leaves your phone. Indoors GPS is weak and won\'t get in the way.</string>
 </resources>

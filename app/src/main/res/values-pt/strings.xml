@@ -897,4 +897,13 @@ Assim o filtro liga sozinho ao reiniciar o celular e volta se alguém desconecta
     <string name="problem_report">Relatar um problema</string>
     <string name="problem_subject">PushLife: problema</string>
     <string name="problem_body_hint">O que aconteceu? (se puder, diga em qual tela e mande um print)</string>
+    <string name="walk_rules">Contam só passos de caminhada de verdade: 20 s seguidos andando, sem balançar o celular.</string>
+    <string name="walk_rejected">%1$d passos não contaram (%2$s)</string>
+    <string name="walk_reject_arm">pareceu balanço de braço</string>
+    <string name="walk_reject_fast">rápido demais para passos</string>
+    <string name="walk_reject_vehicle">o GPS mostrou que você estava num veículo</string>
+    <string name="walk_reject_still">o GPS mostrou que você estava parado</string>
+    <string name="walk_reject_short">trecho curto, menos de 20 s andando</string>
+    <string name="walk_gps_title">Confirmar com GPS</string>
+    <string name="walk_gps_body">Mais difícil de burlar: não conta passos de carro nem parado no lugar. A localização só é usada durante a caminhada e não sai do celular. Dentro de casa o GPS é fraco e não atrapalha.</string>
 </resources>
